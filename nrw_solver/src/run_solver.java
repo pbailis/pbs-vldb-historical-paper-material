@@ -12,7 +12,7 @@ public class run_solver {
         double L_r = 1;
         double L_w = 1;
         int k = 5;
-        int n = 10;
+        int n = 20;
         int w_min = 2;
 
         nrw_solver solver = new nrw_solver(p_s, t, k, c_r, c_w, L_r, L_w, w_min, n);
@@ -24,8 +24,8 @@ public class run_solver {
         {
             nrw_solution cur = it.next();
 
-            System.out.printf("\nN: %d\nR: %d\nW: %d\np_s: %f\nFIT: %f\n", cur.getN(), cur.getR(),
-                                cur.getW(), cur.getP_s(), cur.getFitness());
+            System.out.printf("\nN: %d\nR: %d\nW: %d\np_s: %f\nFIT: %f\nr_L: %f\nw_L: %f", cur.getN(), cur.getR(),
+                                cur.getW(), cur.getP_s(), cur.getFitness(), L_r*cur.getR(), L_w*cur.getW());
         }
     }
 }

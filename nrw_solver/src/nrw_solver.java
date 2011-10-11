@@ -1,4 +1,5 @@
 
+import org.apache.commons.math.util.MathUtils;
 import java.util.List;
 import java.util.Vector;
 
@@ -46,7 +47,13 @@ public class nrw_solver {
 
     private double calc_p_s(int rc, int wc)
     {
-        return Math.pow(((double)choose(n-w_calc(t, wc), rc))/choose(n, rc), k);
+        if(rc+ w_calc(t, wc) > n)
+        {
+            return 1.0;
+        }
+
+        return Math.pow((MathUtils.binomialCoefficientDouble(n-w_calc(t, wc), rc))
+                        /MathUtils.binomialCoefficientDouble(n, rc), k);
     }
 
     private void solve()
@@ -55,7 +62,7 @@ public class nrw_solver {
 
         solutions = new Vector<nrw_solution>();
 
-        for(int rc = 0; rc <= n; rc++)
+        for(int rc = 1; rc <= n; rc++)
         {
             for(int wc = w_min; wc <= n; wc++)
             {
@@ -89,13 +96,5 @@ public class nrw_solver {
         if(!solved)
             solve();
         return solutions;
-    }
-
-    private static long choose(long total, long choose){
-        if(total < choose)
-            return 0;
-        if(choose == 0 || choose == total)
-            return 1;
-        return choose(total-1,choose-1)+choose(total-1,choose);
     }
 }
