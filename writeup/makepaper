@@ -1,0 +1,1 @@
+pdflatex ernst && bibtex ernst && pdflatex ernst && pdflatex ernst && open ernst.pdf
