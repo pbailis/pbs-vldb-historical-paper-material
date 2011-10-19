@@ -2,8 +2,7 @@
 \usepackage{graphicx}
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
 
-\title{Practical Partial Quorums and Probabilistic Consistency}
-
+\title{Practical Non-strict Quorums and Probabilistic Consistency}
 
 \begin{document}
 
@@ -11,24 +10,154 @@
 
 \noindent\textit{``All good ideas arrive by chance.''--Max Ernst}
 
-\begin{abstract} FOO
+\begin{abstract}
+
+To lower visible latency of operations, operators of highly available
+distributed databases resort to non-overlapping read and write sets,
+yet modern eventually consistent quorum-based data stores provide no
+guarantees on the staleness of data returned by these so-called
+“non-strict” quorums. In this work, we further develop the theory of
+probabilistic quorums to provide meaningful bounds on the consistency
+of data items returned by non-strict quorums with realistically low
+replication factors, considering the staleness of data items across
+multiple writes and across wall clock time. With this theory, database
+operators can determine the likelihood of various gradations of
+staleness of returned data given a quorum system and can further tune
+their quorum selection to meet their desired staleness requirements,
+including monotonic reads session guarantees. We then show how
+database operators can optimize quorum size selection for operation
+latency given a staleness service level agreement and system load and
+implement these algorithms on top of a open source production
+distributed database. We demonstrate how this theory can be
+practically applied through both synthetic benchmarking and a sample
+deployment of a social networking service running on our database.
+
 \end{abstract}
 
-\section{Introduction}Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin et sapien vel nulla convallis iaculis. Maecenas ut eros orci, volutpat hendrerit mi. Curabitur et enim a velit laoreet lacinia vel at metus. Nunc hendrerit tincidunt turpis, lacinia vulputate sem convallis et. Etiam laoreet porttitor augue et vehicula. Aliquam lectus risus, elementum ut ullamcorper in, tincidunt vel tellus. Nulla aliquam convallis eros, ac pulvinar enim pretium lacinia. Curabitur nec quam et dolor porttitor egestas vel quis odio. Aenean a risus vel dolor cursus posuere sit amet eu lectus. Aenean sit amet tortor purus. Curabitur eu neque risus.
+\section{Introduction}
 
-Aliquam eu est nunc, id feugiat ante. Pellentesque auctor scelerisque nisi, at fermentum nunc varius ac. Fusce euismod, massa eget tincidunt hendrerit, metus arcu vulputate neque, in suscipit metus orci ut neque. Pellentesque fermentum dolor id dui lobortis at pretium purus bibendum. Duis auctor leo eu quam rutrum pretium. Morbi commodo pulvinar luctus. Duis et est dolor, sit amet gravida risus. Aliquam facilisis lacus vitae nisi sagittis euismod. Cras eu augue vitae elit luctus feugiat non nec magna. Pellentesque malesuada sapien non augue tristique ullamcorper. Integer tempus mollis nisl, et placerat lectus consectetur a.
 
-Sed vel sem sem, eget sodales nibh. Morbi pretium convallis interdum. Mauris quis accumsan erat. Aenean aliquam lorem non lorem dapibus placerat. Mauris iaculis porttitor lectus id sodales. Curabitur eu dui molestie metus ornare consectetur. Phasellus suscipit orci nec turpis dignissim quis euismod sem dignissim. Vivamus enim magna, rhoncus sit amet dictum accumsan, vehicula eget elit. Nunc varius lectus egestas dolor lobortis ut scelerisque elit scelerisque.
+Many of today's widely-deployed data storage solutions eschew ACID
+guarantees in favor of BASE semantics, a large component of which is
+the use of so-called eventual consistency of replicas.  In this model,
+replicas are only guaranteed to eventually agree on the value of a
+particular data item, and reads may return arbitrarily stale data.
+The client-side semantics of this eventual consistency depend on
+client access patterns~\cite{vogels-defs}, but, unless particular care
+is taken, such as always contacting the same replica, the only
+mechanism for ensuring strong consistency is to ensure overlapping
+read and write quorums~\cite{dynamo}.
 
-Donec facilisis turpis ac diam tristique sit amet fermentum arcu vehicula. Praesent at pharetra libero. Integer sed urna lectus, porta dapibus mi. Integer scelerisque nisl at felis egestas egestas. Fusce erat eros, imperdiet vel faucibus sed, suscipit sed ligula. Nunc pulvinar lectus ac lectus hendrerit vitae tempus justo egestas. Etiam luctus felis ac tellus euismod malesuada.
+However, end-users today have come to expect undefined behavior
+offering little to no insight into response consistency from their
+eventually consistent data stores.  To achieve favorable performance,
+users often employ \textit{non-strict or partial quorums}, in which
+read and write sets are not guaranteed to overlap (given $N$ replicas
+and read and write quorum sizes $R$ and $W$, $R+W \leq N$).  Modern
+quorum-based scalable databases such as Dynamo (and its open source
+descendants Cassandra and Riak) provide no guarantees on the staleness
+or consistency returned by non-strict quorums other than that the
+system will ``eventually'' provide the right answer in the absence of
+new writes.
 
-Etiam vestibulum, lectus ac sagittis dapibus, velit urna luctus ligula, eget molestie turpis nulla tempus neque. Aenean vel nunc vel metus bibendum rutrum. Morbi quam massa, pretium ut facilisis eu, viverra nec eros. Aliquam ut porttitor odio. Vestibulum rutrum scelerisque pharetra. Maecenas a augue lectus. Duis in quam a augue euismod semper ac sed nibh.
+In this paper, we prove that we can do better. Quorum-based databases
+can provide guarantees on the staleness of the data they provide. The
+theory community has briefly explored the use of ``probabilistic
+quorums'' to provide arbitrarily high probability of strong
+consistency~\cite{prob-quorum}; in theory, these systems provide
+excellent asymptotic behavior but are limited in practical
+applicability due to their reliance on high replication factors.
+Furthermore, in this theory, there is no guarantee on the recency of
+data returned that is not the most recent version; with small $N$,
+the probability of this happening is large---in the tens of percent.
 
-Etiam rutrum semper ultrices. Sed aliquet diam et velit blandit tempus. Fusce eu lectus quis sapien volutpat semper. Curabitur tincidunt pretium scelerisque. Nam iaculis viverra rutrum. Vestibulum sapien eros, luctus id placerat a, pharetra et lacus. Sed adipiscing metus ut est sollicitudin laoreet. Nullam congue, justo in fringilla hendrerit, tellus urna lobortis enim, luctus euismod leo sem et nisl. Etiam blandit mattis tortor eget pulvinar. Quisque vitae ante pulvinar risus faucibus tempor vitae id justo. Quisque ac turpis libero. Fusce sit amet ante et tortor fermentum pulvinar. Donec vel nunc facilisis lorem mattis laoreet et eu nisl. Proin est mi, faucibus ut mollis vitae, feugiat sit amet metus. Curabitur posuere porttitor lorem, vitae blandit tortor consequat at.
+In this work, we provide meaningful metrics for eventually consistent
+data stores in the form of probabilistic bounded staleness.  By
+relaxing the consistency guarantees from strong consistency to a
+bounded-staleness model, we provide exponential improvements in the
+probability of returning staler-than-promised data, resulting in
+techniques that are useful at replication levels as seen in practice
+($N<10$, and easily $N\leq3$).  One can easily predict the staleness
+of his or her data (e.g., within 1 version with $70\%$ probability,
+with 2 versions with $95\%$ probability, and so on).  From a
+service-level agreement perspective, the system can minimize the
+probability of returning staler-than-promised data to the order of
+fractions of a percent.  It is much easier to write applications that
+tolerate SLAs in the multiple ``nines'' reliability range than in the
+high-tens-of-percent range.
 
-\section{Motivation}
+Specifically, we provide algorithms and models for the staleness of a
+data item across multiple versions and across real time and replica
+propagation delay.  We can predict the probability of a request
+falling within $k$ versions of the latest committed version after $t$
+seconds have elapsed, for any $k$ and $t$, offering strongly
+exponential improvements in the probability of returning
+staler-than-promised data over the traditional literature.  We also
+use these consistency measures to provide probabilistic guarantees on
+monotonic reads, a form of session guarantees where reads are
+guaranteed to return data items no older than what has been previously
+read.
+
+Using this theory, we can accurately provide read and write quorum
+sizes ($W$,$R$,$N$) that optimize the performance of an operation on a
+quorum-based database given the desired staleness of a particular
+partial quorum configuration.  Our models depend only on a model for
+the latency of operations, which can be derived online and
+continuously tuned.  We implement these algorithms on top of
+Cassandra, a widely-deployed open source quorum-based distributed
+database, and demonstrating how to apply partial quorum theory in
+practice.  We validate our new theory using several microbenchmarks
+and synthetic workloads, then demonstrate the utility of staleness
+measures in a Twitter clone with several thousand clients.
+
+We make the following contributions in this paper:
+
+\begin{itemize}
+
+\item We further develop the theory of partial quorums to describe
+  staleness probability metrics across both versions and time as well
+  as probabilistic monotonic reads consistency.  This leads to
+  exponentially lowered load per node and probability of
+  inconsistency (Section~\ref{sec:theory}).
+
+\item We employ this theory in optimizing read and write quorum sizes
+  for minimum overall operational latency subject to a given
+  service level agreement on the staleness of the data returned and
+  the probability of further inconsistency (Section~\ref{sec:optimize}).
+
+\item We implement this optimization layer and our algorithms in a
+  modern distributed database and demonstrate their utility in
+  practice under both synthetic benchmarking and a web application
+  workload (Section~\ref{sec:implement}).
+
+\end{itemize}
+
+\section{Background}
+
+Write some stuff about quorum systems.
+
+
+There are two main reasons to replicate data: durability and
+scalability.  First, in the event of server failure, having stored the
+data on multiple replicas allows end-users to continue to access the
+data.  The replication factor in this case depends largely on the
+relative ``importance'', or cost of losing the data.  Secondly, each
+server has a maximum capacity, or number of requests that it can serve within a
+given time period.  All else equal, replicating the data and
+performing appropriate load-balancing lowers the load on each
+individual server storing the data.
+
+However, coordinating replicas has a cost; ensuring that all replicas
+are up to date is expensive, but, as previously mentioned, giving up
+ACID semantics lessens this cost.  By themselves, BASE semantics are
+not immediately problematic: one cannot necessarily have all of
+consistency, availability, and partition tolerance~\cite{cap-proof},
+so, to achieve availability and partition tolerance, BASE systems give
+up consistency.
+
 
 \section{Probability and Partial Quorums}
+\label{sec:theory}
 
 Probabilistic quorums~\cite{prob-quorum}
 
@@ -36,21 +165,152 @@ Probabilistic quorums~\cite{prob-quorum}
 
 \subsection{$k$-quorums}
 
+\noindent\textit{Consistency Definition:} With probability $1-p_s$, at
+least one value in the resulting read quorum will have been committed within $k$
+versions of the latest committed version.\\
+
+\noindent Assuming non-changing $r$, $w$ (else, multiply $k$ independent instances of Equation \ref{eq:epsilon}):
+
+\begin{equation}
+p_s = \left(\frac{{n-w \choose r}}{{n \choose r}}\right)^k
+\end{equation}
+
 \subsection{Monotonic Reads}
+
+\noindent\textit{Consistency Definition:} With probability $1-p_s$, at
+least one value in the resulting read quorum will be the same version or a newer
+version than the client's previously read value, where versions are
+defined over the global commit ordering.\\
+
+\noindent $\gamma_{gw}$: rate of writes in the system (global)
+
+\noindent $\gamma_{cr}$: rate of reads for particular client
+
+\begin{equation}
+p_s = \left(\frac{{n-w \choose r}}{{n \choose r}}\right)^{1+\gamma_{gw}/\gamma_{cr}}
+\end{equation}
+
+When constructed from $k$ $\varepsilon$-$p$-consistent systems, this
+consistency model has load $\geq
+\frac{(1-p_s^{\frac{1}{2C}})}{\sqrt{n}}$, where
+$C=1+\gamma_{gw}/\gamma_{cr}$.
 
 \subsection{$RT$-quorums}
 
+\noindent\textit{Consistency Definition:} With probability $1-p_s$, at
+least one value in the resulting read quorum will have been committed within the
+past $t$ seconds.\\
+
+\noindent$w(t)$: number of replicas with data item as a function of time
+
+\begin{equation}
+p_s = \frac{{n-w(t) \choose r}}{{n \choose r}}
+\end{equation}
+
 \subsection{Combinations}
+
+
+\subsection{$MR$-$p$-consistency}
+
+\noindent\textit{Consistency Definition:} With probability $1-p_s$, at
+least one value in the resulting read quorum will be the same version or a newer
+version than the client's previously read value, where versions are
+defined over the global commit ordering.\\
+
+\noindent $\gamma_{gw}$: rate of writes in the system (global)
+
+\noindent $\gamma_{cr}$: rate of reads for particular client
+
+\begin{equation}
+p_s = \left(\frac{{n-w \choose r}}{{n \choose r}}\right)^{1+\gamma_{gw}/\gamma_{cr}}
+\end{equation}
+
+When constructed from $k$ $\varepsilon$-$p$-consistent systems, this
+consistency model has load $\geq
+\frac{(1-p_s^{\frac{1}{2C}})}{\sqrt{n}}$, where
+$C=1+\gamma_{gw}/\gamma_{cr}$.
+
+
+\subsection{$k$-$RT$-$p$-consistency}
+
+\noindent\textit{Consistency Definition:} With probability $1-p_s$, at
+least one value in the resulting read quorum will have been written in the last
+$k$ versions provided $t$ seconds have elapsed since the last write.
+
+\begin{equation}
+p_s = \left(\frac{{n-w(t) \choose r}}{{n \choose r}}\right)^k
+\end{equation}
+
+\noindent Note that we can improve this by applying
+$RT$-$p$-consistency for each of the $k$ periods of time elapsed since
+the last $k$ write commits $t_1,\dots,t_k$:
+
+\begin{equation}
+p_s = \frac{{n-w(t_1) \choose r}}{{n \choose r}}\dots\frac{{n-w(t_k) \choose r}}{{n \choose r}}
+\end{equation}
+
+\subsection{$MR$-$RT$-$p$-consistency}
+
+\noindent\textit{Consistency Definition:} With probability $1-p_s$, at
+least one value in the resulting read quorum will be the same version or a newer
+version than the client's previously read value provided $t$ seconds
+have elapsed since the last write, where versions are defined over the
+global commit ordering.
+
+\begin{equation}
+\label{eq:improved}
+p_s = \left(\frac{{n-w(t) \choose r}}{{n \choose r}}\right)^{1+\gamma_{gw}/\gamma_{cr}}
+\end{equation}
+
+Like $k$-$RT$-consistency, we can improve this by applying $MR$-$p$-consistency for each of the $1+\gamma{gw}/\gamma{cr}$ commit times (omitted, but see Equation \ref{eq:improved}).
 
 \subsection{Variable $w$}
 
 \section{Optimization}
+\label{sec:optimize}
 
 \subsection{Operation Latency}
 
+Dynamo-style latency:
+
+Probability that $m$ of $n$ replicas respond to request at time $t$ given latency CDF $L$:
+
+$$P_r(m, t, L) = (1-(L(t))^m)^{n \choose m}$$
+
+$$r_t(r) = p_r(r, t, L_r)$$
+$$w_t(r) = p_r(w, t, L_w)$$
+
+Reads:
+
+$$R_l(r) = \int_0^{\infty} r_t(r) l_r(t) dt$$
+
+Writes
+
+$$W_l(w) = \int_0^{\infty} w_t(w_{min}) l_r(t) dt$$
+
+
+
 \subsection{Optimization Formulation}
 
+We can use simple linear programming to determine what combination of
+$R$ and $W$ (if any) minimizes latency while satisfying the system
+constraints and user requirements.
+
+Given $n$, desired $p$, $w_{min}$ (minimum committed $w$ before
+returning), consistency model (with necessary parameters--$k$, $t$,
+$\gamma_{cr}$, etc.), latency $L$, and the relative weighted
+``importances'' of read and write latency, $c_r$ and $c_w$:
+
+\begin{equation}
+ \begin{array}{rl}
+    \min        & R_l(r) +W_l(w) \\
+    \mbox{s.t.} & p \ge p_s \\
+                & w \ge w_{min}.
+    \end{array}
+\end{equation}
+
 \section{Experimental Evaluation}
+\label{sec:implement}
 
 \subsection{Synthetic Benchmarks}
 
