@@ -36,7 +36,7 @@ booktitle = {DISC 2006}}
 @inproceedings{dynamo,
  author = {DeCandia, Giuseppe and Hastorun, Deniz and Jampani, Madan and Kakulapati, Gunavardhan and Lakshman, Avinash and Pilchin, Alex and Sivasubramanian, Swaminathan and Vosshall, Peter and Vogels, Werner},
  title = {Dynamo: {Amazon's} highly available key-value store},
- booktitle = {Proceedings of twenty-first ACM SIGOPS symposium on Operating systems principles},
+ booktitle = {Proceedings of 21st ACM SIGOPS symposium on Operating systems principles},
  series = {SOSP '07},
  year = {2007},
  isbn = {978-1-59593-591-5},
@@ -122,19 +122,20 @@ booktitle = {DISC 2006}}
 title ={Apache {HBase}},
 howpublished="\url{http://hbase.apache.org}"}
 
-@incollection {nonstrict-availability,
+@inproceedings {nonstrict-availability,
    author = {Aiyer, Amitanand and Alvisi, Lorenzo and Bazzi, Rida},
-   affiliation = {Department of Computer Sciences, The University of Texas at Austin},
    title = {On the Availability of Non-strict Quorum Systems},
-   booktitle = {Distributed Computing},
-   series = {Lecture Notes in Computer Science},
-   editor = {Fraigniaud, Pierre},
-   publisher = {Springer Berlin / Heidelberg},
-   isbn = {978-3-540-29163-3},
-   keyword = {Computer Science},
-   pages = {48-62},
-   volume = {3724},
+   booktitle={DISC '05: Proceedings of the 19th International Symposium on Distributed Computing},
+
    year = {2005}
+}
+
+@inproceedings {k-quorum-lb,
+   author = {Aiyer, Amitanand and Alvisi, Lorenzo and Bazzi, Rida},
+   title = { Byzantine and multi-writer K-quorums},
+   booktitle={DISC '06: Proceedings of the 20th International Symposium on Distributed Computing},
+
+   year = {2006}
 }
 
 @INPROCEEDINGS{sessionguarantees,
@@ -143,4 +144,16 @@ howpublished="\url{http://hbase.apache.org}"}
     booktitle = {PDIS '94: Proceedings of the Third International Conference on Parallel and Distributed Information Systems},
     year = {1994},
     pages = {140--149}
+}
+
+@inproceedings{cops,
+   author = {Wyatt Lloyd and Michael J. Freedmand and Michael Kaminsky and
+	David G. Andersen},
+   title = {Don't settle for Eventual: Scalable Causal Consistency for
+	Wide-Area Storage with {COPS}},
+   booktitle = {{Proceedings of the 23rd ACM Symposium on Operating Systems Principles
+	(SOSP)}},
+   address = {Cascais, Portugal},
+   month = oct,
+   year = {2011}
 }

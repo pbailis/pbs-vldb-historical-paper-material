@@ -4,6 +4,8 @@
 
 \title{Probabilistic Consistency and Practical Non-strict Quorums}
 
+\newdef{definition}{Definition}
+
 \begin{document}
 
 \maketitle
@@ -58,8 +60,8 @@ However, end-users today have come to expect undefined behavior
 offering little to no insight into response consistency from their
 eventually consistent data stores.  To achieve favorable performance,
 users often employ \textit{non-strict or partial quorums}, in which
-read and write sets are not guaranteed to overlap (given $N$ replicas
-and read and write quorum sizes $R$ and $W$, $R+W \leq N$).  Modern
+read and write sets are not guaranteed to overlap (given $n$ replicas
+and read and write quorum sizes $r$ and $w$, $r+w \leq n$).  Modern
 quorum-based scalable data systems such as Dynamo (and its open source
 descendants Cassandra and Riak) provide no guarantees on the staleness
 or consistency returned by non-strict quorums other than that the
@@ -74,7 +76,7 @@ consistency~\cite{prob-quorum}; in theory, these systems provide
 excellent asymptotic behavior but are limited in practical
 applicability due to their reliance on high replication factors.
 Furthermore, in this theory, there is no guarantee on the recency of
-data returned that is not the most recent version; with small $N$,
+data returned that is not the most recent version; with small $n$,
 the probability of this happening is large---in the tens of percent.
 
 In this work, we provide meaningful metrics for eventually consistent
@@ -83,7 +85,7 @@ relaxing the consistency guarantees from strong consistency to a
 bounded-staleness model, we provide exponential improvements in the
 probability of returning staler-than-promised data, resulting in
 techniques that are useful at replication levels as seen in practice
-($N<10$, and easily $N\leq3$).  One can easily predict the staleness
+($n<10$, and easily $n\leq3$).  One can easily predict the staleness
 of his or her data (e.g., within 1 version with $70\%$ probability,
 with 2 versions with $95\%$ probability, and so on).  From a
 service-level agreement perspective, the system can minimize the
@@ -105,7 +107,7 @@ guaranteed to return data items no older than what has been previously
 read.
 
 Using this theory, we can accurately provide read and write quorum
-sizes ($W$,$R$,$N$) that optimize the performance of an operation on a
+sizes ($w$,$r$,$n$) that optimize the performance of an operation on a
 quorum-based data system given the desired staleness of a particular
 partial quorum configuration.  Our models depend only on a model for
 the latency of operations, which can be derived online and
@@ -210,7 +212,7 @@ p_{stale}=\frac{{n-w \choose r}}{{n \choose r}}
 It is readily apparent that the probability of staleness is quite high
 except for large values of $n$.  With $n=100$, $r=w=30$, $p_{stale} =
 1.88 \times 10^{-6}$~\cite{nonstrict-availability}.  However, with
-$n=3$, $r=w=1$, $p_{stale} = .\overline{3}$.  The asymptotics of these
+$n=3$, $r=w=1$, $p_{stale} = .\overline{6}$.  The asymptotics of these
 systems are excellent---but only asymptotically.  To the best of our
 knowledge, probabilistic quorums have only been used to study the
 probability of strong consistency only.
@@ -224,7 +226,7 @@ is sent to $\frac{n}{K}$ replicas such that each replica is no more
 than $K$ versions out-of-date.  However, with multiple writers, one
 loses the ordering properties that the single-writer was able to
 control, and the best known algorithm for the pathological case
-results in a lower bound of $(2n-1)(k-1)+n$ versions staleness.
+results in a lower bound of $(2n-1)(k-1)+n$ versions staleness~\cite{k-quorum-lb}.
 Again, this prior work on $k$-quorums focused on purely deterministic
 verion staleness.
 
@@ -296,7 +298,7 @@ operations.  We begin by considering a model without entropic
 processes ($w$ is constant), then expand our model to consider
 time-varying $w$. We consider a write ``committed'' once it has
 reached $w$ replicas. We discuss further refinements to these
-assumptions in Section \ref{discussion}.
+assumptions in Section \ref{sec:discussion}.
 
 \subsection{Probabilistic $k$-quorums}
 
@@ -309,11 +311,10 @@ the presence of multiple writers by extending this theory to consider
 probabilistic $k$-quorums.  In this model, we consider static write
 quorums (no anti-entropy), but compose multiple write quorums to model the probable overlap of $k$ independent write sets.
 
-\newdef{definition}{Definition}
 \begin{definition}
-A quorum system obeys probabilistic $k$-quorum consistency if, with
+A quorum system obeys \textit{probabilistic $k$-quorum consistency} if, with
 probability $1-p_{staler}$, at least one value in any read quorum will
-have been committed no later than $k$ versions of the latest committed
+have been committed no later than $k$ versions after the latest committed
 version when the read begins.
 \end{definition}
 
@@ -369,7 +370,7 @@ guarantee~\cite{sessionguarantees}.
 
 \begin{definition}
 \label{def:prob-mr}
-A quorum system obeys probabilistic monotonic reads consistency if, with probaility at least $1-p_{staler}$, at
+A quorum system obeys \textit{probabilistic monotonic reads consistency} if, with probaility at least $1-p_{staler}$, at
 least one value in any read quorum the same version or a newer version
 than the client's previously read value, where versions are defined
 over the global commit ordering.
@@ -413,82 +414,85 @@ Until now, we have considered only static write quorums.  However, as
 we discussed in Section \ref{sec:practice}, modern quorum systems
 propagate writes to all members of the quorum system for a given key.
 This is commonly known as anti-entropy.  For generality, in this
-section, we will discuss general anti-entropy models. However we
+section, we will discuss general anti-entropy models. However, we
 explicitly model the Dynamo-style anti-entropy mechanism in Section
-\ref{sec:dynamo-prop}.
+\ref{sec:dynamo-prop}.  Probabilistic $RT$-quorums model the
+propagation of writes across wall-clock or real-world time such that
+the set of replicas with a given version of the data (or later) grows
+over time\footnote{Node failures shrink this set and can be
+  incorporated into this model, but we do not consider them here.}.
+We denote the probability density function describing the number of
+replicas $\mathcal{W}$ that have a particular version $v$ (or a
+version committed after $v$\footnote{We assume writes obey a total
+  ordering. This can be accomplished using synchronized clocks (last
+  writer wins) or with causal ordering and commutative merge
+  functions~\cite{cops}.}) $t$ seconds after committing as
+$p_l(\mathcal{W}, t)$.
 
-\noindent\textit{Consistency Definition:} With probability $1-p_s$, at
-least one value in the resulting read quorum will have been committed within the
-past $t$ seconds.\\
+\begin{definition}
+A quorum system obeys \textit{probabilistic $RT$-quorum consistency}
+if, with probability $1-p_{staler}$, at least one value in any read
+quorum will either have been committed no greater than $t$ units of
+time before the read began or will belong to an in-flight write.
+\end{definition}
 
-\noindent$w(t)$: number of replicas with data item as a function of time
-
-\begin{equation}
-p_s = \frac{{n-w(t) \choose r}}{{n \choose r}}
-\end{equation}
-
-\subsection{Combinations}
-
-
-\subsection{$MR$-$p$-consistency}
-
-\noindent\textit{Consistency Definition:} With probability $1-p_s$, at
-least one value in the resulting read quorum will be the same version or a newer
-version than the client's previously read value, where versions are
-defined over the global commit ordering.\\
-
-\noindent $\gamma_{gw}$: rate of writes in the system (global)
-
-\noindent $\gamma_{cr}$: rate of reads for particular client
-
-\begin{equation}
-p_s = \left(\frac{{n-w \choose r}}{{n \choose r}}\right)^{1+\gamma_{gw}/\gamma_{cr}}
-\end{equation}
-
-When constructed from $k$ $\varepsilon$-$p$-consistent systems, this
-consistency model has load $\geq
-\frac{(1-p_s^{\frac{1}{2C}})}{\sqrt{n}}$, where
-$C=1+\gamma_{gw}/\gamma_{cr}$.
-
-
-\subsection{$k$-$RT$-$p$-consistency}
-
-\noindent\textit{Consistency Definition:} With probability $1-p_s$, at
-least one value in the resulting read quorum will have been written in the last
-$k$ versions provided $t$ seconds have elapsed since the last write.
+By definition, $p_l(c,0) = 1$ $\forall c \in [0, w]$.  Intuitively, at
+commit time, $w$ replicas will have the value, so the probability that
+zero to $w$ replicas have the value immediately after commit is
+exactly $1$.  We can model the probability of probabilistic $RT$-consistency for an interval $t$ by summing the conditional probabilities of each possible $\mathcal{W}$:
 
 \begin{equation}
-p_s = \left(\frac{{n-w(t) \choose r}}{{n \choose r}}\right)^k
+p_{staler} = p_l(n, t)+\sum_{c\in[w, n)} \frac{{n-c \choose r}}{{n \choose r}} p_l(c, t)
 \end{equation}
 
-\noindent Note that we can improve this by applying
-$RT$-$p$-consistency for each of the $k$ periods of time elapsed since
-the last $k$ write commits $t_1,\dots,t_k$:
+In practice, $p_l$ depends on the expected latency of operations and can be
+approximated analytically (Section \ref{sec:dynamo-prop} or measured
+online\footnote{For this reason, it is difficult to analytically
+  determine the load of any probabilistically consistent system
+  dependent on real-time operations.}.
+
+\subsection{Probabilistic $\langle k, t
+  \rangle$-quorum Consistency}
+
+We can combine the previous models to combine both versioned and
+real-time staleness metrics to answer questions of the following form:
+what is the probability that a read will return a value no later than
+$k$ versions old if the write committed no sooner than $t$ seconds
+ago?
+
+\begin{definition}
+A quorum system obeys \textit{probabilistic $\langle k, t
+  \rangle$-quorum consistency} if, with probability $1-p_{staler}$, at
+least one value in any read quorum will have been committed no later
+than $k$ versions after the latest committed version when the read
+begins, provided the read begins $t$ units of time after the previous
+$k$ versions commit.
+\end{definition}
+
+The definition of $p_{staler}$ follows from the prior definitions:
 
 \begin{equation}
-p_s = \frac{{n-w(t_1) \choose r}}{{n \choose r}}\dots\frac{{n-w(t_k) \choose r}}{{n \choose r}}
+p_{staler} = \left(p_l(n, t)+\sum_{c\in[w, n)} \frac{{n-c \choose r}}{{n \choose r}} p_l(c, t)\right)^k
 \end{equation}
 
-\subsection{$MR$-$RT$-$p$-consistency}
+In this equation, we assume the pathological case where the last $k$
+writes all occurred at the same time.  This is not likely in practice,
+so if we can determine the time since commit for the last $k$ writes,
+we can improve this staleness bound by considering each quorum's $p_{stale}$ at $RT=t$ separately.
 
-\noindent\textit{Consistency Definition:} With probability $1-p_s$, at
-least one value in the resulting read quorum will be the same version or a newer
-version than the client's previously read value provided $t$ seconds
-have elapsed since the last write, where versions are defined over the
-global commit ordering.
-
-\begin{equation}
-\label{eq:improved}
-p_s = \left(\frac{{n-w(t) \choose r}}{{n \choose r}}\right)^{1+\gamma_{gw}/\gamma_{cr}}
-\end{equation}
-
-Like $k$-$RT$-consistency, we can improve this by applying $MR$-$p$-consistency for each of the $1+\gamma{gw}/\gamma{cr}$ commit times (omitted, but see Equation \ref{eq:improved}).
+Note that the prior definitions of consistency are encapsulated by
+probabilistic $\langle k, t \rangle$-quorum consistency. probabilistic
+$k$-quorum consistency is simply probabilistic $\langle k, 0
+\rangle$-quorum consistency, probabilistic monotonic reads consistency
+is $\langle 1+\frac{\gamma_{gw}}{\gamma_{cr}}, 0 \rangle$-quorum
+consistency, and $RT$-consistency is $\langle 0, RT \rangle$-quorum
+consistency.
 
 \subsection{Variable $w$}
 
 \subsection{Typical Quorum Settings}
 
-\section{Optimization}
+\section{Applied Theory and Refinements}
 \label{sec:optimize}
 
 \subsection{Operation Latency}
@@ -517,7 +521,7 @@ $$W_l(w) = \int_0^{\infty} w_t(w_{min}) l_r(t) dt$$
 \subsection{Optimization Formulation}
 
 We can use simple linear programming to determine what combination of
-$R$ and $W$ (if any) minimizes latency while satisfying the system
+$r$ and $w$ (if any) minimizes latency while satisfying the system
 constraints and user requirements.
 
 Given $n$, desired $p$, $w_{min}$ (minimum committed $w$ before
@@ -539,6 +543,8 @@ $\gamma_{cr}$, etc.), latency $L$, and the relative weighted
 Transactions
 
 Variable $w$
+
+Detection
 
 \section{Experimental Evaluation}
 \label{sec:implement}
