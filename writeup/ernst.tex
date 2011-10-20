@@ -2,7 +2,7 @@
 \usepackage{graphicx}
 \usepackage{balance, url,}  % for  \balance command ON LAST PAGE  (only there!)
 
-\title{Probabilistic Consistency and Practical Non-strict Quorums}
+\title{Probabilistic Consistency\\and Practical Non-strict Quorums}
 
 \newdef{definition}{Definition}
 
@@ -370,7 +370,7 @@ guarantee~\cite{sessionguarantees}.
 
 \begin{definition}
 \label{def:prob-mr}
-A quorum system obeys \textit{probabilistic monotonic reads consistency} if, with probaility at least $1-p_{staler}$, at
+A quorum system obeys \textit{probabilistic monotonic reads consistency} if, with probability at least $1-p_{staler}$, at
 least one value in any read quorum the same version or a newer version
 than the client's previously read value, where versions are defined
 over the global commit ordering.
@@ -488,10 +488,6 @@ is $\langle 1+\frac{\gamma_{gw}}{\gamma_{cr}}, 0 \rangle$-quorum
 consistency, and $RT$-consistency is $\langle 0, RT \rangle$-quorum
 consistency.
 
-\subsection{Variable $w$}
-
-\subsection{Typical Quorum Settings}
-
 \section{Applied Theory and Refinements}
 \label{sec:optimize}
 
@@ -545,6 +541,19 @@ Transactions
 Variable $w$
 
 Detection
+
+read repair
+
+durability
+
+\subsection{Typical Quorum Configurations}
+
+CASSANDA: R=1, W=1 (\url{https://svn.apache.org/repos/asf/cassandra/branches/cassandra-1.0/interface/cassandra.thrift})
+
+RIAK: N=3, R,W QUORUM https://github.com/basho/riak_kv/blob/1.0/src/riak_kv_app.erl
+http://wiki.basho.com/Riak-Glossary.html#Quorum
+
+Voldemort: does not provide production configs besides testing (N=2)
 
 \section{Experimental Evaluation}
 \label{sec:implement}
