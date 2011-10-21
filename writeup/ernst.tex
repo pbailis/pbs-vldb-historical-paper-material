@@ -2,7 +2,7 @@
 \usepackage{graphicx}
 \usepackage{balance, url, amsfonts, verbatim}  % for  \balance command ON LAST PAGE  (only there!)
 
-\title{Probabilistic Consistency\\and Practical Non-strict Quorum Systems}
+\title{Probabilistic Consistency and\\ Practical Non-strict Quorum Systems}
 
 \newdef{definition}{Definition}
 
@@ -67,6 +67,16 @@ descendants Cassandra and Riak) provide no guarantees on the staleness
 or consistency returned by non-strict quorums other than that the
 system will ``eventually'' provide the right answer in the absence of
 new writes.
+
+
+\begin{figure}
+\includegraphics[width=.8\columnwidth]{figs/latency-stale.pdf}
+\caption{Diagram of control flow for client write to Dynamo-style
+  quorum.  Here, $N=3$, $W=2$. Client writes are proxied and sent to
+  all replicas. The write succeeds when $W$ replicas respond.  Note
+  that the proxy is likely a replica as well, invoking a local write.}
+\label{fig:latency-staleness}
+\end{figure}
 
 In this paper, we prove that we can do better. Quorum-based data systems
 can provide guarantees on the staleness of the data they provide. The
@@ -653,6 +663,8 @@ use of per-operation consistency\footnote{Voldemort specifies
   engineering decision that could be changed with minimal
   modifications to the wire protocol.}
 
+\textbf{99th Percentile Latency.}
+
 \subsection{Typical Quorum Configurations}
 
 CASSANDA: R=1, W=1 (\url{https://svn.apache.org/repos/asf/cassandra/branches/cassandra-1.0/interface/cassandra.thrift})
@@ -673,7 +685,28 @@ Voldemort: does not provide production configs besides testing (N=2)
 \subsection{Optimization and SLAs}
 \label{sec:optimization}
 
-\subsection{Synthetic Benchmarks}
+\begin{figure}
+\centering
+\includegraphics[width=.8\columnwidth]{figs/bothdimensions.pdf}
+\caption{Diagram of control flow for client write to Dynamo-style
+  quorum.  Here, $N=3$, $W=2$. Client writes are proxied and sent to
+  all replicas. The write succeeds when $W$ replicas respond.  Note
+  that the proxy is likely a replica as well, invoking a local write.}
+\label{fig:prob-staler}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=.8\columnwidth]{figs/inaccuracy.pdf}
+\caption{Diagram of control flow for client write to Dynamo-style
+  quorum.  Here, $N=3$, $W=2$. Client writes are proxied and sent to
+  all replicas. The write succeeds when $W$ replicas respond.  Note
+  that the proxy is likely a replica as well, invoking a local write.}
+\label{fig:prob-staler}
+\end{figure}
+
+
+
 
 \subsection{Twitter Clone}
 
