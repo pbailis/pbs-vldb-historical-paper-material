@@ -12,35 +12,7 @@
 
 \noindent\textit{``All good ideas arrive by chance.''--Max Ernst}
 
-\begin{abstract}
-
-
-To lower the latency of read and write operations, operators of highly
-available distributed data systems lower the required number of replicas
-to be contacted per operation. This often results in non-overlapping
-read and write replica sets, meaning the data store may return stale
-data. However, modern eventually consistent quorum-based data stores
-provide no guarantees on the staleness of data returned by these
-so-called “non-strict” quorums.
-
-In this work, we further develop the theory of probabilistic quorums
-to provide meaningful bounds on the consistency of data items returned
-by non-strict quorums of realistically-sized numbers of replicas. We
-consider the staleness of data items across multiple versions and
-across wall-clock time (taking anti-entropy processes into account),
-including monotonic reads session guarantees. With this theory,
-data system operators can determine the likelihood of various gradations
-of staleness of returned data given a quorum system and then tune
-their quorum selection to meet their desired application requirements.
-We formulate an optimization of operation latency in terms of quorum
-size given a staleness service level agreement and system load. We
-subsequently implement these algorithms in an open source,
-production-use distributed data system, Cassandra. Using this
-implementation, we demonstrate how this theory can be practically
-applied through both synthetic benchmarking and a sample deployment of
-a social networking service running on our data system.
-
-\end{abstract}
+\input{abstract}
 
 \section{Introduction}
 
@@ -548,10 +520,9 @@ durability
 
 \subsection{Typical Quorum Configurations}
 
-CASSANDA: R=1, W=1 (\url{https://svn.apache.org/repos/asf/cassandra/branches/cassandra-1.0/interface/cassandra.thrift})
+CASSANDA: R=1, W=1 
 
-RIAK: N=3, R,W QUORUM https://github.com/basho/riak_kv/blob/1.0/src/riak_kv_app.erl
-http://wiki.basho.com/Riak-Glossary.html#Quorum
+RIAK: N=3, R,W QUORUM 
 
 Voldemort: does not provide production configs besides testing (N=2)
 
