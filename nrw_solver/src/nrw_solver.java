@@ -46,17 +46,26 @@ public class nrw_solver {
     }
 
     //this is p_w in the paper
-    //from equation 6: http://mathworld.wolfram.com/OrderStatistic.html
-    private double get_prob_w(int w, int wmin, double t)
+    private double pdf_get_prob_w(int w, double t)
     {
-        return ((double)fact(this.n-wmin))/(double)(fact(w-wmin-1)*fact(this.n-w))
-                    * Math.pow(L_w_noack.getLatencyCDF(t), w-wmin-1)
+         return ((double)fact(this.n))/(double)(fact(w-1)*fact(this.n-w))
+                    * Math.pow(L_w_noack.getLatencyCDF(t), w-1)
                     * Math.pow(1-L_w_noack.getLatencyCDF(t), this.n-w)
                     * L_w.getLatencyPDF(t);
+
+    }
+
+    //This is P_w in the paper
+    //calculate the probability of the (w-wmin)th slowest node of (n-wmin) nodes
+    //having write by time t
+    //from equation 6: http://mathworld.wolfram.com/OrderStatistic.html
+    private double cdf_get_prob_w_after_write(int w, int wmin, double t)
+    {
+        return 1-Math.pow(1-Math.pow(L_w_noack.getLatencyCDF(t), w-wmin), MathUtils.binomialCoefficientDouble(n-wmin, w-wmin));
     }
 
     //this is p_r in the paper
-    private double get_prob_r(int r, double t)
+    private double pdf_get_prob_r(int r, double t)
     {
         return ((double)fact(this.n))/(double)(fact(r-1)*fact(this.n-r))
                     * Math.pow(L_r.getLatencyCDF(t), r-1)
@@ -73,7 +82,7 @@ public class nrw_solver {
         for(Iterator<Double> it = domain.iterator(); it.hasNext();)
         {
             double t = it.next();
-            accum += get_prob_r(r, t)*L_r.getLatencyPDF(t);
+            accum += pdf_get_prob_r(r, t)*t;
         }
 
         return accum;
@@ -88,7 +97,7 @@ public class nrw_solver {
         for(Iterator<Double> it = domain.iterator(); it.hasNext();)
         {
             double t = it.next();
-            accum += get_prob_r(w, t)*L_w.getLatencyPDF(t);
+            accum += pdf_get_prob_w(w, t)*t;
         }
 
         return accum;
@@ -97,7 +106,7 @@ public class nrw_solver {
     private double calc_p_s_given_w(int rc, int wc)
     {
         //strong quorum --> fine
-        if(rc+ wc > n)
+        if(rc+wc > n)
         {
             return 0.0;
         }
@@ -106,15 +115,23 @@ public class nrw_solver {
                         /MathUtils.binomialCoefficientDouble(n, rc);
     }
 
-    private double calc_p_s(int rc, int wmin, double t)
+    private double calc_p_s(int rc, int wminc, double t)
     {
-        double ret = calc_p_s_given_w(rc, wmin);
-        for(int w = wmin+1; w<this.n; ++w)
+        double ret = (calc_p_s_given_w(rc, wminc));
+
+        List<Double> times = L_w_noack.getRange();
+
+        double last_prob = ret;
+
+        for(int w = wminc+1; w<=this.n; ++w)
         {
-            ret += (calc_p_s_given_w(rc, w))*get_prob_w(w, wmin, t);
+            double this_ps = calc_p_s_given_w(rc, w);
+
+            ret += (this_ps-last_prob)* cdf_get_prob_w_after_write(w, wminc, t);
+            last_prob = this_ps;
         }
 
-        if(ret > 1.0)
+        if(ret > 1.0 || Math.round(ret*100000.0)/100000.0 < 0)
             throw new RuntimeException(String.format("p_s > 1; was %f\n", ret));
 
         return Math.pow(ret, k);
@@ -139,11 +156,11 @@ public class nrw_solver {
                     continue;
                 }
 
-                if(Math.round(config_fitness*10000) < Math.round(cur_min*10000))
+                if(Math.round(config_fitness*1000) < Math.round(cur_min*1000))
                 {
                     solutions.clear();
                 }
-                if(Math.round(config_fitness*10000) <= Math.round(cur_min*10000))
+                if(Math.round(config_fitness*1000) <= Math.round(cur_min*1000))
                 {
                     solutions.add(new nrw_solution(n, rc, wc, calcReadLatency(rc), calcWriteLatency(wc), config_fitness, this_ps));
                     cur_min = config_fitness;

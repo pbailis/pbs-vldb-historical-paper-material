@@ -7,12 +7,12 @@ public class run_solver {
 
     public static void main(String [ ] args)
     {
-        double p_s = 0;
-        double t = 0;
+        double p_s = 0.1;
+        double t = 0.4;
         double c_r = .5;
         double c_w = .5;
         int k = 1;
-        int n = 10;
+        int n = 5;
         int w_min = 1;
 
         LatencyModel rmodel, wmodel, wmodelnoack = new SimpleLatencyModel();
