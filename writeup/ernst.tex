@@ -444,13 +444,13 @@ propagation of writes across wall-clock or real-world time such that
 the set of replicas with a given version of the data (or later) grows
 over time\footnote{Node failures shrink this set and can be
   incorporated into this model, but we do not consider them here.}.
-We denote the probability density function describing the number of
+We denote the cumulative density function describing the number of
 replicas $\mathcal{W}$ that have a particular version $v$ (or a
 version committed after $v$\footnote{We assume writes obey a total
   ordering. This can be accomplished using synchronized clocks (last
   writer wins) or with causal ordering and commutative merge
   functions~\cite{cops}.}) $t$ seconds after committing as
-$p_w(\mathcal{W}, t)$.
+$P_w(\mathcal{W}, t)$.
 
 \begin{definition}
 A quorum system obeys \textit{probabilistic $RT$-quorum consistency}
@@ -459,16 +459,16 @@ quorum will either have been committed no greater than $t$ units of
 time before the read began or will belong to an in-flight write.
 \end{definition}
 
-By definition, $p_w(c,0) = 1$ $\forall c \in [0, w]$.  Intuitively, at
+By definition, $P_w(c,0) = 1$ $\forall c \in [0, w]$.  Intuitively, at
 commit time, $w$ replicas will have the value, so the probability that
 zero to $w$ replicas have the value immediately after commit is
 exactly $1$.  We can model the probability of probabilistic $RT$-consistency for an interval $t$ by summing the conditional probabilities of each possible $\mathcal{W}$:
 
 \begin{equation}
-p_{staler} = p_l(n, t)+\sum_{c\in[w, n)} \frac{{n-c \choose r}}{{n \choose r}}\cdot p_w(c, t)
+p_{staler} = P_l(w, t)+\sum_{c\in(w, n]} \frac{{n-c \choose r}}{{n \choose r}}\cdot [P_w(c, t)-P_w(c-1,t)]
 \end{equation}
 
-In practice, $p_l$ depends on the expected latency of operations and can be
+In practice, $P_l$ depends on the expected latency of operations and can be
 approximated analytically (Section \ref{sec:dynamo-prop} or measured
 online\footnote{For this reason, it is difficult to analytically
   determine the load of any probabilistically consistent system
@@ -530,7 +530,8 @@ by time $t$.  However, this is equivalent to taking the minimum
 response time over the maximum of each possible set of $w$ replicas
 from $\mathcal{Q}$, which works out more cleanly in this formulation.
 Given the write latency cumulative density functions for a set of
-nodes $S$, $L_{ws}(S, t)$ :
+nodes $S$, $L_{ws}(S, t)$, the probability density function $p_w$ of
+write latency of a set of nodes is:
 \begin{equation}
 p_w(\mathcal{W}, t) = min(\{L_{ws}(S, t) \mid S \subseteq \mathcal{Q}, |S| = \mathcal{W}\})
 \end{equation}
@@ -561,28 +562,33 @@ CDF\footnote{Note that this distribution only captures the request
   replica can serve the data before it responds to the proxy.},
 $L_w(t)$ (PDF, resp. $l_w(t)$).  The probability that $w$ nodes all
 respond within time $t$ is simply $(L_w(t))^\mathcal{W}$, and the
-minimum over all such of these sets is exactly:
+minimum over all such of these sets is the CDF $P_w$:
 \begin{equation}
-p_w(\mathcal{W}, t) = (1-(L_w(t))^\mathcal{W})^{n \choose \mathcal{W}}
+P_w(\mathcal{W}, t) = 1-(1-(L_w(t))^\mathcal{W})^{n \choose \mathcal{W}}
 \end{equation}
 This is indeed simplifying, but it makes the theory much simpler.  We
 discuss the validity of this IID assumption when we measure latencies
 experimentally in Section \ref{sec:real-latency}.
 
 Under the IID assumption, we can easily determine the expected
-Dynamo-style write quorum operation latency. The reformulation of
-$p_w(\mathcal{W}, t)$ is conditional on the PDF $l_w(t)$:
+Dynamo-style write quorum operation latency:
 \begin{equation}
-WQ_l(\mathcal{W}) = \int_0^{\infty} p_w(\mathcal{W}, t) \cdot l_w(t) dt
+WQ_l(\mathcal{W}) = \int_0^{\infty} p_w(\mathcal{W}, t) dt
 \end{equation}
 In practice, the proxy is often a replica as well, so for a write
 quorum of size $w$, we only need to consider $\mathcal{W}=w-1$ writes.
+
+Similarly, to determine how many replicas have a particular value (even if they have not acked) after a write quorum of size $w$, we evaluate:
+\begin{equation}
+P_{w:have}(\mathcal{W}, t) = 1-(1-(L_w(t))^{\mathcal{W}-w})^{n-w \choose \mathcal{W}-w}
+\end{equation}
+
 
 Thus far, we have only considered the write operation latencies.  The
 read quorum latency may be different from the write latency depending
 on node-level actions such as forced logging or disk-bound operations.
 However, the expected read operation latency for a quorum of size
-$\mathcal{R}$, $RQ_l{\mathcal{R}}$, can be calculated similarly given a
+$\mathcal{R}$, $RQ_l(\mathcal{R})$, can be calculated similarly given a
 model for the latency of reads ($L_{rs}(S,t)$ and $L_r(t))$.
 
 \subsection{Optimization Formulation}

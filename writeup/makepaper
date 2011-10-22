@@ -1,1 +1,1 @@
-pdflatex ernst && bibtex ernst && pdflatex ernst && pdflatex ernst && open ernst.pdf
+pdflatex ernst && bibtex ernst && pdflatex ernst && pdflatex ernst && cp ernst.pdf ~/Dropbox/Public && open ernst.pdf
