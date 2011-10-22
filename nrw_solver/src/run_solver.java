@@ -7,19 +7,37 @@ public class run_solver {
 
     public static void main(String [ ] args)
     {
-        double p_s = 0.1;
-        double t = 0.4;
-        double c_r = .5;
-        double c_w = .5;
-        int k = 1;
+        //number of replicas
         int n = 5;
+        //minimum number of writes to commit (keep w_min < n)
         int w_min = 1;
+
+        //maximum probability of staler-than-promised-ness
+        double p_s = 0.05;
+
+        //RT-staleness
+        double t = 0;
+        //k-staleness
+        int k = 1;
+
+        //relative weighting of read latency
+        double c_r = .5;
+        //relative weighting of write latency
+        double c_w = .5;
+
+
+        /*
+        We require three single-replica latency models (IID, remember!):
+            a model for read operation completion,
+            a model for write operation completion,
+            and a model for how fast writes get to a replica
+            (the last is called wmodelnoack).
+         */
 
         LatencyModel rmodel, wmodel, wmodelnoack = new SimpleLatencyModel();
 
         rmodel = wmodelnoack;
         wmodel = wmodelnoack;
-
 
         try{
             LatencyModelValidator.ValidateModel(wmodel);
