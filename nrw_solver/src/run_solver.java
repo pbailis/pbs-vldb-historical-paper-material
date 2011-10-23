@@ -15,8 +15,8 @@ public class run_solver {
         //maximum probability of staler-than-promised-ness
         double p_s = 0.05;
 
-        //RT-staleness
-        double t = 0;
+        //RT-staleness, in seconds
+        double t = 1.0;
         //k-staleness
         int k = 1;
 

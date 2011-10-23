@@ -123,12 +123,9 @@ public class nrw_solver {
 
         double last_prob = ret;
 
-        for(int w = wminc+1; w<=this.n; ++w)
+        for(int w = wminc; w<this.n; ++w)
         {
-            double this_ps = calc_p_s_given_w(rc, w);
-
-            ret += (this_ps-last_prob)* cdf_get_prob_w_after_write(w, wminc, t);
-            last_prob = this_ps;
+            ret += (calc_p_s_given_w(rc, w+1)-calc_p_s_given_w(rc, w))* cdf_get_prob_w_after_write(w, wminc, t);
         }
 
         if(ret > 1.0 || Math.round(ret*100000.0)/100000.0 < 0)

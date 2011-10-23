@@ -455,8 +455,8 @@ $P_w(\mathcal{W}, t)$.
 \begin{definition}
 A quorum system obeys \textit{probabilistic $RT$-quorum consistency}
 if, with probability $1-p_{staler}$, at least one value in any read
-quorum will either have been committed no greater than $t$ units of
-time before the read began or will belong to an in-flight write.
+quorum will either have been committed earlier than $t$ units of time
+before the read began (but may not be committed yet).
 \end{definition}
 
 By definition, $P_w(c,0) = 1$ $\forall c \in [0, w]$.  Intuitively, at
@@ -465,7 +465,7 @@ zero to $w$ replicas have the value immediately after commit is
 exactly $1$.  We can model the probability of probabilistic $RT$-consistency for an interval $t$ by summing the conditional probabilities of each possible $\mathcal{W}$:
 
 \begin{equation}
-p_{staler} = P_l(w, t)+\sum_{c\in(w, n]} \frac{{n-c \choose r}}{{n \choose r}}\cdot [P_w(c, t)-P_w(c-1,t)]
+p_{staler} = P_l(w, t)+\sum_{c\in(w, n]} \frac{{n-c \choose r}}{{n \choose r}}\cdot [P_w(c+1, t)-P_w(c,t)]
 \end{equation}
 
 In practice, $P_l$ depends on the expected latency of operations and can be
@@ -492,7 +492,7 @@ $k$ versions commit.
 \end{definition}
 The definition of $p_{staler}$ follows from the prior definitions:
 \begin{equation}
-p_{staler} = \left(p_l(n, t)+\sum_{c\in[w, n)} \frac{{n-c \choose r}}{{n \choose r}} \cdot p_l(c, t)\right)^k
+p_{staler} = (P_l(w, t)+\sum_{c\in[w, n)} \frac{{n-c \choose r}}{{n \choose r}} \cdot [P_w(c+1, t)-P_w(c,t)])^k
 \end{equation}
 In this equation, we assume the pathological case where the last $k$
 writes all occurred at the same time.  This is not likely in practice,
@@ -573,7 +573,7 @@ experimentally in Section \ref{sec:real-latency}.
 Under the IID assumption, we can easily determine the expected
 Dynamo-style write quorum operation latency:
 \begin{equation}
-WQ_l(\mathcal{W}) = \int_0^{\infty} p_w(\mathcal{W}, t) dt
+WQ_l(\mathcal{W}) = \int_0^{\infty} t \cdot p_w(\mathcal{W}, t) dt
 \end{equation}
 In practice, the proxy is often a replica as well, so for a write
 quorum of size $w$, we only need to consider $\mathcal{W}=w-1$ writes.
