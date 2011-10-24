@@ -1,8 +1,8 @@
 \documentclass{vldb}
 \usepackage{graphicx}
-\usepackage{balance, url,}  % for  \balance command ON LAST PAGE  (only there!)
+\usepackage{balance, url, amsfonts, verbatim}  % for  \balance command ON LAST PAGE  (only there!)
 
-\title{Probabilistic Consistency\\and Practical Non-strict Quorums}
+\title{Probabilistic Consistency and\\ Practical Non-strict Quorum Systems}
 
 \newdef{definition}{Definition}
 
@@ -16,29 +16,45 @@
 
 \section{Introduction}
 
+Modern distributed storage systems need to be scalable, highly 
+available and provide high performance for reads and writes.
+Such systems typically replicate data across different machines
+or even across datacenter for two reasons: first, to provide 
+better availability when components fail and secondly to provide 
+better performance by serving requests from multiple replicas.
+In order to provide better performance and availability, systems
+often to choose to eschew ACID guarantees and instead provide 
+eventual consistency. In this model, replicas are only guaranteed 
+to eventually agree on the value of a particular data item, and 
+reads may return arbitrarily stale data.
 
-Many of today's widely-deployed data storage solutions eschew ACID
-guarantees in favor of BASE semantics, a large component of which is
-the use of so-called eventual consistency of replicas.  In this model,
-replicas are only guaranteed to eventually agree on the value of a
-particular data item, and reads may return arbitrarily stale data.
-The client-side semantics of this eventual consistency depend on
-client access patterns~\cite{vogels-defs}, but, unless particular care
-is taken, such as always contacting the same replica, the only
-mechanism for ensuring strong consistency is to ensure overlapping
-read and write quorums~\cite{dynamo}.
-
-However, end-users today have come to expect undefined behavior
-offering little to no insight into response consistency from their
-eventually consistent data stores.  To achieve favorable performance,
-users often employ \textit{non-strict or partial quorums}, in which
+Read and Write quorums sets are a mechanism that can used to ensure 
+strong consistency across multiple replicas of a data item. To 
+achieve favorable performance, users often employ 
+\textit{non-strict or partial quorums}, in which
 read and write sets are not guaranteed to overlap (given $n$ replicas
 and read and write quorum sizes $r$ and $w$, $r+w \leq n$).  Modern
-quorum-based scalable data systems such as Dynamo (and its open source
-descendants Cassandra and Riak) provide no guarantees on the staleness
-or consistency returned by non-strict quorums other than that the
-system will ``eventually'' provide the right answer in the absence of
-new writes.
+quorum-based scalable data systems such as Dynamo~\cite{dynamo} (and
+its open source descendants Cassandra~\cite{cassandra},
+Riak~\cite{riak}, and Voldemort~\cite{voldemort}) provide no
+guarantees on the staleness or consistency returned by non-strict
+quorums other than that the system will ``eventually'' provide the
+right answer in the absence of new writes. Further, operators of 
+distributed storage system are required to choose the a fixed 
+size for the read and write sets which affects the availability 
+and latency of requests for a given workload.
+
+\begin{figure}
+\includegraphics[width=.8\columnwidth]{figs/latency-stale.pdf}
+\caption{In this work, we demonstrate the tradeoffs between latency
+  and staleness (in versions and real-time) in quorum-based
+  distributed databases.  This plot shows both modeled and empirical
+  results along these axes for a quorum with $n=5$ replicas, $95\%$
+  confidence, and equal rates of reads and writes. Moving along the
+  curves corresponds to varying the read and write quorum
+  sizes. Additional detail is given in Section~\ref{sec:eval}}
+\label{fig:latency-staleness}
+\end{figure}
 
 In this paper, we prove that we can do better. Quorum-based data systems
 can provide guarantees on the staleness of the data they provide. The
@@ -62,9 +78,9 @@ of his or her data (e.g., within 1 version with $70\%$ probability,
 with 2 versions with $95\%$ probability, and so on).  From a
 service-level agreement perspective, the system can minimize the
 probability of returning staler-than-promised data to the order of
-fractions of a percent.  It is much easier to write applications that
-tolerate SLAs in the multiple ``nines'' reliability range than in the
-high-tens-of-percent range.
+fractions of a percent.  Subsequently, operators using non-strict
+quorums can adjust their desired trade-offs between latency and
+consistency, as shown in Figure~\ref{fig:latency-staleness}.
 
 Specifically, we provide algorithms and models for the staleness of a
 data item across multiple versions and across real time and replica
@@ -108,13 +124,14 @@ We make the following contributions in this paper:
 \item We implement this optimization layer and our algorithms in a
   modern distributed key-value store and demonstrate their utility in
   practice under both synthetic benchmarking and a web application
-  workload (Section~\ref{sec:implement}).
+  workload (Section~\ref{sec:eval}).
 
 \end{itemize}
 
 \section{Background}
 
-Write some stuff about quorum systems.
+Write some stuff about quorum systems, replication, and so on.
+SHIVARAM IS HANDLING MOST OF THIS.
 
 
 There are two main reasons to replicate data: durability and
@@ -139,7 +156,7 @@ up consistency.
 \section{Probability and Partial Quorums}
 \label{sec:theory}
 
-SUMMARY
+SUMMARY OF THIS SECTION
 
 \subsection{Quorum Foundations: Theory}
 
@@ -244,6 +261,16 @@ data when $R+W > N$.  However, for improved latency, operators often
 set $R+W \leq N$, typically $R=W=1$, as is the default for these
 database systems (see Table TBD).
 
+\begin{figure}
+\centering
+\includegraphics[width=.8\columnwidth]{figs/dynamo-quorum.pdf}
+\caption{Diagram of control flow for client write to Dynamo-style
+  quorum.  Here, $N=3$, $W=2$. Client writes are proxied and sent to
+  all replicas. The write succeeds when $W$ replicas respond.  Note
+  that the proxy is likely a replica as well, invoking a local write.}
+\label{fig:dynamo-quorum}
+\end{figure}
+
 There are significant differences between data systems and the theory
 describing quorum operation.  First, replication factors for
 distributed data systems are relatively low.  Typical replication
@@ -282,14 +309,12 @@ theoretical approaches to achieving this, however we can do better in
 the presence of multiple writers by extending this theory to consider
 probabilistic $k$-quorums.  In this model, we consider static write
 quorums (no anti-entropy), but compose multiple write quorums to model the probable overlap of $k$ independent write sets.
-
 \begin{definition}
 A quorum system obeys \textit{probabilistic $k$-quorum consistency} if, with
 probability $1-p_{staler}$, at least one value in any read quorum will
 have been committed no later than $k$ versions after the latest committed
 version when the read begins.
 \end{definition}
-
 Versions whose writes that are not yet committed (in-flight) may be
 returned by a read in this formulation of probabilistic $k$-quorums
 (see Figure \ref{fig:timelines}A).  The $k$-quorum literature defines these as $k$-regular semantics~\cite{nonstrict-availability}.
@@ -319,10 +344,9 @@ quorums\footnote{In the language of probabilistic quorums, we have
   follows immediately from~\cite[Corollary 3.12]{prob-quorum}}.
 Quorums are chosen at random, so the probability of non-intersection
 is simply Equation \ref{eq:prob-strict} exponentiated by $k$:
-
 \begin{equation}
 \label{eq:k-consistency}
-p_s = \left(\frac{{n-w \choose r}}{{n \choose r}}\right)^k
+p_{staler} = \left(\frac{{n-w \choose r}}{{n \choose r}}\right)^k
 \end{equation}
 
 For the $n=3, r=w=1$ case, this means that the probability of
@@ -393,13 +417,13 @@ propagation of writes across wall-clock or real-world time such that
 the set of replicas with a given version of the data (or later) grows
 over time\footnote{Node failures shrink this set and can be
   incorporated into this model, but we do not consider them here.}.
-We denote the probability density function describing the number of
+We denote the cumulative density function describing the number of
 replicas $\mathcal{W}$ that have a particular version $v$ (or a
 version committed after $v$\footnote{We assume writes obey a total
   ordering. This can be accomplished using synchronized clocks (last
   writer wins) or with causal ordering and commutative merge
   functions~\cite{cops}.}) $t$ seconds after committing as
-$p_l(\mathcal{W}, t)$.
+$P_w(\mathcal{W}, t)$.
 
 \begin{definition}
 A quorum system obeys \textit{probabilistic $RT$-quorum consistency}
@@ -408,16 +432,16 @@ quorum will either have been committed no greater than $t$ units of
 time before the read began or will belong to an in-flight write.
 \end{definition}
 
-By definition, $p_l(c,0) = 1$ $\forall c \in [0, w]$.  Intuitively, at
+By definition, $P_w(c,0) = 1$ $\forall c \in [0, w]$.  Intuitively, at
 commit time, $w$ replicas will have the value, so the probability that
 zero to $w$ replicas have the value immediately after commit is
 exactly $1$.  We can model the probability of probabilistic $RT$-consistency for an interval $t$ by summing the conditional probabilities of each possible $\mathcal{W}$:
 
 \begin{equation}
-p_{staler} = p_l(n, t)+\sum_{c\in[w, n)} \frac{{n-c \choose r}}{{n \choose r}} p_l(c, t)
+p_{staler} = P_l(w, t)+\sum_{c\in(w, n]} \frac{{n-c \choose r}}{{n \choose r}}\cdot [P_w(c, t)-P_w(c-1,t)]
 \end{equation}
 
-In practice, $p_l$ depends on the expected latency of operations and can be
+In practice, $P_l$ depends on the expected latency of operations and can be
 approximated analytically (Section \ref{sec:dynamo-prop} or measured
 online\footnote{For this reason, it is difficult to analytically
   determine the load of any probabilistically consistent system
@@ -431,7 +455,6 @@ real-time staleness metrics to answer questions of the following form:
 what is the probability that a read will return a value no later than
 $k$ versions old if the write committed no sooner than $t$ seconds
 ago?
-
 \begin{definition}
 A quorum system obeys \textit{probabilistic $\langle k, t
   \rangle$-quorum consistency} if, with probability $1-p_{staler}$, at
@@ -440,13 +463,10 @@ than $k$ versions after the latest committed version when the read
 begins, provided the read begins $t$ units of time after the previous
 $k$ versions commit.
 \end{definition}
-
 The definition of $p_{staler}$ follows from the prior definitions:
-
 \begin{equation}
-p_{staler} = \left(p_l(n, t)+\sum_{c\in[w, n)} \frac{{n-c \choose r}}{{n \choose r}} p_l(c, t)\right)^k
+p_{staler} = \left(p_l(n, t)+\sum_{c\in[w, n)} \frac{{n-c \choose r}}{{n \choose r}} \cdot p_l(c, t)\right)^k
 \end{equation}
-
 In this equation, we assume the pathological case where the last $k$
 writes all occurred at the same time.  This is not likely in practice,
 so if we can determine the time since commit for the last $k$ writes,
@@ -463,77 +483,254 @@ consistency.
 \section{Applied Theory and Refinements}
 \label{sec:optimize}
 
-\subsection{Operation Latency}
+\subsection{Dynamo-style Operation Latency}
 
 \label{sec:dynamo-prop}
 
-Dynamo-style latency, assuming IID.  Alternative: measure empirically
+Until now, we have assumed that the expected latency of operations
+reaching a given number of replicas by a particular time
+($p_w(\mathcal{W}, t)$ for writes) in the case of writes is known.  We
+can measure this distribution empirically (Section
+\ref{sec:real-latency}), but we can also model this latency
+analytically, given a few assumptions.
 
-Probability that $m$ of $n$ replicas respond to request at time $t$ given latency CDF $L$:
+To begin, we consider write latency.  With Dynamo-style queries, we
+want to determine the probability that $w$ of the replicas in the
+write quorum $\mathcal{Q}$ respond within time $t$.  We can determine
+this in at least two ways.  One way is to find use order statistic
+theory to determine the probability that the $w$th replica reasponds
+by time $t$.  However, this is equivalent to taking the minimum
+response time over the maximum of each possible set of $w$ replicas
+from $\mathcal{Q}$, which works out more cleanly in this formulation.
+Given the write latency cumulative density functions for a set of
+nodes $S$, $L_{ws}(S, t)$, the probability density function $p_w$ of
+write latency of a set of nodes is:
+\begin{equation}
+p_w(\mathcal{W}, t) = min(\{L_{ws}(S, t) \mid S \subseteq \mathcal{Q}, |S| = \mathcal{W}\})
+\end{equation}
 
-$$P_r(m, t, L) = (1-(L(t))^m)^{n \choose m}$$
+To determine the expected latency of a write to a quorum of size
+$\mathcal{W}$, enoted $WQ_l(\mathcal{W})$, we simply need to consider
+the conditional probability of $\mathcal{W}$ writes completing across
+all possible time values $t$.  However, this depends on the
+distribution of $L_{ws}(S, t)$, which requires some
+assumptions. Determining the ordinal probability of a set of randomly
+distributed variables (in our case, the minimum of all $L_{ws}(S,
+t)$), is possible but is also fairly complicated.  The difficult
+arises in determining the distribution of a given $L_{ws}(S)$.  If we
+assume that all nodes in $S$ obey independent latency distributions,
+this is tractible.  If we assume that they are dependent and therefore
+obey a joint distribution, then, as $w$ grows, solving for this
+probability becomes much more difficult~\cite{needed}.  Approximation
+algorithms can assist here~\cite{needed}, but we can also make
+simplifying assumptions about the distribution of these latencies.
 
-$$r_t(r) = p_r(r, t, L_r)$$
-$$w_t(r) = p_r(w, t, L_w)$$
+If we assume that latencies are independently, identically distributed
+(IID), that is, if each node obeys the same latency distribution and
+each nodes latency is independent of the other nodes's latency, this
+equation is greatly simplified.  Under IID assumptions, the time for a
+write to reach every node in the quorum obeys a single latency
+CDF\footnote{Note that this distribution only captures the request
+  forward, not the round-trip time before the acknowledgement.  The
+  replica can serve the data before it responds to the proxy.},
+$L_w(t)$ (PDF, resp. $l_w(t)$).  The probability that $w$ nodes all
+respond within time $t$ is simply $(L_w(t))^\mathcal{W}$, and the
+minimum over all such of these sets is the CDF $P_w$:
+\begin{equation}
+P_w(\mathcal{W}, t) = 1-(1-(L_w(t))^\mathcal{W})^{n \choose \mathcal{W}}
+\end{equation}
+This is indeed simplifying, but it makes the theory much simpler.  We
+discuss the validity of this IID assumption when we measure latencies
+experimentally in Section \ref{sec:real-latency}.
 
-Reads:
+Under the IID assumption, we can easily determine the expected
+Dynamo-style write quorum operation latency:
+\begin{equation}
+WQ_l(\mathcal{W}) = \int_0^{\infty} p_w(\mathcal{W}, t) dt
+\end{equation}
+In practice, the proxy is often a replica as well, so for a write
+quorum of size $w$, we only need to consider $\mathcal{W}=w-1$ writes.
 
-$$R_l(r) = \int_0^{\infty} r_t(r) l_r(t) dt$$
+Similarly, to determine how many replicas have a particular value (even if they have not acked) after a write quorum of size $w$, we evaluate:
+\begin{equation}
+P_{w:have}(\mathcal{W}, t) = 1-(1-(L_w(t))^{\mathcal{W}-w})^{n-w \choose \mathcal{W}-w}
+\end{equation}
 
-Writes
 
-$$W_l(w) = \int_0^{\infty} w_t(w_{min}) l_r(t) dt$$
-
-
+Thus far, we have only considered the write operation latencies.  The
+read quorum latency may be different from the write latency depending
+on node-level actions such as forced logging or disk-bound operations.
+However, the expected read operation latency for a quorum of size
+$\mathcal{R}$, $RQ_l(\mathcal{R})$, can be calculated similarly given a
+model for the latency of reads ($L_{rs}(S,t)$ and $L_r(t))$.
 
 \subsection{Optimization Formulation}
 
-We can use simple linear programming to determine what combination of
-$r$ and $w$ (if any) minimizes latency while satisfying the system
+With these equations, we can optimize the selection of a partial
+quorum system to minimize overall operation latency subject to
+constraints on staleness. We can guarantee bounded staleness by
+ensuring that $p_{staler} = 1$, however this is only possible in
+$k$-quorum consistency as the real-time components of $RT$-quorum
+consistency and its variants are inherently probabilistic (unless we
+can prove an absolute bound on operation latency).  We can use a
+simply formulated optimization program to determine what combination
+of $r$ and $w$ minimizes latency while satisfying the system
 constraints and user requirements.
 
-Given $n$, desired $p$, $w_{min}$ (minimum committed $w$ before
-returning), consistency model (with necessary parameters--$k$, $t$,
-$\gamma_{cr}$, etc.), latency $L$, and the relative weighted
-``importances'' of read and write latency, $c_r$ and $c_w$:
+Given $n$, desired $p$, $w_{min}$ (minimum durability of writes),
+consistency model (with necessary parameters--$k$, $t$, $\gamma_{cr}$,
+etc.), and the relative weighted ``importances'' of read
+and write latency, $c_r$ and $c_w$, we can determine $r$ and $w$:
 
 \begin{equation}
  \begin{array}{rl}
-    \min        & R_l(r) +W_l(w) \\
-    \mbox{s.t.} & p \ge p_s \\
+    \min        & c_r\cdot RQ_l(r) +c_w \cdot WQ_l(w) \\
+    \mbox{s.t.} & p \ge p_{staler} \\
                 & w \ge w_{min}.
     \end{array}
 \end{equation}
 
-\subsection{Implications}
+We implement and validate this optimization framework in
+Section~\ref{sec:optimization}.
+
+\subsection{Discussion}
 \label{sec:discussion}
 
-Transactions
+There are several aspects of distributed data systems that we have not yet
+addressed.  Here, we briefly discuss improvements to our models.
 
-Variable $w$
+\textbf{Staleness detection.} Each of the $p_{staler}$ bounds
+describes a probability that a particular key is no staler than
+specified.  In the context of probabilistic consistency SLAs, it would
+be useful to determine whether a key is staler than promised by a
+given SLA.  Determining this fact on-line is tantamount to achieving
+strong consistency, however there are at least two strategies for
+mitigating this difficulty. First, additional gossiping such as
+regular negative acknowledgements can notify nodes of potential
+version staleness.  This strategy has been discussed in the
+literature~\cite{tocite} for non-probabilistic quorum systems.
+Second, the system can provide asychronous notifications of staleness
+information.  Proxies can keep a growing log of versions which, with
+appropriate timestamping, can be used to determine if previously
+returned values were staler than promised.  This is fairly
+straightforward but requires careful garbage collection to manage
+proxy-side state as the number of client requests scales.
+Additionally, the possibility of proxy failure requires that prior
+operations be durably logged; however, provided the proxy eventually
+comes online and updates its log, the asynchronous guarantee holds.
+Both of these schemes are feasible yet add significant complexity to a
+probabilistically consistent quorum system.
 
-Detection
+\textbf{Multi-key transactions.} We have considered single-key operations,
+however the ability to perform distributed transactions is potentially
+attractive.  For read-only transactions, if the key distribution is
+random, each quorum is independent, so we can simply multiple the
+staleness probabilities of each key.  Achieving atomicity of writes to
+multiple keys requires more complicated coordination mechanisms such
+as two-phase commit.  Again, transactions are feasible but require
+considerable care in implementation, complicated what is otherwise a
+simple replication scheme.
 
-read repair
+\textbf{Node failures.} Fail-stop node failures can be easily
+incorporated into our latency models. The probability of a node
+permanently failing $p_{f-perm}$ can be represented by setting the
+probability of infinitely long read and write
+operations. $L_{w}(\inf)=L_{r}(\inf)=p_{f-perm}$.  Intermittent node
+failures of length $t_{fail}$ can be represented by setting
+$L_{w}(t_{fail})$ to the probability of the node failing.  In this
+way, operation latency captures all expected failure semantics.
 
-durability
+\textbf{Read repair and active anti-entropy.} Modern Dynamo-style
+systems use a technique known as \textit{read repair} to reconcile
+divergent versions at query-time.  If two nodes return different
+responses to a \textit{get} request, the responses are merged and
+forwarded to the determined out-of-date node.  Dynamo performs
+additional anti-entropy using Merkel trees, however the open source
+databases we have examined only perform read repair (CITATION
+NEEDED--at least Cassandra does this). We do not model read repair or
+additional anti-entropy processes here (although doing so requires
+only minimal changes to our model), so we overestimate the chance of
+staleness violation.
+
+\textbf{Variable $w$.} We have assumed the use of a single $w$ across
+all writes.  However, many KVSs such as Cassandra and Riak allow the
+use of per-operation consistency\footnote{Voldemort specifies
+  consistency requirements at the schema level. This is ostensibly an
+  engineering decision that could be changed with minimal
+  modifications to the wire protocol.}
+
+\textbf{99th Percentile Latency.}
 
 \subsection{Typical Quorum Configurations}
 
 CASSANDA: R=1, W=1 
 
+<<<<<<< HEAD
 RIAK: N=3, R,W QUORUM 
+=======
+RIAK: N=3, R,W QUORUM \url{https://github.com/basho/riak_kv/blob/1.0/src/riak_kv_app.erl}
+\url{http://wiki.basho.com/Riak-Glossary.html#Quorum}
+>>>>>>> 11fb27c39c7f11f1b544d903fd16543cac89854b
 
 Voldemort: does not provide production configs besides testing (N=2)
 
 \section{Experimental Evaluation}
-\label{sec:implement}
+\label{sec:eval}
 
 \subsection{implementation}
 
-\subsection{Synthetic Benchmarks}
+\subsection{Operation Latency}
+\label{sec:real-latency}
+
+In our measurements on EC2, the correllation of writes was MADE UP,
+meaning the operations were effectively IID.  However, we can
+approximate an environment with a higher correlation by modifying $w$.
+In an environment where half of the nodes are co-located on a rack, we can treat $w$ as $w/2$.  We show the tradeoffs between correlation and latency in Figure \ref{fig:correlation}.
+
+\begin{figure}
+\centering
+\includegraphics[width=.8\columnwidth]{figs/correlation.pdf}
+\caption{Expected latency of write quorums of $w$ replicas in Dynamo-style operation versus quorum element correlation.}
+\label{fig:correlation}
+\end{figure}
+
+\subsection{Optimization and SLAs}
+\label{sec:optimization}
+
+\begin{figure}
+\centering
+\includegraphics[width=.8\columnwidth]{figs/bothdimensions.pdf}
+\caption{Time and version staleness required to ensure varying SLA constraints on the probability of returning staler-than-promised data in simple microbenchmarking.}
+\label{fig:prob-staler}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=.8\columnwidth]{figs/inaccuracy.pdf}
+\caption{Accuracy of model compared to experimental microbenchmarking.
+  The size of each point is linearly proportional to the inaccuracy of
+  the model's predictions.}
+\label{fig:prob-staler}
+\end{figure}
+
+
+
 
 \subsection{Twitter Clone}
+
+\begin{figure}
+\centering
+\includegraphics[width=.8\columnwidth]{figs/twissandra.pdf}
+\caption{Time and version staleness tradeoffs as measured by end users
+  of Twitter clone.}
+\label{fig:twissandra}
+\end{figure}
+
+\section{Related Work}
+
+Theory
+
+Vadhat
 
 \section{Conclusion}
 

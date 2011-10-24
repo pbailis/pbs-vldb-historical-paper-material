@@ -1,0 +1,28 @@
+
+\begin{abstract}
+
+Distributed storage systems replicate data items to
+provide better performance and availability. Such systems typically use 
+strict quorums to provide to provide consistent reads and writes.
+However, to lower the user-visible latency and handle intermittent failures, 
+storage systems designed for large clusters opt for 'eventual consistency' 
+using non-overlapping read and write sets. Further, operators are
+required to choose a fixed number of read/write replicas to maintain the
+target latencies. 
+
+In this work we present 'Ernst', a replica-management scheme that
+provides flexible storage with high availability and performance. Ernst
+optimizes the quorum size to meet latency targets chosen by the operator
+and dynamically adjutsts the read and write sets. Further, by extending
+the theory of probabilistic quorums and using the models of
+anti-entropic processes, we provide bounds on data staleness across
+multiple writes and wall clock time for non-strict quorums.  We have
+implemented 'Ernst' on top of Cassandra, an open source distributed
+database used in production and our synthetic benchmarks show that our
+predicted staleness is XX\% within the theoretical bound.
+Finally, we present a case study of how a social networking application
+can configure its replica management scheme to meet its latency targets
+and our prototype implementation is XX\% faster than using strict
+quorums.
+
+\end{abstract}
