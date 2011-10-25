@@ -4,13 +4,13 @@
 Distributed storage systems replicate data items to
 provide better performance and availability. Such systems typically use 
 strict quorums to provide to provide consistent reads and writes.
-However, to lower the user-visible latency and handle intermittent failures, 
-storage systems designed for large clusters opt for 'eventual consistency' 
-using non-overlapping read and write sets. Further, operators are
-required to choose a fixed number of read/write replicas to maintain the
-target latencies. 
+However, to lower the variance of user-visible latency and handle 
+intermittent failures, storage systems designed for large clusters 
+opt for 'eventual consistency' using non-overlapping read and write 
+sets. Further, operators are required to choose a fixed number of 
+read/write replicas to maintain the target latencies. 
 
-In this work we present 'Ernst', a replica-management scheme that
+In this work we present 'Ernst', a replica-management policy that
 provides flexible storage with high availability and performance. Ernst
 optimizes the quorum size to meet latency targets chosen by the operator
 and dynamically adjutsts the read and write sets. Further, by extending

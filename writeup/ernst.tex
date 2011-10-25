@@ -19,19 +19,19 @@
 Modern distributed storage systems need to be scalable, highly 
 available and provide high performance for reads and writes.
 Such systems typically replicate data across different machines
-or even across datacenter for two reasons: first, to provide 
+or even across datacenters for two reasons: first, to provide 
 better availability when components fail and secondly to provide 
 better performance by serving requests from multiple replicas.
-In order to provide better performance and availability, systems
-often to choose to eschew ACID guarantees and instead provide 
+In order to provide predictable read and write latency, systems often
+choose to eschew consistency across replicas and instead provide
 eventual consistency. In this model, replicas are only guaranteed 
 to eventually agree on the value of a particular data item, and 
 reads may return arbitrarily stale data.
 
 Read and Write quorums sets are a mechanism that can used to ensure 
 strong consistency across multiple replicas of a data item. To 
-achieve favorable performance, users often employ 
-\textit{non-strict or partial quorums}, in which
+achieve favorable performance and handle intermittent failures, 
+users often employ \textit{non-strict or partial quorums}, in which
 read and write sets are not guaranteed to overlap (given $n$ replicas
 and read and write quorum sizes $r$ and $w$, $r+w \leq n$).  Modern
 quorum-based scalable data systems such as Dynamo~\cite{dynamo} (and
@@ -56,10 +56,8 @@ and latency of requests for a given workload.
 \label{fig:latency-staleness}
 \end{figure}
 
-In this paper, we prove that we can do better. Quorum-based data systems
-can provide guarantees on the staleness of the data they provide. The
-theory community has briefly explored the use of ``probabilistic
-quorums'' to provide arbitrarily high probability of strong
+``Probabilistic quorums'' have been previously studied in a 
+theoretical context to provide arbitrarily high probability of strong
 consistency~\cite{prob-quorum}; in theory, these systems provide
 excellent asymptotic behavior but are limited in practical
 applicability due to their reliance on high replication factors.
@@ -67,44 +65,32 @@ Furthermore, in this theory, there is no guarantee on the recency of
 data returned that is not the most recent version; with small $n$,
 the probability of this happening is large---in the tens of percent.
 
-In this work, we provide meaningful metrics for eventually consistent
-data stores in the form of probabilistic bounded staleness.  By
-relaxing the consistency guarantees from strong consistency to a
-bounded-staleness model, we provide exponential improvements in the
-probability of returning staler-than-promised data, resulting in
-techniques that are useful at replication levels as seen in practice
-($n<10$, and easily $n\leq3$).  One can easily predict the staleness
-of his or her data (e.g., within 1 version with $70\%$ probability,
-with 2 versions with $95\%$ probability, and so on).  From a
-service-level agreement perspective, the system can minimize the
-probability of returning staler-than-promised data to the order of
-fractions of a percent.  Subsequently, operators using non-strict
-quorums can adjust their desired trade-offs between latency and
-consistency, as shown in Figure~\ref{fig:latency-staleness}.
+In this paper we present algorithms and models for accurately predicting
+the staleness of a data item across multiple versions and
+wall clock time. This can be used to answer, with high probability,
+queries of the form: fetch a data item within $k$ versions of the 
+latest committed version or read a data item at most $t$ seconds older
+than the last committed version.  We also use these consistency measures 
+to provide probabilistic guarantees on monotonic reads, a form of 
+session guarantees where reads are guaranteed to return data items 
+no older than what has been previously read.
 
-Specifically, we provide algorithms and models for the staleness of a
-data item across multiple versions and across real time and replica
-propagation delay.  We can predict the probability of a request
-falling within $k$ versions of the latest committed version after $t$
-seconds have elapsed, for any $k$ and $t$, offering strongly
-exponential improvements in the probability of returning
-staler-than-promised data over the traditional literature.  We also
-use these consistency measures to provide probabilistic guarantees on
-monotonic reads, a form of session guarantees where reads are
-guaranteed to return data items no older than what has been previously
-read.
+By relaxing the consistency guarantees from strong consistency to a 
+bounded-staleness model and by modeling how the anti-entropic 
+process across replicas over time, we provide exponential improvements 
+in the probability of returning staler-than-promised data. 
+This results in techniques that are useful at replication levels as 
+seen in practice ($n<10$, and easily $n\leq3$) and provides a 
+consistency-latency trade-off as shown in Figure~\ref{fig:latency-staleness}.
 
-Using this theory, we can accurately provide read and write quorum
-sizes ($w$,$r$,$n$) that optimize the performance of an operation on a
-quorum-based data system given the desired staleness of a particular
-partial quorum configuration.  Our models depend only on a model for
-the latency of operations, which can be derived online and
-continuously tuned.  We implement these algorithms on top of
-Cassandra, a widely-deployed open source quorum-based distributed
-data system, and demonstrating how to apply partial quorum theory in
-practice.  We validate our new theory using several microbenchmarks
-and synthetic workloads, then demonstrate the utility of staleness
-measures in a Twitter clone with several thousand clients.
+Using this theory, we have developed 'Ernst' a replica management policy
+that determines the read and write quorum sizes ($w$,$r$,$n$) to
+optimize the performance of an operation given the desired staleness
+bound. We implement 'Ernst' on top of Cassandra, a widely-deployed 
+open source quorum-based distributed storage system, and demonstrate how
+it can be easily applied in practice. We validate our new theory using 
+several microbenchmarks and synthetic workloads and then demonstrate 
+the utility of staleness measures in a Twitter-clone with several thousand clients.
 
 We make the following contributions in this paper:
 
