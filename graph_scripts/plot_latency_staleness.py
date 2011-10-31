@@ -25,11 +25,12 @@ def plot_with_errorbars(config, results):
     text(chosen.tstale+.02, chosenlatency, "%dN%dR%dW" % (config.N, config.R, config.W), fontsize=8)
 
 for config in results:
+    print len(results[config][0])
     pctile_index = int(ceil(len(results[config][0])*percentile))
 
     ### nth percentile by t-staleness
     order_by_t_stale(results[config][0])
-    plot_with_errorbars(config, results)
+    #plot_with_errorbars(config, results)
 
     ### nth percentile by version
     order_by_k_stale(results[config][0])
@@ -37,14 +38,15 @@ for config in results:
 
     ### nth percentile by latency
     order_by_latency(results[config][0])
-    #plot_with_errorbars(config, results)
+    plot_with_errorbars(config, results)
 
 
-errorbar(10000, 0, fmt='o', color="black", label="K=1")
-errorbar(10000, 0, fmt='o', color="blue", label="K=2")
+errorbar(-10000, 0, fmt='o', color="black", label="K=1")
+errorbar(-10000, 0, fmt='o', color="blue", label="K=2")
 legend(loc="upper right", numpoints=1)
 
-xlim(xmin=-5, xmax=150)
+xlim(xmin=0, xmax=150)
+
 title("N=%d, p_staler = %f" % (results.keys()[0].N, 1.0-percentile))
 xlabel("t-staleness (ms)")
 ylabel("average write + read latency (ms)")

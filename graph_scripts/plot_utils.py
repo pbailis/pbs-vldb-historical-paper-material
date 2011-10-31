@@ -69,7 +69,7 @@ def parse_file(f):
                     #value
                     read_version,
                     #t-staleness
-                    (read_end - version_commits[read_version])/NS_PER_MS,
+                    (read_start - version_commits[read_version])/NS_PER_MS,
                     #k-staleness
                     read_version - last_committed_version,
                     #latency
