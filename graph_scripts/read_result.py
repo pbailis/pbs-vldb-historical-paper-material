@@ -1,17 +1,19 @@
 
 class ReadResult:
     def __init__(self,
-                 value,
+                 version,
                  starttime,
                  endtime,
                  read_version,
-                 lastcommittime,
+                 lastcommittedversion,
+                 lastcommittedtime,
                  kstale,
                  latency):
-        self.value = value
-        self.starttime = starttime
-        self.endtime = endtime
-        self.lastcommittime = lastcommittime
+        self.version = version
+        self.starttime = starttime/1000000.0
+        self.endtime = endtime/1000000.0
+        self.lastcommittedversion = lastcommittedversion
+        self.lastcommittedtime = lastcommittedtime/1000000.0
         self.kstale = kstale
-        self.latency = latency
+        self.latency = latency/1000000.0
 

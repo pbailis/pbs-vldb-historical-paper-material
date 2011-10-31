@@ -6,7 +6,7 @@ class WriteResult:
                  endtime,
                  latency):
         self.value = value
-        self.starttime = starttime
-        self.endtime = endtime
-        self.latency = latency
+        self.starttime = starttime/1000000.0
+        self.endtime = endtime/1000000.0
+        self.latency = latency/1000000.0
 

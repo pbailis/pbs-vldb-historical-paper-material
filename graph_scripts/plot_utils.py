@@ -75,7 +75,7 @@ def parse_file(config, f):
             read_version = int(line.split()[5])
 
             res = ReadResult(
-                    #value
+                    #read version
                     read_version,
                     #start time
                     read_start,
@@ -83,6 +83,8 @@ def parse_file(config, f):
                     read_end,
                     #read version
                     read_version,
+                    #last commited version,
+                    last_committed_version,
                     #last commit time
                     write_end,
                     #k-staleness

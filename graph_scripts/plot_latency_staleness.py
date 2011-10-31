@@ -14,20 +14,57 @@ def ktocolor(k):
         return 'blue'
 
 def plot_with_errorbars(result):
-    pctile_index = int(ceil(len(result.reads)*percentile))
+    result.reads.sort(key=lambda read: read.starttime-read.lastcommittedtime)
+    
+    latest_read = 0
+    older_read = 0
+    #k=1 consistency
+    mint = -1
+    t = 0
 
-'''
-    chosen = result.reads[pctile_index]
-    chosenlatency = average([r.latency for r in result.reads[:pctile_index]])+average([w.latency for w in result.writes])
-    chosenlatencydev = sqrt(pow(std([r.latency for r in result.reads[:pctile_index]]), 2)+
+    times = []
+    latencies = []
+    latencydevs = []
+
+    for t in range(0, 150):
+        chosenreads = []
+       
+        for read in result.reads:
+            if read.starttime-read.lastcommittedtime > t:
+                continue
+
+            chosenreads.append(read)
+
+            if read.version >= read.lastcommittedversion:
+                latest_read += 1
+            else:
+                older_read += 1
+
+
+            #ensure at least 100 samples
+            if latest_read/float(latest_read+older_read) > percentile and latest_read+older_read > 100:
+                latency = (average([r.latency for r in chosenreads])
+                           + average([w.latency for w in result.writes]))
+                latencydev = sqrt(pow(std([r.latency for r in result.reads]), 2)+
                             pow(std([w.latency for w in result.writes]), 2))
 
-    errorbar([chosen.tstale], [chosenlatency], fmt='o', yerr=[chosenlatencydev], color=ktocolor(chosen.kstale))
-    text(chosen.tstale, chosenlatency, "%dN%dR%dW" % (result.config.N,
-                                                      result.config.R, 
-                                                      config.W), fontsize=8)
+                times.append(t)
+                latencies.append(latency)
+                latencydevs.append(latencydev)
 
-'''
+                print latest_read+older_read
+
+                break;
+
+        #for now, only do the first latency
+        if times != []:
+            break
+                
+    print "DID R%d W%d" % (result.config.R, result.config.W)
+    errorbar(times, latencies, fmt='o-', yerr=latencydevs)
+    text(times[0], latencies[0], "%dN%dR%dW" % (result.config.N,
+                                                      result.config.R, 
+                                                      result.config.W), fontsize=8)
 
 for result in results:
     plot_with_errorbars(result)
@@ -36,7 +73,7 @@ for result in results:
 #errorbar(0, 0, fmt='o', color="blue", label="K=2")
 #legend(loc="upper right", numpoints=1)
 
-title("N=%d, p_staler = %f" % (results.keys()[0].N, 1.0-percentile))
+title("N=%d, p_staler = %f" % (results[0].config.N, 1.0-percentile))
 xlabel("t-staleness (ms)")
 ylabel("average write + read latency (ms)")
 savefig("latency-stale.pdf")
