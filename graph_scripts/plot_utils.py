@@ -1,12 +1,14 @@
 
+from results_class import *
 from read_result import *
+from write_result import *
 from config_settings import *
 from os import listdir
 
 NS_PER_MS = 1000000.0
 
 def fetch_results(resultsdir):
-    resultsdict = {}
+    ret = []
 
     for d in listdir(resultsdir):
         if d.find("N") == -1:
@@ -18,10 +20,13 @@ def fetch_results(resultsdir):
             R=int(d[2])
             W=int(d[4])
 
-            resultsdict[ConfigSettings(N, R, W)] = parse_file(resultsdir+"/"+d+"/"+s+"/cassandra.log")
+            config = ConfigSettings(N, R, W)
+            
+            ret.append(parse_file(config, resultsdir+"/"+d+"/"+s+"/cassandra.log"))
 
-    return resultsdict
+    return ret
 
+'''
 def order_by_t_stale(readlist):
     readlist.sort(key=lambda res: res.tstale)
 
@@ -30,11 +35,12 @@ def order_by_k_stale(readlist):
 
 def order_by_latency(readlist):
     readlist.sort(key=lambda res: res.latency)
+'''
 
-def parse_file(f):
-    ret = []
-    write_latencies = []
-    version_commits = {}
+def parse_file(config, f):
+    reads = []
+    writes = []
+    commit_times = {}
 
     #collect write info
     for line in open(f):
@@ -48,8 +54,11 @@ def parse_file(f):
             assert last_committed_version == write_start_version
             assert write_end-write_start
 
-            version_commits[last_committed_version] = write_end
-            write_latencies.append((write_end-write_start)/NS_PER_MS)
+            commit_times[last_committed_version] = write_end
+            writes.append(WriteResult(write_start_version,
+                                      write_start,
+                                      write_end,
+                                      write_end-write_start))
 
     #then collect read info; reads can come back before write commits!
     for line in open(f):
@@ -68,8 +77,14 @@ def parse_file(f):
             res = ReadResult(
                     #value
                     read_version,
-                    #t-staleness
-                    (read_start - version_commits[read_version])/NS_PER_MS,
+                    #start time
+                    read_start,
+                    #end time
+                    read_end,
+                    #read version
+                    read_version,
+                    #last commit time
+                    write_end,
                     #k-staleness
                     read_version - last_committed_version,
                     #latency
@@ -77,6 +92,6 @@ def parse_file(f):
 
             assert res.latency > 0
 
-            ret.append(res)
+            reads.append(res)
 
-    return [ret, write_latencies]
+    return ResultsClass(config, reads, writes, commit_times)
