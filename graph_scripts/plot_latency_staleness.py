@@ -13,58 +13,64 @@ def ktocolor(k):
     else:
         return 'blue'
 
-def plot_with_errorbars(result):
-    result.reads.sort(key=lambda read: read.starttime-read.lastcommittedtime)
+def plot_with_errorbars(k, result):
+    result.reads.sort(key=lambda read: read.starttime-
+                      read.last_committed_time_at_read_start)
     
+    staler = 0
+    #current w.r.t. k
+    current = 0
 
-    #k=1 consistency
-    mint = -1
+    pstale_at_t = {}
 
-    times = []
-    latencies = []
-    latencydevs = []
-
-    for t in range(0, 150):
-        chosenreads = []
-        
-        latest_read = 0
-        older_read = 0
-
-        for read in result.reads:
-            if read.starttime-read.lastcommittedtime > t:
-                continue
-
-            chosenreads.append(read)
-
-            if read.version >= read.lastcommittedversion:
-                latest_read += 1
-            else:
-                older_read += 1
-
-
-        #ensure at least 100 samples
-        if latest_read/float(latest_read+older_read) > percentile and latest_read+older_read > 100:
-            latency = (average([r.latency for r in chosenreads])
-                       + average([w.latency for w in result.writes]))
-            latencydev = sqrt(pow(std([r.latency for r in result.reads]), 2)+
-                              pow(std([w.latency for w in result.writes]), 2))
-
-            times.append(t)
-            latencies.append(latency)
-            latencydevs.append(latencydev)
+    #compute the probability of staleness at each t
+    for read in result.reads:
+        if read.version >= read.last_committed_version_at_read_start-(k-1):
+            current += 1
+        else:
+            print "STALE"
+            staler += 1
             
-            print latest_read+older_read
-            
-            break;
+        pstale_at_t[read.starttime-read.last_committed_time_at_read_start] = float(staler)/(staler+current)
+
+    #find the t such that p_staler < percentile for all T >= t
+    times = pstale_at_t.keys()
+    times.sort()
+    times.reverse()
+
+    chosen = -1
+
+    if max(pstale_at_t.values()) == 0:
+        print "NO STALENESS"
+        chosen = 0
+    else:
+        for t in range(0, len(times)):
+
+            print times[t], pstale_at_t[times[t]]
+
+            #this is on the reversed array, so if pstale_at_t(T) is <= 1-percentile,
+            #then all t > t are also <= 1-percentile
+            if (pstale_at_t[times[t]] <= 1-percentile 
+                and pstale_at_t[times[t+1]] > 1-percentile):
+                chosen = times[t]
+                break
+
+    print result.config.R, result.config.W, chosen
+
+    latency = (average([r.latency for r in result.reads])
+               + average([w.latency for w in result.writes]))
+    latencydev = sqrt(pow(std([r.latency for r in result.reads]), 2)+
+                      pow(std([w.latency for w in result.writes]), 2))
 
     print "DID R%d W%d" % (result.config.R, result.config.W)
-    errorbar(times, latencies, fmt='o-', yerr=latencydevs)
-    text(times[0], latencies[0], "%dN%dR%dW" % (result.config.N,
-                                                      result.config.R, 
-                                                      result.config.W), fontsize=8)
+    errorbar(chosen, latency, fmt='o-', yerr=latencydev)
+    text(chosen, latency, "%dN%dR%dW" % (result.config.N,
+                                         result.config.R, 
+                                         result.config.W), fontsize=8)
+
 
 for result in results:
-    plot_with_errorbars(result)
+    plot_with_errorbars(1, result)
 
 #errorbar(0, 0, fmt='o', color="black", label="K=1")
 #errorbar(0, 0, fmt='o', color="blue", label="K=2")

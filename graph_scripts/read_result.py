@@ -5,15 +5,18 @@ class ReadResult:
                  starttime,
                  endtime,
                  read_version,
-                 lastcommittedversion,
-                 lastcommittedtime,
+                 lastcommittedversionatreadstart,
+                 lastcommittedtimeatreadstart,
                  kstale,
                  latency):
         self.version = version
-        self.starttime = starttime/1000000.0
-        self.endtime = endtime/1000000.0
-        self.lastcommittedversion = lastcommittedversion
-        self.lastcommittedtime = lastcommittedtime/1000000.0
+        self.starttime = starttime
+        self.endtime = endtime
+        self.last_committed_version_at_read_start = lastcommittedversionatreadstart
+        self.last_committed_time_at_read_start = lastcommittedtimeatreadstart
         self.kstale = kstale
-        self.latency = latency/1000000.0
+        self.latency = latency
+
+        assert read_version >= lastcommittedversionatreadstart
+        assert starttime >= lastcommittedtimeatreadstart
 

@@ -45,10 +45,10 @@ def parse_file(config, f):
     #collect write info
     for line in open(f):
         if line.find("WS") != -1:
-            write_start = int(line.split()[4].strip(','))
+            write_start = int(line.split()[4].strip(','))/1000000.0
             write_start_version = int(line.split()[5].strip(','))
         elif line.find("WC") != -1:
-            write_end = int(line.split()[4].strip(','))
+            write_end = int(line.split()[4].strip(','))/1000000.0
             last_committed_version = int(line.split()[5].strip(','))
 
             assert last_committed_version == write_start_version
@@ -60,18 +60,37 @@ def parse_file(config, f):
                                       write_end,
                                       write_end-write_start))
 
+    writes.sort(key=lambda w: w.endtime)
+
     #then collect read info; reads can come back before write commits!
+    write_commit_index = -1
+
     for line in open(f):
-        if line.find("WS") != -1:
-            write_start = int(line.split()[4].strip(','))
-            write_start_version = int(line.split()[5].strip(','))
-        elif line.find("WC") != -1:
-            write_end = int(line.split()[4].strip(','))
-            last_committed_version = int(line.split()[5].strip(','))
+        if line.find("WC") != -1:
+            write_commit_index += 1
         elif line.find("RS") != -1:
-            read_start = int(line.split()[4])
+            read_start = int(line.split()[4])/1000000.0
+
+            #find the corresponding write
+
+            search_index = write_commit_index
+            while True:
+                if search_index == len(writes)-1 or writes[search_index].endtime > read_start:
+                    break
+                search_index += 1
+
+            while True:
+                if writes[search_index].endtime < read_start:
+                    last_write = writes[search_index]
+                    break
+                search_index -= 1
+
+
+            last_committed_version_at_read_start = last_write.version
+            last_committed_version_time_at_read_start = last_write.endtime
+
         elif line.find("RC") != -1:
-            read_end = int(line.split()[4])
+            read_end = int(line.split()[4])/1000000.0
             read_version = int(line.split()[5])
 
             res = ReadResult(
@@ -84,11 +103,11 @@ def parse_file(config, f):
                     #read version
                     read_version,
                     #last commited version,
-                    last_committed_version,
+                    last_committed_version_at_read_start,
                     #last commit time
-                    write_end,
+                    last_committed_version_time_at_read_start,
                     #k-staleness
-                    read_version - last_committed_version,
+                    read_version - last_committed_version_at_read_start,
                     #latency
                     (read_end - read_start)/NS_PER_MS)
 
