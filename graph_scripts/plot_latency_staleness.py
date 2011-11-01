@@ -16,11 +16,9 @@ def ktocolor(k):
 def plot_with_errorbars(result):
     result.reads.sort(key=lambda read: read.starttime-read.lastcommittedtime)
     
-    latest_read = 0
-    older_read = 0
+
     #k=1 consistency
     mint = -1
-    t = 0
 
     times = []
     latencies = []
@@ -28,7 +26,10 @@ def plot_with_errorbars(result):
 
     for t in range(0, 150):
         chosenreads = []
-       
+        
+        latest_read = 0
+        older_read = 0
+
         for read in result.reads:
             if read.starttime-read.lastcommittedtime > t:
                 continue
@@ -41,25 +42,21 @@ def plot_with_errorbars(result):
                 older_read += 1
 
 
-            #ensure at least 100 samples
-            if latest_read/float(latest_read+older_read) > percentile and latest_read+older_read > 100:
-                latency = (average([r.latency for r in chosenreads])
-                           + average([w.latency for w in result.writes]))
-                latencydev = sqrt(pow(std([r.latency for r in result.reads]), 2)+
-                            pow(std([w.latency for w in result.writes]), 2))
+        #ensure at least 100 samples
+        if latest_read/float(latest_read+older_read) > percentile and latest_read+older_read > 100:
+            latency = (average([r.latency for r in chosenreads])
+                       + average([w.latency for w in result.writes]))
+            latencydev = sqrt(pow(std([r.latency for r in result.reads]), 2)+
+                              pow(std([w.latency for w in result.writes]), 2))
 
-                times.append(t)
-                latencies.append(latency)
-                latencydevs.append(latencydev)
+            times.append(t)
+            latencies.append(latency)
+            latencydevs.append(latencydev)
+            
+            print latest_read+older_read
+            
+            break;
 
-                print latest_read+older_read
-
-                break;
-
-        #for now, only do the first latency
-        if times != []:
-            break
-                
     print "DID R%d W%d" % (result.config.R, result.config.W)
     errorbar(times, latencies, fmt='o-', yerr=latencydevs)
     text(times[0], latencies[0], "%dN%dR%dW" % (result.config.N,
