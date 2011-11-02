@@ -93,6 +93,9 @@ def parse_file(config, f):
             read_end = int(line.split()[4])/1000000.0
             read_version = int(line.split()[5])
 
+            if config.R+config.W > config.N:
+                assert read_version >= last_committed_version_at_read_start
+
             res = ReadResult(
                     #read version
                     read_version,
