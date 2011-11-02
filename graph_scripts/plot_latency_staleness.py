@@ -65,8 +65,7 @@ def plot_with_errorbars(k, result):
 
 
 for result in results:
-    #plot_with_errorbars(1, result)
-    hist([write.latency for write in result.writes], 100, label="%dR%dW" % (result.config.R, result.config.W))
+    plot_with_errorbars(1, result)
 
     N = result.config.N
 
