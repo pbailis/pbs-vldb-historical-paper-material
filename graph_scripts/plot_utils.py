@@ -22,9 +22,7 @@ def fetch_results(resultsdir):
 
             config = ConfigSettings(N, R, W)
             
-            ret.append(parse_file(config, resultsdir+"/"+d+"/"+s+"/cassandra.log"))
-
-    return ret
+            yield(parse_file(config, resultsdir+"/"+d+"/"+s+"/cassandra.log"))
 
 '''
 def order_by_t_stale(readlist):
@@ -89,11 +87,13 @@ def parse_file(config, f):
             last_committed_version_at_read_start = last_write.version
             last_committed_version_time_at_read_start = last_write.endtime
 
+            assert read_start >= last_committed_version_time_at_read_start
+
         elif line.find("RC") != -1:
             read_end = int(line.split()[4])/1000000.0
             read_version = int(line.split()[5])
 
-            if config.R+config.W > config.N:
+            if config.R + config.W > config.N:
                 assert read_version >= last_committed_version_at_read_start
 
             res = ReadResult(

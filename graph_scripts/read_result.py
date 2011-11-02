@@ -17,6 +17,5 @@ class ReadResult:
         self.kstale = kstale
         self.latency = latency
 
-        assert read_version >= lastcommittedversionatreadstart
+        
         assert starttime >= lastcommittedtimeatreadstart
-
