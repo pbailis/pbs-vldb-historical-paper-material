@@ -56,7 +56,7 @@ def plot_with_errorbars(k, result):
     latencydev = sqrt(pow(std([r.latency for r in result.reads]), 2)+
                       pow(std([w.latency for w in result.writes]), 2))
 
-    print "%dR %dW\n%d within %d versions, %d staler %d total" % (result.config.R, result.config.W, k, current, staler, current+staler)
+    print "%dR %dW\n%d within %d versions, %d staler %d total" % (result.config.R, result.config.W, current, k, staler, current+staler)
     print "DID R%d W%d" % (result.config.R, result.config.W)
     errorbar(chosen, latency, fmt='o-', yerr=latencydev)
     text(chosen, latency, "%dN%dR%dW" % (result.config.N,
