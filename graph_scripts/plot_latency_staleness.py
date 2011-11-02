@@ -65,14 +65,19 @@ def plot_with_errorbars(k, result):
 
 
 for result in results:
-    plot_with_errorbars(1, result)
+    #plot_with_errorbars(1, result)
+    hist([write.latency for write in result.writes], 100, label="%dR%dW" % (result.config.R, result.config.W))
+
     N = result.config.N
+
+legend()
 
 #errorbar(0, 0, fmt='o', color="black", label="K=1")
 #errorbar(0, 0, fmt='o', color="blue", label="K=2")
 #legend(loc="upper right", numpoints=1)
 
 title("N=%d, p_staler = %f" % (N, 1.0-percentile))
+xlim(xmax=100)
 xlabel("t-staleness (ms)")
 ylabel("average write + read latency (ms)")
 savefig("latency-stale.pdf")

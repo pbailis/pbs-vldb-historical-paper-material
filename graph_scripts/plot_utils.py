@@ -43,10 +43,10 @@ def parse_file(config, f):
     #collect write info
     for line in open(f):
         if line.find("WS") != -1:
-            write_start = int(line.split()[4].strip(','))/1000000.0
+            write_start = int(line.split()[4].strip(','))/NS_PER_MS
             write_start_version = int(line.split()[5].strip(','))
         elif line.find("WC") != -1:
-            write_end = int(line.split()[4].strip(','))/1000000.0
+            write_end = int(line.split()[4].strip(','))/NS_PER_MS
             last_committed_version = int(line.split()[5].strip(','))
 
             assert last_committed_version == write_start_version
@@ -67,7 +67,7 @@ def parse_file(config, f):
         if line.find("WC") != -1:
             write_commit_index += 1
         elif line.find("RS") != -1:
-            read_start = int(line.split()[4])/1000000.0
+            read_start = int(line.split()[4])/NS_PER_MS
 
             #find the corresponding write
 
@@ -90,7 +90,7 @@ def parse_file(config, f):
             assert read_start >= last_committed_version_time_at_read_start
 
         elif line.find("RC") != -1:
-            read_end = int(line.split()[4])/1000000.0
+            read_end = int(line.split()[4])/NS_PER_MS
             read_version = int(line.split()[5])
 
             if config.R + config.W > config.N:
@@ -112,7 +112,7 @@ def parse_file(config, f):
                     #k-staleness
                     read_version - last_committed_version_at_read_start,
                     #latency
-                    (read_end - read_start)/NS_PER_MS)
+                    (read_end - read_start))
 
             assert res.latency > 0
 
