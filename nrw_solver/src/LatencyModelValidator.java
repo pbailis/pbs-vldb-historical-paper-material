@@ -4,15 +4,16 @@ import java.util.List;
 
 //TODO replace with exceptions
 public class LatencyModelValidator {
+    private static int NUM_REPLICAS = 1;
     static boolean ValidateModel(LatencyModel toCheck) throws RuntimeException
     {
-        List<Double> domain = toCheck.getRange();
+        List<Double> domain = toCheck.getRange(NUM_REPLICAS);
 
         //check that sum over domain is 1.0
         double accum = 0;
         for(Iterator<Double> it = domain.iterator(); it.hasNext();)
         {
-            accum += toCheck.getLatencyPDF(it.next());
+            accum += toCheck.getLatencyPDF(NUM_REPLICAS, it.next());
         }
 
         if(Math.round(accum*10000.0) != 10000.0)
@@ -22,7 +23,7 @@ public class LatencyModelValidator {
         //check that CDF is monotonically increasing
         for(Iterator<Double> it = domain.iterator(); it.hasNext();)
         {
-            cur = toCheck.getLatencyCDF(it.next());
+            cur = toCheck.getLatencyCDF(NUM_REPLICAS, it.next());
             if(cur < prev)
             {
                 throw new RuntimeException(String.format("CDF is not monotonically increasing; %f > %f", prev, cur));

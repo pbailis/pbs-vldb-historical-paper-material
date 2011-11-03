@@ -49,9 +49,9 @@ public class nrw_solver {
     private double pdf_get_prob_w(int w, double t)
     {
          return ((double)fact(this.n))/(double)(fact(w-1)*fact(this.n-w))
-                    * Math.pow(L_w_noack.getLatencyCDF(t), w-1)
-                    * Math.pow(1-L_w_noack.getLatencyCDF(t), this.n-w)
-                    * L_w.getLatencyPDF(t);
+                    * Math.pow(L_w_noack.getLatencyCDF(w, t), w-1)
+                    * Math.pow(1-L_w_noack.getLatencyCDF(w, t), this.n-w)
+                    * L_w.getLatencyPDF(w, t);
 
     }
 
@@ -61,21 +61,21 @@ public class nrw_solver {
     //from equation 6: http://mathworld.wolfram.com/OrderStatistic.html
     private double cdf_get_prob_w_after_write(int w, int wmin, double t)
     {
-        return 1-Math.pow(1-Math.pow(L_w_noack.getLatencyCDF(t), w-wmin), MathUtils.binomialCoefficientDouble(n-wmin, w-wmin));
+        return 1-Math.pow(1-Math.pow(L_w_noack.getLatencyCDF(w, t), w-wmin), MathUtils.binomialCoefficientDouble(n-wmin, w-wmin));
     }
 
     //this is p_r in the paper
     private double pdf_get_prob_r(int r, double t)
     {
         return ((double)fact(this.n))/(double)(fact(r-1)*fact(this.n-r))
-                    * Math.pow(L_r.getLatencyCDF(t), r-1)
-                    * Math.pow(1-L_r.getLatencyCDF(t), this.n-r)
-                    * L_r.getLatencyPDF(t);
+                    * Math.pow(L_r.getLatencyCDF(r, t), r-1)
+                    * Math.pow(1-L_r.getLatencyCDF(r, t), this.n-r)
+                    * L_r.getLatencyPDF(r, t);
     }
 
     private double calcReadLatency(int r)
     {
-        List<Double> domain = L_r.getRange();
+        List<Double> domain = L_r.getRange(r);
 
         double accum = 0;
 
@@ -90,7 +90,7 @@ public class nrw_solver {
 
     private double calcWriteLatency(int w)
     {
-        List<Double> domain = L_w.getRange();
+        List<Double> domain = L_w.getRange(w);
 
         double accum = 0;
 
@@ -119,7 +119,7 @@ public class nrw_solver {
     {
         double ret = (calc_p_s_given_w(rc, wminc));
 
-        List<Double> times = L_w_noack.getRange();
+        List<Double> times = L_w_noack.getRange(wminc);
 
         double last_prob = ret;
 

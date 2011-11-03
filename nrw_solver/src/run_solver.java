@@ -1,12 +1,18 @@
-import sun.java2d.pipe.SpanShapeRenderer;
 
 import java.util.Iterator;
 import java.util.List;
 
+import java.io.IOException;
+
 public class run_solver {
 
-    public static void main(String [ ] args)
+    public static void main(String [ ] args) throws IOException
     {
+        if (args.length != 1)
+        {
+          System.out.println("Usage: nrw_solver <latency-distribution-file>");
+          System.exit(1);
+        }
         //number of replicas
         int n = 5;
         //minimum number of writes to commit (keep w_min < n)
@@ -25,6 +31,7 @@ public class run_solver {
         //relative weighting of write latency
         double c_w = .5;
 
+        String latencyDistributionFile = args[0]; 
 
         /*
         We require three single-replica latency models (IID, remember!):
@@ -34,7 +41,7 @@ public class run_solver {
             (the last is called wmodelnoack).
          */
 
-        LatencyModel rmodel, wmodel, wmodelnoack = new SimpleLatencyModel();
+        LatencyModel rmodel, wmodel, wmodelnoack = new FileLatencyModel(latencyDistributionFile);
 
         rmodel = wmodelnoack;
         wmodel = wmodelnoack;

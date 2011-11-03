@@ -15,7 +15,7 @@ public class SimpleLatencyModel implements LatencyModel {
     }
 
 
-    public double getLatencyPDF(double t)
+    public double getLatencyPDF(int numReplicas, double t)
     {
         if(t==0)
             return 0;
@@ -28,14 +28,14 @@ public class SimpleLatencyModel implements LatencyModel {
         return 0.0;
     }
 
-    public double getLatencyCDF(double t)
+    public double getLatencyCDF(int numReplicas, double t)
     {
         if(t==0)
             return 0;
         return Math.min(1.0, Math.floor((t+.001)*1000.0)/1000.0);
     }
 
-    public List<Double> getRange()
+    public List<Double> getRange(int numReplicas)
     {
         return range;
     }
