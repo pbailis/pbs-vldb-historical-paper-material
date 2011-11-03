@@ -7,7 +7,11 @@ from scipy import mean
 from scipy import std
 from pylab import *
 
-def parse_results(results_dir):
+# write_latencies is keyed by W.
+# each dictionary within it is keyed by latency ciel in ms 
+write_latencies = defaultdict(lambda: defaultdict(int))
+
+def parse_results_dir(results_dir):
   W = int(results_dir.split("/")[4][4])
   R = int(results_dir.split("/")[4][2])
   N = int(results_dir.split("/")[4][0])
@@ -33,39 +37,45 @@ def parse_results(results_dir):
 
     keys = wt_start_dict.keys()
     keys.sort()
+    for k in keys:
+      wt_fin_dict[k].sort()
     #print "number of keys: %d"%(len(keys))
 
     for num_wait in range(1, W+1):
       values = []
       for k in keys:
         end_times = wt_fin_dict[k]
-        end_times.sort()
-        values.append(end_times[num_wait - 1] - wt_start_dict[k])
+        latency = end_times[num_wait - 1] - wt_start_dict[k]
+        values.append(latency)
+        latency_bucket = int(ceil(latency))
+        if latency < 0: 
+          print "Latency is %d for num_wait %d, key %d, start %d" \
+              %(latency, num_wait, k, wt_start_dict[k])
+          latency_bucket = 0
 
-      figure()
-      plot(keys, values, '.', label='wt %d'%(num_wait)) 
-      title("wt-%d for %s" %(num_wait, results_dir))
-      xlabel("key")
-      ylabel("wait time in ms")
+        write_latencies[num_wait][latency_bucket] = \
+          write_latencies[num_wait][latency_bucket] + 1
+
+      #figure()
+      #plot(keys, values, '.', label='wt %d'%(num_wait)) 
+      #title("wt-%d for %s" %(num_wait, results_dir))
+      #xlabel("key")
+      #ylabel("wait time in ms")
       print("wait for %d, wait time median: %f, 99 pc: %f, avg: %f," \
-          "std: %f" %(num_wait, stats.scoreatpercentile(values, 50), \
+         "std: %f" %(num_wait, stats.scoreatpercentile(values, 50), \
             stats.scoreatpercentile(values, 99), mean(values), \
               std(values))) 
-      savefig("wt-%d-%d.pdf"%(W,num_wait))
+      #savefig("wt-%d-%d.pdf"%(W,num_wait))
 
 
-parse_results("../results/micro/5N-2011-10-31-23_04_57/5N1R5W")
-parse_results("../results/micro/5N-2011-10-31-23_04_57/5N1R4W")
-parse_results("../results/micro/5N-2011-10-31-23_04_57/5N1R3W")
-parse_results("../results/micro/5N-2011-10-31-23_04_57/5N1R2W")
-parse_results("../results/micro/5N-2011-10-31-23_04_57/5N1R1W")
-parse_results("../results/micro/5N-2011-10-31-23_04_57/5N2R1W")
-parse_results("../results/micro/5N-2011-10-31-23_04_57/5N2R2W")
-parse_results("../results/micro/5N-2011-10-31-23_04_57/5N2R3W")
-parse_results("../results/micro/5N-2011-10-31-23_04_57/5N2R4W")
-parse_results("../results/micro/5N-2011-10-31-23_04_57/5N3R1W")
-parse_results("../results/micro/5N-2011-10-31-23_04_57/5N3R2W")
-parse_results("../results/micro/5N-2011-10-31-23_04_57/5N3R3W")
-parse_results("../results/micro/5N-2011-10-31-23_04_57/5N4R1W")
-parse_results("../results/micro/5N-2011-10-31-23_04_57/5N4R2W")
-parse_results("../results/micro/5N-2011-10-31-23_04_57/5N5R1W")
+def all_results(results_root):
+  for d in listdir(results_root):
+    if d.find("N") == -1:
+      continue
+    parse_results_dir(results_root+"/"+d)
+
+all_results("../results/micro/5N-2011-10-31-23_04_57")
+
+for k in write_latencies.keys():
+  for j in write_latencies[k].keys():
+    print "%d %d %d" % (k, j, write_latencies[k][j])
