@@ -3,7 +3,7 @@ from plot_utils import *
 from math import ceil
 from pylab import *
 
-results = fetch_results("../results/micro/5N-2011-10-30-15_20_59/")
+results = fetch_results("../results/micro/5N-2011-31-23_04_57")
 
 percentile = .98
 
@@ -28,7 +28,6 @@ def plot_with_errorbars(k, result):
         if read.version >= read.last_committed_version_at_read_start-(k-1):
             current += 1
         else:
-            print "STALE"
             staler += 1
             
         pstale_at_t[read.starttime-read.last_committed_time_at_read_start] = float(staler)/(staler+current)
@@ -40,13 +39,10 @@ def plot_with_errorbars(k, result):
 
     chosen = -1
 
-    if max(pstale_at_t.values()) == 0:
-        print "NO STALENESS"
+    if max(pstale_at_t.values()) <= 1-percentile:
         chosen = 0
     else:
         for t in range(0, len(times)):
-
-            print times[t], pstale_at_t[times[t]]
 
             #this is on the reversed array, so if pstale_at_t(T) is <= 1-percentile,
             #then all t > t are also <= 1-percentile
@@ -55,13 +51,12 @@ def plot_with_errorbars(k, result):
                 chosen = times[t]
                 break
 
-    print result.config.R, result.config.W, chosen
-
     latency = (average([r.latency for r in result.reads])
                + average([w.latency for w in result.writes]))
     latencydev = sqrt(pow(std([r.latency for r in result.reads]), 2)+
                       pow(std([w.latency for w in result.writes]), 2))
 
+    print "%dR %dW\n%d within %d versions, %d staler %d total" % (result.config.R, result.config.W, current, k, staler, current+staler)
     print "DID R%d W%d" % (result.config.R, result.config.W)
     errorbar(chosen, latency, fmt='o-', yerr=latencydev)
     text(chosen, latency, "%dN%dR%dW" % (result.config.N,
@@ -72,11 +67,16 @@ def plot_with_errorbars(k, result):
 for result in results:
     plot_with_errorbars(1, result)
 
+    N = result.config.N
+
+legend()
+
 #errorbar(0, 0, fmt='o', color="black", label="K=1")
 #errorbar(0, 0, fmt='o', color="blue", label="K=2")
 #legend(loc="upper right", numpoints=1)
 
-title("N=%d, p_staler = %f" % (results[0].config.N, 1.0-percentile))
+title("N=%d, p_staler = %f" % (N, 1.0-percentile))
+xlim(xmax=100)
 xlabel("t-staleness (ms)")
 ylabel("average write + read latency (ms)")
 savefig("latency-stale.pdf")
