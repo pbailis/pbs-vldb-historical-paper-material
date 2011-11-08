@@ -19,8 +19,9 @@ def fetch_results(resultsdir):
             N=int(d[0])
             R=int(d[2])
             W=int(d[4])
+            lmbda = float(d[7:])
 
-            config = ConfigSettings(N, R, W)
+            config = ConfigSettings(N, R, W, lmbda)
             
             yield(parse_file(config, resultsdir+"/"+d+"/"+s+"/cassandra.log"))
 

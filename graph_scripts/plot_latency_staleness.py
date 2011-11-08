@@ -3,9 +3,9 @@ from plot_utils import *
 from math import ceil
 from pylab import *
 
-results = fetch_results("../results/micro/5N-2011-11-07_15_10_20")
+results = fetch_results("../results/2011-11-08-10_23_30")
 
-percentile = .98
+percentile = .95
 
 def ktocolor(k):
     if k == 0:
@@ -32,6 +32,9 @@ def plot_with_errorbars(k, result):
             
         pstale_at_t[read.starttime-read.last_committed_time_at_read_start] = float(staler)/(staler+current)
 
+    print ("%d reads were staler than %d, %d were %d or greater (%f), %d total" %
+           (staler, k, current, k, float(current)/(staler+current), staler+current))
+
     #find the t such that p_staler < percentile for all T >= t
     times = pstale_at_t.keys()
     times.sort()
@@ -41,6 +44,10 @@ def plot_with_errorbars(k, result):
 
     if max(pstale_at_t.values()) <= 1-percentile:
         chosen = 0
+    elif pstale_at_t[times[0]] > 1-percentile:
+        print ("%d-staleness was greater than %f; time %f was %f"
+               % (k, 1-percentile, times[0], pstale_at_t[times[0]]))
+        return
     else:
         for t in range(0, len(times)):
 
@@ -53,19 +60,20 @@ def plot_with_errorbars(k, result):
 
     latency = (average([r.latency for r in result.reads])
                + average([w.latency for w in result.writes]))
-    latencydev = sqrt(pow(std([r.latency for r in result.reads]), 2)+
-                      pow(std([w.latency for w in result.writes]), 2))
+    #standard error on the mean
+    latencydev = (sqrt(pow(std([r.latency for r in result.reads])/sqrt(len(result.reads)), 2)+
+                      pow(std([w.latency for w in result.writes])/sqrt(len(result.writes)), 2)))
 
-    print "%dR %dW\n%d within %d versions, %d staler %d total" % (result.config.R, result.config.W, current, k, staler, current+staler)
+    print "%dR %dW\n%d within %d versions, %d staler %d total %d" % (result.config.R, result.config.W, current, k, staler, current+staler, chosen)
     print "DID R%d W%d" % (result.config.R, result.config.W)
-    errorbar(chosen, latency, fmt='o-', yerr=latencydev)
+    errorbar(chosen, latency, fmt='o-', yerr=latencydev, ms=10)
     text(chosen, latency, "%dN%dR%dW" % (result.config.N,
                                          result.config.R, 
                                          result.config.W), fontsize=8)
 
-
 for result in results:
-    plot_with_errorbars(1, result)
+    for k in range(0, 3):
+        plot_with_errorbars(k, result)
 
     N = result.config.N
 
@@ -76,7 +84,6 @@ legend()
 #legend(loc="upper right", numpoints=1)
 
 title("N=%d, p_staler = %f" % (N, 1.0-percentile))
-xlim(xmax=100)
 xlabel("t-staleness (ms)")
 ylabel("average write + read latency (ms)")
 savefig("latency-stale.pdf")
