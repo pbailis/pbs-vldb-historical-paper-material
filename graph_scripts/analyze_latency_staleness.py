@@ -34,15 +34,14 @@ print "N R W k t pstale"
 
 for result in results:
     for k in range(0, 3):
-        plot_with_errorbars(k, result, percentile)
+        ktstale = get_latency_staleness_results(k, result, percentile)
+        if ktstale != None:
+            print "%d %d %d %f %d %f %f" % (ktstale.config.N,
+                                            ktstale.config.R,
+                                            ktstale.config.W,
+                                            ktstale.config.lmbda,
+                                            ktstale.kstale,
+                                            ktstale.tstale,
+                                            ktstale.pstale)
 
-    N = result.config.N
 
-legend()
-
-title("N=%d, p_staler = %f" % (N, 1.0-percentile))
-xlabel("t-staleness (ms)")
-ylabel("average write + read latency (ms)")
-savefig("latency-stale.pdf")
-
-show()

@@ -4,7 +4,7 @@ from math import ceil, log
 from pylab import *
 from random import *
 
-results = fetch_results("../results/2011-11-08-10_23_30")
+results = fetch_results(resultsfile)
 
 percentile = .99
 
@@ -36,4 +36,4 @@ for result in results:
 
     legend()
 
-    show()
+    #show()

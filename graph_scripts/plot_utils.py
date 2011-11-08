@@ -1,11 +1,16 @@
 
+from k_t_result import *
 from results_class import *
 from read_result import *
 from write_result import *
 from config_settings import *
 from os import listdir
+from pylab import *
+
+resultsfile = "../results/2011-11-08-10_50_43"
 
 NS_PER_MS = 1000000.0
+MIN_READINGS_T_STALE = 10
 
 def fetch_results(resultsdir):
     ret = []
@@ -128,3 +133,43 @@ def parse_file(config, f):
               reads.append(res)
 
     return ResultsClass(config, reads, writes, commit_times)
+
+def get_latency_staleness_results(k, result, percentile):
+
+    result.reads.sort(key=lambda read: read.starttime-
+                      read.last_committed_time_at_read_start)
+    
+    staler = 0
+    #current w.r.t. k
+    current = 0
+
+    result.reads.reverse()
+
+    prev_freshness = 1
+    tstale = 0
+
+    #compute the probability of staleness at each t
+    for read in result.reads:
+        if read.version >= read.last_committed_version_at_read_start-(k-1):
+            current += 1
+        else:
+            staler += 1
+
+        cur_pcurrent = current/float(current+staler)
+
+        if prev_freshness > percentile and cur_pcurrent < percentile and current+staler > MIN_READINGS_T_STALE:
+            tstale = read.starttime-read.last_committed_time_at_read_start
+            break
+
+        prev_freshness = cur_pcurrent
+
+    if prev_freshness < percentile:
+        return None
+
+    latency = (average([r.latency for r in result.reads])
+               + average([w.latency for w in result.writes]))
+    #standard error on the mean
+    latencydev = (sqrt(pow(std([r.latency for r in result.reads])/sqrt(len(result.reads)), 2)+
+                      pow(std([w.latency for w in result.writes])/sqrt(len(result.writes)), 2)))
+
+    return KTResult(result.config, k, tstale, latency, latencydev, staler, current, 1-prev_freshness)
