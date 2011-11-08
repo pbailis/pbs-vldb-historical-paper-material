@@ -1,37 +1,46 @@
 
+import java.io.FileReader;
 import java.util.Iterator;
 import java.util.List;
 
 import java.io.IOException;
+import java.util.Properties;
 
 public class run_solver {
 
     public static void main(String [ ] args) throws IOException
     {
-        if (args.length != 1)
+        String propertiesFile = "solver.properties";
+
+        if (args.length == 1)
         {
-          System.out.println("Usage: nrw_solver <latency-distribution-file>");
-          System.exit(1);
+            propertiesFile = args[0];
         }
+        else
+        {
+          System.out.printf("no solver file specified, using default (%s)\n", propertiesFile);
+        }
+
+        Properties configFile = new Properties();
+        configFile.load(new FileReader(propertiesFile));
+
         //number of replicas
-        int n = 5;
+        int n = Integer.parseInt(configFile.get("n").toString());
         //minimum number of writes to commit (keep w_min < n)
-        int w_min = 1;
+        int w_min = Integer.parseInt(configFile.get("wmin").toString());
 
         //maximum probability of staler-than-promised-ness
-        double p_s = 0.05;
+        double p_s = Double.parseDouble(configFile.get("p_s").toString());
 
         //RT-staleness, in seconds
-        double t = 1.0;
+        double t = Double.parseDouble(configFile.get("t-stale").toString());
         //k-staleness
-        int k = 1;
+        int k = Integer.parseInt(configFile.get("k-stale").toString());
 
         //relative weighting of read latency
-        double c_r = .5;
+        double c_r = Double.parseDouble(configFile.get("c_r").toString());
         //relative weighting of write latency
-        double c_w = .5;
-
-        String latencyDistributionFile = args[0]; 
+        double c_w = Double.parseDouble(configFile.get("c_w").toString());
 
         /*
         We require three single-replica latency models (IID, remember!):
@@ -41,13 +50,14 @@ public class run_solver {
             (the last is called wmodelnoack).
          */
 
-        LatencyModel rmodel, wmodel, wmodelnoack = new FileLatencyModel(latencyDistributionFile);
-
-        rmodel = wmodelnoack;
-        wmodel = wmodelnoack;
+        LatencyModel rmodel = new FileLatencyModel((String)configFile.get("r-latency-model"));
+        LatencyModel wmodel = new FileLatencyModel((String)configFile.get("w-latency-model"));
+        LatencyModel ackmodel = new FileLatencyModel((String)configFile.get("ack-latency-model"));
 
         try{
+            LatencyModelValidator.ValidateModel(rmodel);
             LatencyModelValidator.ValidateModel(wmodel);
+            LatencyModelValidator.ValidateModel(ackmodel);
         }
         catch (Exception e)
         {
@@ -57,7 +67,7 @@ public class run_solver {
         }
 
 
-        nrw_solver solver = new nrw_solver(p_s, t, k, c_r, c_w, rmodel, wmodel, wmodelnoack, w_min, n);
+        nrw_solver solver = new nrw_solver(p_s, t, k, c_r, c_w, rmodel, wmodel, ackmodel, w_min, n);
 
         List<nrw_solution> results = solver.get_solutions();
         Iterator<nrw_solution> it = results.iterator();
