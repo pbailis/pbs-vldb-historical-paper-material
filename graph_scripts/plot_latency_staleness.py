@@ -3,7 +3,7 @@ from plot_utils import *
 from math import ceil
 from pylab import *
 
-results = fetch_results("../results/micro/5N-2011-31-23_04_57")
+results = fetch_results("../results/micro/5N-2011-11-07_15_10_20")
 
 percentile = .98
 

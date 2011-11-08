@@ -46,8 +46,8 @@ def parse_file(config, f):
             write_start = int(line.split()[4].strip(','))/NS_PER_MS
             write_start_version = int(line.split()[5].strip(','))
         elif line.find("WC") != -1:
-            write_end = int(line.split()[4].strip(','))/NS_PER_MS
-            last_committed_version = int(line.split()[5].strip(','))
+            write_end = int(line.split()[2].strip(','))/NS_PER_MS
+            last_committed_version = int(line.split()[3].strip(','))
 
             assert last_committed_version == write_start_version
             assert write_end-write_start
@@ -73,49 +73,57 @@ def parse_file(config, f):
 
             search_index = write_commit_index
             while True:
+              if search_index != -1:
                 if search_index == len(writes)-1 or writes[search_index].endtime > read_start:
                     break
-                search_index += 1
+              search_index += 1
 
             while True:
                 if writes[search_index].endtime < read_start:
                     last_write = writes[search_index]
                     break
+                if search_index == 0:
+                  break
                 search_index -= 1
 
-
-            last_committed_version_at_read_start = last_write.version
-            last_committed_version_time_at_read_start = last_write.endtime
-
-            assert read_start >= last_committed_version_time_at_read_start
+            # Read was before any write
+            if search_index == 0:
+              last_committed_version_at_read_start = -1
+              last_committed_version_time_at_read_start = -1
+            else:
+              last_committed_version_at_read_start = last_write.version
+              last_committed_version_time_at_read_start = last_write.endtime
+              assert read_start >= last_committed_version_time_at_read_start
 
         elif line.find("RC") != -1:
-            read_end = int(line.split()[4])/NS_PER_MS
-            read_version = int(line.split()[5])
+            read_end = int(line.split()[2])/NS_PER_MS
+            read_version = int(line.split()[3])
 
             if config.R + config.W > config.N:
                 assert read_version >= last_committed_version_at_read_start
 
-            res = ReadResult(
-                    #read version
-                    read_version,
-                    #start time
-                    read_start,
-                    #end time
-                    read_end,
-                    #read version
-                    read_version,
-                    #last commited version,
-                    last_committed_version_at_read_start,
-                    #last commit time
-                    last_committed_version_time_at_read_start,
-                    #k-staleness
-                    read_version - last_committed_version_at_read_start,
-                    #latency
-                    (read_end - read_start))
+            # Ignore read that happened before any write
+            if last_committed_version_at_read_start != -1:
+              res = ReadResult(
+                      #read version
+                      read_version,
+                      #start time
+                      read_start,
+                      #end time
+                      read_end,
+                      #read version
+                      read_version,
+                      #last commited version,
+                      last_committed_version_at_read_start,
+                      #last commit time
+                      last_committed_version_time_at_read_start,
+                      #k-staleness
+                      read_version - last_committed_version_at_read_start,
+                      #latency
+                      (read_end - read_start))
 
-            assert res.latency > 0
+              assert res.latency > 0
 
-            reads.append(res)
+              reads.append(res)
 
     return ResultsClass(config, reads, writes, commit_times)

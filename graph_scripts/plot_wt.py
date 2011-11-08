@@ -74,7 +74,8 @@ def all_results(results_root):
       continue
     parse_results_dir(results_root+"/"+d)
 
-all_results("../results/micro/5N-2011-10-31-23_04_57")
+#all_results("../results/micro/5N-2011-11-03-23_11_46")
+all_results("../results/micro/5N-2011-11-07_15_10_20")
 
 for k in write_latencies.keys():
   for j in write_latencies[k].keys():
