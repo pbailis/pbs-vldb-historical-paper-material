@@ -24,7 +24,9 @@ h4 {
 font-size: 11pt;
 }
 
-
+input {
+width:150px
+}
 
 #info a:link {color: #444; text-decoration: none; font-size: 11pt; }
 #info a:active {color: #666; text-decoration: none; }
@@ -38,9 +40,40 @@ color: #ffffff;
 }
 
 
+#nrwpanel
+{
+	width:200px;
+	margin:20px auto;
+	text-align:center;
+	padding:15px;
+	border:1px solid #333;
+}
+
+
+#latencypanel
+{
+        padding:15px;
+	width:700px;
+	margin-top:1em;
+	margin:20px auto;
+	text-align:center;
+	border:1px solid #333;
+}
+
 h3 {
 text-align: center;
 font-weight: normal;
+}
+
+span.axis-label{
+font-size:smaller;
+color:#545454;
+}
+
+span.graph-label{
+text-align: center;
+float:center;
+line-height:30px;
 }
 
 body {

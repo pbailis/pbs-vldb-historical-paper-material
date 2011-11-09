@@ -19,6 +19,8 @@ You have a 97.9% chance of reading one of the 5 latest versions 5 seconds after 
 <script type="text/javascript">
     document.observe('dom:loaded', function(){
     editWLambda(100);
+    editRLambda(100);
+    editALambda(100);
 		       });
 
 
@@ -33,7 +35,7 @@ function showN(N)
 	document.getElementById("Nslider").innerHTML=N;
         if(document.getElementById("Rslider").innerHTML > N)
             showR(N);
-        if(document.getElementById("Wslider").getAttribute("value") > N)
+        if(document.getElementById("Wslider").innerHTML > N)
             showW(N);
 
         document.getElementById("Rinput").setAttribute("max", N);
@@ -46,36 +48,101 @@ function showW(W)
 	document.getElementById("Wslider").innerHTML=W;
 }
 
+
+function editRLambda(rlambda)
+{
+		   document.getElementById("rlambda").innerHTML=(rlambda/1000).toFixed(3);
+		   var d2 = [];
+    for(var i = 0; i < Math.min(20000/rlambda, 300); i += 0.5)
+		       
+		       d2.push([i, rlambda/1000*Math.exp(-rlambda/1000*i)]);
+		   
+		   var f = Flotr.draw($('rcontainer'), [ d2 ]);
+}
+
+
 function editWLambda(wlambda)
 {
-	document.getElementById("wlambda").innerHTML=wlambda/1000;
+	document.getElementById("wlambda").innerHTML=(wlambda/1000).toFixed(3);
 var d1 = [];
 for(var i = 0; i < Math.min(20000/wlambda, 300); i += 0.5)
 		   d1.push([i, wlambda/1000*Math.exp(-wlambda/1000*i)]);
 		   
 		   var f = Flotr.draw($('wcontainer'), [ d1 ]);
+
+}
+
+
+function editALambda(alambda)
+{
+	document.getElementById("alambda").innerHTML=(alambda/1000).toFixed(3);
+var d1 = [];
+for(var i = 0; i < Math.min(20000/alambda, 300); i += 0.5)
+		   d1.push([i, alambda/1000*Math.exp(-alambda/1000*i)]);
+		   
+		   var f = Flotr.draw($('acontainer'), [ d1 ]);
 }
 
 </script>
 
 
-<center>
-  <div id="wcontainer" style="width:300px;height:100px;"></div>
-  Latency (ms)<br/><br/>
 
-  </script>
 
-Lambda: <input type="range"  min="0" max="1000" value="100" step="1" onchange="editWLambda(this.value)"/><span id="wlambda">.100</span><br>
 
-N: <input type="range"  min="1" max="9" value="3" step="1" onchange="showN(this.value)" style='width:150px'/><span id="Nslider">3</span><br>
+<table cellpadding=20px align="center">
+<tr>
+<td>
+<div id="nrwpanel">
+<b>Staleness Settings</b><br/><br/>
+SOME: <input id="fakeid2" type="range"  min="1" max="9" value="3" step="1" onchange=""/><span id="foo">3</span><br>
+STUFF: <input id="fakeid" type="range"  min="1" max="3" value="1" step="1" onchange=""/><span id="bar">1</span><br>
+</div>
+</td>
+<td>
+<div id="nrwpanel">
+<b>Replica Configuration</b><br/><br/>
+N: <input type="range"  min="1" max="9" value="3" step="1" onchange="showN(this.value)"/><span id="Nslider">3</span><br>
 R: <input id="Rinput" type="range"  min="1" max="3" value="1" step="1" onchange="showR(this.value)"/><span id="Rslider">1</span><br>
 W: <input id="Winput" type="range"  min="1" max="3" value="1" step="1" onchange="showW(this.value)"/><span id="Wslider">1</span><br>
+</div>
+</td>
+</tr>
+</table>
 
+<div id="latencypanel">
+<b>Operation Latency</b><br/>
+Exponentially Distributed PDFs</br>
+<table cellpadding=20px align="center">
+<tr>
+<td>
+  <center>
+    <span class="graph-label">Write Request to Replica </span>
+    <div id="wcontainer" style="width:180px;height:100px;"></div>
+    <span class="axis-label">Latency (ms)</span><br/>
+    &#x3BB; <input type="range"  min="0" max="1000" value="100" step="1" onchange="editWLambda(this.value)"/><span id="wlambda">.100</span><br>
+  </center>
+</td>
 
+<td align="center">
+  <center>
+    <span class="graph-label">Read Request to Replica </span>
+    <div id="rcontainer" style="width:180px;height:100px;"></div>
+    <span class="axis-label">Latency (ms)</span><br/>
+    &#x3BB;  <input type="range"  min="0" max="1000" value="100" step="1" onchange="editRLambda(this.value)"/><span id="rlambda">.100</span><br>
+  </center>
+</td>
 
-</center>
-
-
+<td>
+  <center>
+    <span class="graph-label"> Response from Replica </span>
+    <div id="acontainer" style="width:180px;height:100px;"></div>
+    <span class="axis-label">Latency (ms)</span><br/>
+    &#x3BB; <input type="range"  min="0" max="1000" value="100" step="1" onchange="editALambda(this.value)"/><span id="alambda">.100</span><br>
+  </center>
+</td>
+</tr>
+</table>
+</div>
 
 
 </body>
