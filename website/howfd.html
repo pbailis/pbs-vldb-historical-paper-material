@@ -1,0 +1,71 @@
+<head>
+
+		<script type="text/javascript" src="flotr-0.1.0alpha.js"></script>
+		<script type="text/javascript" src="prototype-1.6.0.2.js"></script>
+
+
+</head>
+
+<body>
+<script type="text/javascript">
+    document.observe('dom:loaded', function(){
+    
+    var lambda = .10;
+    var d1 = [];
+    for(var i = 0; i < 200; i += 0.5)
+		       d1.push([i, lambda*Math.exp(-lambda*i)]);
+		    
+		      var f = Flotr.draw($('container'), [ d1 ]);
+		       });
+
+
+
+function showR(R)
+{
+	document.getElementById("Rslider").innerHTML=R;
+}
+
+function showN(N)
+{
+	document.getElementById("Nslider").innerHTML=N;
+        document.getElementById("Rinput").setAttribute("max", N);
+        document.getElementById("Winput").setAttribute("max", N);
+}
+
+function showW(W)
+{
+	document.getElementById("Wslider").innerHTML=W;
+}
+
+function showLambda(lambda)
+{
+	document.getElementById("lambda").innerHTML=lambda/1000;
+var d1 = [];
+for(var i = 0; i < 200; i += 0.5)
+		   d1.push([i, lambda/1000*Math.exp(-lambda/1000*i)]);
+		   
+		   var f = Flotr.draw($('container'), [ d1 ]);
+}
+</script>
+
+
+<center>
+  <div id="container" style="width:300px;height:100px;"></div>
+  Latency (ms)<br/><br/>
+
+  </script>
+
+Lambda: <input type="range"  min="0" max="1000" value=".100" step="1" onchange="showLambda(this.value)"/><span id="lambda">.100</span><br>
+
+N: <input type="range"  min="1" max="10" value="3" step="1" onchange="showN(this.value)"/><span id="Nslider">3</span><br>
+R: <input id="Rinput" type="range"  min="0" max="3" value="1" step="1" onchange="showR(this.value)"/><span id="Rslider">1</span><br>
+W: <input id="Winput" type="range"  min="0" max="3" value="1" step="1" onchange="showW(this.value)"/><span id="Wslider">1</span><br>
+
+
+
+</center>
+
+
+
+
+</body>
