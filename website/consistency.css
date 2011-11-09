@@ -1,0 +1,57 @@
+html {
+font-family:'Helvetica Neue Light', HelveticaNeue-Light, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+height: 100%;
+}
+
+h1 {
+text-align: center;
+font-weight:normal;
+}
+
+.moreinfo {
+display: none;
+}
+
+#main {
+margin-bottom:20px;
+}
+
+.morelink {
+float:right;
+}
+
+h4 {
+font-size: 11pt;
+}
+
+
+
+#info a:link {color: #444; text-decoration: none; font-size: 11pt; }
+#info a:active {color: #666; text-decoration: none; }
+#info a:visited {color: #444; text-decoration: none; }
+#info a:hover {color: #666; text-decoration: none; }
+
+#header {
+background-color: #ff3333;
+color: #ffffff;
+
+}
+
+
+h3 {
+text-align: center;
+font-weight: normal;
+}
+
+body {
+margin-left: auto;
+margin-right: auto;
+width: 60%;
+max-width: 1200px;
+}
+
+li { 
+margin-top: 1.5em; 
+font-size: 1em;
+}
+
