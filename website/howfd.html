@@ -1,6 +1,7 @@
 <head>
 
 		<script type="text/javascript" src="flotr-0.1.0alpha.js"></script>
+		<script type="text/javascript" src="calculation.js"></script>
 		<script type="text/javascript" src="prototype-1.6.0.2.js"></script>
 
 <title>How Fscked is My Consistency?</title>
@@ -55,7 +56,7 @@ function editRLambda(rlambda)
 		   var d2 = [];
     for(var i = 0; i < Math.min(20000/rlambda, 300); i += 0.5)
 		       
-		       d2.push([i, rlambda/1000*Math.exp(-rlambda/1000*i)]);
+		       d2.push([i, calc_exponential_cdf(rlambda/1000, i)]);
 		   
 		   var f = Flotr.draw($('rcontainer'), [ d2 ]);
 }
@@ -66,7 +67,7 @@ function editWLambda(wlambda)
 	document.getElementById("wlambda").innerHTML=(wlambda/1000).toFixed(3);
 var d1 = [];
 for(var i = 0; i < Math.min(20000/wlambda, 300); i += 0.5)
-		   d1.push([i, wlambda/1000*Math.exp(-wlambda/1000*i)]);
+		       d1.push([i, calc_exponential_cdf(wlambda/1000, i)]);
 		   
 		   var f = Flotr.draw($('wcontainer'), [ d1 ]);
 
@@ -78,7 +79,7 @@ function editALambda(alambda)
 	document.getElementById("alambda").innerHTML=(alambda/1000).toFixed(3);
 var d1 = [];
 for(var i = 0; i < Math.min(20000/alambda, 300); i += 0.5)
-		   d1.push([i, alambda/1000*Math.exp(-alambda/1000*i)]);
+		       d1.push([i, calc_exponential_cdf(alambda/1000, i)]);
 		   
 		   var f = Flotr.draw($('acontainer'), [ d1 ]);
 }
@@ -111,7 +112,7 @@ W: <input id="Winput" type="range"  min="1" max="3" value="1" step="1" onchange=
 
 <div id="latencypanel">
 <b>Operation Latency</b><br/>
-Exponentially Distributed PDFs</br>
+Exponentially Distributed CDFs</br>
 <table cellpadding=20px align="center">
 <tr>
 <td>
@@ -119,7 +120,7 @@ Exponentially Distributed PDFs</br>
     <span class="graph-label">Write Request to Replica </span>
     <div id="wcontainer" style="width:180px;height:100px;"></div>
     <span class="axis-label">Latency (ms)</span><br/>
-    &#x3BB; <input type="range"  min="0" max="1000" value="100" step="1" onchange="editWLambda(this.value)"/><span id="wlambda">.100</span><br>
+    &#x3BB; <input type="range"  min="1" max="1000" value="100" step="1" onchange="editWLambda(this.value)"/><span id="wlambda">.100</span><br>
   </center>
 </td>
 
@@ -128,7 +129,7 @@ Exponentially Distributed PDFs</br>
     <span class="graph-label">Read Request to Replica </span>
     <div id="rcontainer" style="width:180px;height:100px;"></div>
     <span class="axis-label">Latency (ms)</span><br/>
-    &#x3BB;  <input type="range"  min="0" max="1000" value="100" step="1" onchange="editRLambda(this.value)"/><span id="rlambda">.100</span><br>
+    &#x3BB;  <input type="range"  min="1" max="1000" value="100" step="1" onchange="editRLambda(this.value)"/><span id="rlambda">.100</span><br>
   </center>
 </td>
 
@@ -137,7 +138,7 @@ Exponentially Distributed PDFs</br>
     <span class="graph-label"> Response from Replica </span>
     <div id="acontainer" style="width:180px;height:100px;"></div>
     <span class="axis-label">Latency (ms)</span><br/>
-    &#x3BB; <input type="range"  min="0" max="1000" value="100" step="1" onchange="editALambda(this.value)"/><span id="alambda">.100</span><br>
+    &#x3BB; <input type="range"  min="1" max="1000" value="100" step="1" onchange="editALambda(this.value)"/><span id="alambda">.100</span><br>
   </center>
 </td>
 </tr>
