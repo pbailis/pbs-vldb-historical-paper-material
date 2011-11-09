@@ -7,7 +7,7 @@ from config_settings import *
 from os import listdir
 from pylab import *
 
-resultsfile = "../results/2011-11-08-10_50_43"
+resultsfile = "../results/2011-11-08-16_05_48"
 
 NS_PER_MS = 1000000.0
 MIN_READINGS_T_STALE = 10
@@ -136,6 +136,8 @@ def parse_file(config, f):
 
 def get_latency_staleness_results(k, result, percentile):
 
+    assert k >= 1
+
     result.reads.sort(key=lambda read: read.starttime-
                       read.last_committed_time_at_read_start)
     
@@ -148,6 +150,20 @@ def get_latency_staleness_results(k, result, percentile):
     prev_freshness = 1
     tstale = 0
 
+    '''
+    if result.config.R == 1 and result.config.W ==2 and result.config.lmbda == .002 and k==1:
+        for read in result.reads:
+            if read.version >= read.last_committed_version_at_read_start-(k-1):
+                current += 1
+            else:
+                staler += 1
+
+            cur_pcurrent = current/float(current+staler)
+
+            print read.starttime-read.last_committed_time_at_read_start, cur_pcurrent
+    '''
+
+
     #compute the probability of staleness at each t
     for read in result.reads:
         if read.version >= read.last_committed_version_at_read_start-(k-1):
@@ -157,6 +173,7 @@ def get_latency_staleness_results(k, result, percentile):
 
         cur_pcurrent = current/float(current+staler)
 
+
         if prev_freshness > percentile and cur_pcurrent < percentile and current+staler > MIN_READINGS_T_STALE:
             tstale = read.starttime-read.last_committed_time_at_read_start
             break
@@ -164,6 +181,7 @@ def get_latency_staleness_results(k, result, percentile):
         prev_freshness = cur_pcurrent
 
     if prev_freshness < percentile:
+        print "STALER THAN REQUESTED"
         return None
 
     latency = (average([r.latency for r in result.reads])

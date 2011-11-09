@@ -2,9 +2,9 @@
 from os import listdir
 from math import ceil
 from collections import defaultdict
-from scipy import stats
-from scipy import mean
-from scipy import std
+#from scipy import stats
+#from scipy import mean
+#from scipy import std
 from pylab import *
 
 # write_latencies is keyed by W.
@@ -61,10 +61,10 @@ def parse_results_dir(results_dir):
       #title("wt-%d for %s" %(num_wait, results_dir))
       #xlabel("key")
       #ylabel("wait time in ms")
-      print("wait for %d, wait time median: %f, 99 pc: %f, avg: %f," \
-         "std: %f" %(num_wait, stats.scoreatpercentile(values, 50), \
-            stats.scoreatpercentile(values, 99), mean(values), \
-              std(values))) 
+      #print("wait for %d, wait time median: %f, 99 pc: %f, avg: %f," \
+      #   "std: %f" %(num_wait, stats.scoreatpercentile(values, 50), \
+      #      stats.scoreatpercentile(values, 99), mean(values), \
+      #        std(values))) 
       #savefig("wt-%d-%d.pdf"%(W,num_wait))
 
 
@@ -75,7 +75,7 @@ def all_results(results_root):
     parse_results_dir(results_root+"/"+d)
 
 #all_results("../results/micro/5N-2011-11-03-23_11_46")
-all_results("../results/micro/5N-2011-11-07_15_10_20")
+all_results("../results/2011-11-08-10_50_43/")
 
 for k in write_latencies.keys():
   for j in write_latencies[k].keys():

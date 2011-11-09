@@ -33,7 +33,7 @@ def plot_with_errorbars(k, result, percentile):
 print "N R W k t pstale"
 
 for result in results:
-    for k in range(0, 3):
+    for k in range(1, 4):
         plot_with_errorbars(k, result, percentile)
 
     N = result.config.N
