@@ -48,6 +48,7 @@
         <mkdir dir="${build.classes}/META-INF" />
 
         <jar destfile="${build.out}/${final.name}.jar" manifest="MANIFEST.MF">
+            <fileset dir="${build.classes}"/>
 	    <zipfileset src="${basedir}/src/commons-math-2.2.jar"/>
         </jar>
     </target>

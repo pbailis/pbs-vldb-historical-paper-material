@@ -49,9 +49,9 @@ public class nrw_solver {
     private double pdf_get_prob_w(int w, double t)
     {
          return ((double)fact(this.n))/(double)(fact(w-1)*fact(this.n-w))
-                    * Math.pow(L_w_noack.getLatencyCDF(w, t), w-1)
-                    * Math.pow(1-L_w_noack.getLatencyCDF(w, t), this.n-w)
-                    * L_w.getLatencyPDF(w, t);
+                    * Math.pow(L_w_noack.getLatencyCDF(1, t), w-1)
+                    * Math.pow(1-L_w_noack.getLatencyCDF(1, t), this.n-w)
+                    * L_w.getLatencyPDF(1, t);
 
     }
 
@@ -61,16 +61,16 @@ public class nrw_solver {
     //from equation 6: http://mathworld.wolfram.com/OrderStatistic.html
     private double cdf_get_prob_w_after_write(int w, int wmin, double t)
     {
-        return 1-Math.pow(1-Math.pow(L_w_noack.getLatencyCDF(w, t), w-wmin), MathUtils.binomialCoefficientDouble(n-wmin, w-wmin));
+        return 1-Math.pow(1-Math.pow(L_w_noack.getLatencyCDF(1, t), w-wmin), MathUtils.binomialCoefficientDouble(n-wmin, w-wmin));
     }
 
     //this is p_r in the paper
     private double pdf_get_prob_r(int r, double t)
     {
         return ((double)fact(this.n))/(double)(fact(r-1)*fact(this.n-r))
-                    * Math.pow(L_r.getLatencyCDF(r, t), r-1)
-                    * Math.pow(1-L_r.getLatencyCDF(r, t), this.n-r)
-                    * L_r.getLatencyPDF(r, t);
+                    * Math.pow(L_r.getLatencyCDF(1, t), r-1)
+                    * Math.pow(1-L_r.getLatencyCDF(1, t), this.n-r)
+                    * L_r.getLatencyPDF(1, t);
     }
 
     private double calcReadLatency(int r)
@@ -125,7 +125,7 @@ public class nrw_solver {
 
         for(int w = wminc; w<this.n; ++w)
         {
-            ret += (calc_p_s_given_w(rc, w+1)-calc_p_s_given_w(rc, w))* cdf_get_prob_w_after_write(w, wminc, t);
+            ret += (calc_p_s_given_w(rc, w+1)-calc_p_s_given_w(rc, w))* cdf_get_prob_w_after_write(w+1, wminc, t);
         }
 
         if(ret > 1.0 || Math.round(ret*100000.0)/100000.0 < 0)

@@ -3,22 +3,19 @@ import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 
-import java.util.Map;
-import java.util.HashMap;
-import java.util.TreeMap;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Vector;
+import java.util.*;
 
 public class FileLatencyModel implements LatencyModel {
     
     private Map<Integer, Map<Double, Long>> latencyBuckets;
+    private Map<Integer, Long> maxLatencies;
     private Map<Integer, Map<Double, Long>> cumulativeLatencyBuckets;
     private Map<Integer, Long> totalElements;
 
     public FileLatencyModel(String filename) throws IOException
     {
       latencyBuckets = new HashMap<Integer, Map<Double, Long>>();
+      maxLatencies = new HashMap<Integer, Long>();
       cumulativeLatencyBuckets = new HashMap<Integer, Map<Double, Long>>();
       totalElements = new HashMap<Integer, Long>();
       initFromFile(filename);
@@ -48,6 +45,7 @@ public class FileLatencyModel implements LatencyModel {
               cumulativeLatencyBuckets.get(numReplicas).put(lat, cumulativeNumElements);
             }
             totalElements.put(numReplicas, cumulativeNumElements);
+            maxLatencies.put(numReplicas, Collections.max(latencyBuckets.get(numReplicas).values()));
         }
     }
 
@@ -58,7 +56,8 @@ public class FileLatencyModel implements LatencyModel {
         Double numElements = (double)latencyBuckets.get(numReplicas).get(t); 
         Double total = (double)totalElements.get(numReplicas);
         return  numElements/total; 
-      } else {
+      }
+      else {
         return 0.0;
       }
     }
@@ -69,7 +68,12 @@ public class FileLatencyModel implements LatencyModel {
           cumulativeLatencyBuckets.get(numReplicas).containsKey(t)) {
         return (double)(cumulativeLatencyBuckets.get(numReplicas).get(t)) / 
           (double)(totalElements.get(numReplicas));
-      } else {
+      }
+      else if(maxLatencies.get(numReplicas) < t)
+      {
+          return 1.0;
+      }
+      else {
         return 0.0;
       }
     }
