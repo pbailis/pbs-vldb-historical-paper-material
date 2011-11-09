@@ -11,6 +11,10 @@
 <body>
 <h1>How Fscked is My Consistency?</h1>
 
+<p>You have a 97.9% chance of reading the latest version 2 seconds after it commits.</p>
+
+You have a 97.9% chance of reading one of the 5 latest versions 5 seconds after they commit.
+
 
 <script type="text/javascript">
     document.observe('dom:loaded', function(){
@@ -27,8 +31,14 @@ function showR(R)
 function showN(N)
 {
 	document.getElementById("Nslider").innerHTML=N;
+        if(document.getElementById("Rslider").innerHTML > N)
+            showR(N);
+        if(document.getElementById("Wslider").getAttribute("value") > N)
+            showW(N);
+
         document.getElementById("Rinput").setAttribute("max", N);
         document.getElementById("Winput").setAttribute("max", N);
+
 }
 
 function showW(W)
@@ -57,9 +67,9 @@ for(var i = 0; i < Math.min(20000/wlambda, 300); i += 0.5)
 
 Lambda: <input type="range"  min="0" max="1000" value="100" step="1" onchange="editWLambda(this.value)"/><span id="wlambda">.100</span><br>
 
-N: <input type="range"  min="1" max="10" value="3" step="1" onchange="showN(this.value)"/><span id="Nslider">3</span><br>
-R: <input id="Rinput" type="range"  min="0" max="3" value="1" step="1" onchange="showR(this.value)"/><span id="Rslider">1</span><br>
-W: <input id="Winput" type="range"  min="0" max="3" value="1" step="1" onchange="showW(this.value)"/><span id="Wslider">1</span><br>
+N: <input type="range"  min="1" max="9" value="3" step="1" onchange="showN(this.value)" style='width:150px'/><span id="Nslider">3</span><br>
+R: <input id="Rinput" type="range"  min="1" max="3" value="1" step="1" onchange="showR(this.value)"/><span id="Rslider">1</span><br>
+W: <input id="Winput" type="range"  min="1" max="3" value="1" step="1" onchange="showW(this.value)"/><span id="Wslider">1</span><br>
 
 
 
