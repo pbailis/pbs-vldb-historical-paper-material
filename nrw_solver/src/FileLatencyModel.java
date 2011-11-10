@@ -11,6 +11,7 @@ public class FileLatencyModel implements LatencyModel {
     private Map<Integer, Long> maxLatencies;
     private Map<Integer, Map<Double, Long>> cumulativeLatencyBuckets;
     private Map<Integer, Long> totalElements;
+    private Map<Integer, TreeSet<Double>> valueTimes;
 
     public FileLatencyModel(String filename) throws IOException
     {
@@ -18,6 +19,7 @@ public class FileLatencyModel implements LatencyModel {
       maxLatencies = new HashMap<Integer, Long>();
       cumulativeLatencyBuckets = new HashMap<Integer, Map<Double, Long>>();
       totalElements = new HashMap<Integer, Long>();
+      valueTimes = new HashMap<Integer, TreeSet<Double>>();
       initFromFile(filename);
     }
 
@@ -42,6 +44,13 @@ public class FileLatencyModel implements LatencyModel {
             Long cumulativeNumElements = 0L;
             for (Double lat : latencyBuckets.get(numReplicas).keySet()) {
               cumulativeNumElements += latencyBuckets.get(numReplicas).get(lat);
+
+              if(!valueTimes.containsKey(numReplicas))
+              {
+                  valueTimes.put(numReplicas, new TreeSet<Double>());
+              }
+
+              valueTimes.get(numReplicas).add(lat);
               cumulativeLatencyBuckets.get(numReplicas).put(lat, cumulativeNumElements);
             }
             totalElements.put(numReplicas, cumulativeNumElements);
@@ -64,15 +73,23 @@ public class FileLatencyModel implements LatencyModel {
 
     public double getLatencyCDF(int numReplicas, double t)
     {
-      if (cumulativeLatencyBuckets.containsKey(numReplicas) && 
-          cumulativeLatencyBuckets.get(numReplicas).containsKey(t)) {
-        return (double)(cumulativeLatencyBuckets.get(numReplicas).get(t)) / 
-          (double)(totalElements.get(numReplicas));
-      }
-      else if(maxLatencies.get(numReplicas) < t)
+
+      if(maxLatencies.get(numReplicas) < t)
       {
           return 1.0;
       }
+      else if (cumulativeLatencyBuckets.containsKey(numReplicas)) {
+          double closestTime;
+
+          if(valueTimes.get(numReplicas).floor(t) == null)
+              closestTime = valueTimes.get(numReplicas).first();
+          else
+              closestTime = valueTimes.get(numReplicas).floor(t);
+
+        return (double)(cumulativeLatencyBuckets.get(numReplicas).get(closestTime)) /
+          (double)(totalElements.get(numReplicas));
+      }
+
       else {
         return 0.0;
       }
