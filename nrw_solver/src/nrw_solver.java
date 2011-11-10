@@ -13,6 +13,7 @@ public class nrw_solver {
     private LatencyModel L_w_noack;
     private int w_min;
     private int n;
+    private int r;
     private double t;
     private double p_s;
     private int k;
@@ -21,7 +22,7 @@ public class nrw_solver {
 
     private List<nrw_solution> solutions;
 
-    public nrw_solver(double p_s, double t, int k, double c_r, double c_w, LatencyModel L_r, LatencyModel L_w, LatencyModel L_w_noack, int w_min, int n)
+    public nrw_solver(double p_s, double t, int k, double c_r, double c_w, LatencyModel L_r, LatencyModel L_w, LatencyModel L_w_noack, int n, int r, int w_min)
     {
         this.c_r = c_r;
         this.c_w = c_w;
@@ -33,6 +34,7 @@ public class nrw_solver {
         this.p_s = p_s;
         this.t = t;
         this.k = k;
+        this.r = r;
     }
 
     private double eval_func(int r, int w)
@@ -73,7 +75,7 @@ public class nrw_solver {
                     * L_r.getLatencyPDF(1, t);
     }
 
-    private double calcReadLatency(int r)
+    public double calcReadLatency(int r)
     {
         List<Double> domain = L_r.getRange(r);
 
@@ -88,7 +90,7 @@ public class nrw_solver {
         return accum;
     }
 
-    private double calcWriteLatency(int w)
+    public double calcWriteLatency(int w)
     {
         List<Double> domain = L_w.getRange(w);
 
@@ -115,7 +117,7 @@ public class nrw_solver {
                         /MathUtils.binomialCoefficientDouble(n, rc);
     }
 
-    private double calc_p_s(int rc, int wminc, double t)
+    public double calc_p_s(int rc, int wminc, double t, int k)
     {
         double ret = (calc_p_s_given_w(rc, wminc));
 
@@ -146,7 +148,7 @@ public class nrw_solver {
             {
                 double config_fitness = eval_func(rc, wc);
 
-                double this_ps = calc_p_s(rc, wc, t);
+                double this_ps = calc_p_s(rc, wc, t, k);
 
                 if(this_ps > p_s)
                 {

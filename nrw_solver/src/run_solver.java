@@ -1,4 +1,6 @@
 
+import com.sun.security.auth.login.ConfigFile;
+
 import java.io.FileReader;
 import java.util.Iterator;
 import java.util.List;
@@ -24,8 +26,18 @@ public class run_solver {
         Properties configFile = new Properties();
         configFile.load(new FileReader(propertiesFile));
 
+        String desiredAction = "optimize";
+
         //number of replicas
-        int n = Integer.parseInt(configFile.get("n").toString());
+        int n = Integer.parseInt(configFile.getProperty("n"));
+
+        int r = 1;
+        String r_str= configFile.getProperty("r");
+        if(r_str.length() != 0)
+        {
+            r = Integer.parseInt(r_str);
+        }
+
         //minimum number of writes to commit (keep w_min < n)
         int w_min = Integer.parseInt(configFile.get("wmin").toString());
 
@@ -33,14 +45,14 @@ public class run_solver {
         double p_s = Double.parseDouble(configFile.get("p_s").toString());
 
         //RT-staleness, in seconds
-        double t = Double.parseDouble(configFile.get("t-stale").toString());
+        double t = Double.parseDouble(configFile.getProperty("t-stale"));
         //k-staleness
         int k = Integer.parseInt(configFile.get("k-stale").toString());
 
         //relative weighting of read latency
-        double c_r = Double.parseDouble(configFile.get("c_r").toString());
+        double c_r = Double.parseDouble(configFile.getProperty("c_r"));
         //relative weighting of write latency
-        double c_w = Double.parseDouble(configFile.get("c_w").toString());
+        double c_w = Double.parseDouble(configFile.getProperty("c_w"));
 
         /*
         We require three single-replica latency models (IID, remember!):
@@ -50,9 +62,9 @@ public class run_solver {
             (the last is called wmodelnoack).
          */
 
-        LatencyModel rmodel = new FileLatencyModel((String)configFile.get("r-latency-model"));
-        LatencyModel wmodel = new FileLatencyModel((String)configFile.get("w-latency-model"));
-        LatencyModel ackmodel = new FileLatencyModel((String)configFile.get("ack-latency-model"));
+        LatencyModel rmodel = new FileLatencyModel((String)configFile.getProperty("r-latency-model"));
+        LatencyModel wmodel = new FileLatencyModel((String)configFile.getProperty("w-latency-model"));
+        LatencyModel ackmodel = new FileLatencyModel((String)configFile.getProperty("ack-latency-model"));
 
         try{
             LatencyModelValidator.ValidateModel(rmodel);
@@ -66,19 +78,54 @@ public class run_solver {
             System.exit(-1);
         }
 
+        String operation = configFile.getProperty("actiontype");
 
-        nrw_solver solver = new nrw_solver(p_s, t, k, c_r, c_w, rmodel, wmodel, ackmodel, w_min, n);
-
-        List<nrw_solution> results = solver.get_solutions();
-        Iterator<nrw_solution> it = results.iterator();
+        nrw_solver solver = new nrw_solver(p_s, t, k, c_r, c_w, rmodel, wmodel, ackmodel, n, r, w_min);
 
 
-        while(it.hasNext())
+        if(operation.equals("optimize"))
         {
-            nrw_solution cur = it.next();
+            List<nrw_solution> results = solver.get_solutions();
+            Iterator<nrw_solution> it = results.iterator();
 
-            System.out.printf("\nN: %d\nR: %d\nW: %d\np_s: %f\nFIT: %f\nr_L: %f\nw_L: %f\n", cur.getN(), cur.getR(),
-                                cur.getW(), cur.getP_s(), cur.getFitness(), cur.getReadLatency(), cur.getWriteLatency());
+
+            while(it.hasNext())
+            {
+                nrw_solution cur = it.next();
+
+                System.out.printf("\nN: %d\nR: %d\nW: %d\np_s: %f\nFIT: %f\nr_L: %f\nw_L: %f\n", cur.getN(), cur.getR(),
+                                    cur.getW(), cur.getP_s(), cur.getFitness(), cur.getReadLatency(), cur.getWriteLatency());
+            }
+        }
+        else if(operation.equals("calc_staleness"))
+        {
+            System.out.println(solver.calc_p_s(r, w_min, t, k));
+        }
+        else if(operation.equals("sweep_t"))
+        {
+            for(int tval = 0; tval < 1000; ++tval)
+            {
+                System.out.printf("%d, %f\n", tval, solver.calc_p_s(r, w_min, tval, k));
+            }
+        }
+        else if(operation.equals("sweep_r_w_t_fixed_k"))
+        {
+            for(int rc = 1; rc <= n; rc++)
+            {
+                for(int wc = 1; wc <= n; wc++)
+                {
+                    if(rc+wc>n+1)
+                        continue;
+                    for(int tc = 0; tc < 1000; tc++)
+                    {
+                        System.out.printf("%d %d %d %f %f %f %f\n", n, rc, wc, t,
+                                        solver.calc_p_s(rc, wc, tc, k),
+                                        solver.calcReadLatency(rc),
+                                        solver.calcWriteLatency(wc));
+                    }
+
+                }
+            }
         }
     }
 }
