@@ -6,7 +6,7 @@ from pylab import *
 
 results = fetch_results(resultsfile)
 
-percentile = .95
+percentile = .99
 
 def ktocolor(k):
     if k == 0:
@@ -60,7 +60,7 @@ for lmbda in lmbdas:
 
 ax=gca()
 ax.set_xscale('symlog', linthreshx=.01)
-ax.set_yscale('log')
+#ax.set_yscale('log')
 
 legend()
 show()

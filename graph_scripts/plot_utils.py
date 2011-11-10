@@ -7,10 +7,29 @@ from config_settings import *
 from os import listdir
 from pylab import *
 
-resultsfile = "../results/2011-11-08-16_05_48"
+resultsfile = "../results/2011-11-09-01_45_52"
 
 NS_PER_MS = 1000000.0
 MIN_READINGS_T_STALE = 10
+
+def get_lmbdas(resultsdir):
+    lmbdas = set()
+    for d in listdir(resultsdir):
+        print d
+        if d.find("N") == -1:
+            continue
+        lmbdas.add(d[7:])
+
+    return lmbdas
+
+def fetch_result(resultsdir, N, R, W, lmbda):
+    config = ConfigSettings(N, R, W, lmbda)
+    resultdir = "%s/%dN%dR%dW-%s/" % (resultsdir, N, R, W, lmbda)
+    for s in listdir(resultdir):
+        if s.find("PROXY") != -1:
+            proxy = s
+
+    return parse_file(config, resultdir+s+"/cassandra.log")
 
 def fetch_results(resultsdir):
     ret = []
@@ -150,18 +169,7 @@ def get_latency_staleness_results(k, result, percentile):
     prev_freshness = 1
     tstale = 0
 
-    '''
-    if result.config.R == 1 and result.config.W ==2 and result.config.lmbda == .002 and k==1:
-        for read in result.reads:
-            if read.version >= read.last_committed_version_at_read_start-(k-1):
-                current += 1
-            else:
-                staler += 1
-
-            cur_pcurrent = current/float(current+staler)
-
-            print read.starttime-read.last_committed_time_at_read_start, cur_pcurrent
-    '''
+    how_many_stale = ceil(len(result.reads)*(1-percentile))
 
 
     #compute the probability of staleness at each t
@@ -171,18 +179,12 @@ def get_latency_staleness_results(k, result, percentile):
         else:
             staler += 1
 
-        cur_pcurrent = current/float(current+staler)
-
-
-        if prev_freshness > percentile and cur_pcurrent < percentile and current+staler > MIN_READINGS_T_STALE:
+        if(staler > how_many_stale and tstale == 0):
             tstale = read.starttime-read.last_committed_time_at_read_start
-            break
 
-        prev_freshness = cur_pcurrent
 
-    if prev_freshness < percentile:
-        print "STALER THAN REQUESTED"
-        return None
+    print how_many_stale, staler, len(result.reads)
+
 
     latency = (average([r.latency for r in result.reads])
                + average([w.latency for w in result.writes]))
@@ -191,3 +193,39 @@ def get_latency_staleness_results(k, result, percentile):
                       pow(std([w.latency for w in result.writes])/sqrt(len(result.writes)), 2)))
 
     return KTResult(result.config, k, tstale, latency, latencydev, staler, current, 1-prev_freshness)
+
+
+def get_t_staleness_series(k, result):
+    assert k >= 1
+
+    result.reads.sort(key=lambda read: read.starttime-
+                      read.last_committed_time_at_read_start)
+
+    result.reads.reverse()
+    
+    percentiles = []
+    tstales = []
+
+    for percentile in xrange(900, 1000, 10):
+        tstale=0
+        staler = 0
+        #current w.r.t. k
+        current = 0
+
+        how_many_stale = ceil(len(result.reads)*(1-percentile/1000.0))
+
+    #compute the probability of staleness at each t
+        for read in result.reads:
+            if read.version >= read.last_committed_version_at_read_start-(k-1):
+                current += 1
+            else:
+                staler += 1
+
+            if(staler > how_many_stale):
+                tstale = read.starttime-read.last_committed_time_at_read_start
+                break
+
+        tstales.append(tstale)
+        percentiles.append(percentile/1000.0)
+
+    return tstales, percentiles
