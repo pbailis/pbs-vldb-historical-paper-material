@@ -7,7 +7,7 @@ from config_settings import *
 from os import listdir
 from pylab import *
 
-resultsfile = "../results/2011-11-09-01_45_52"
+resultsfile = "../results/2011-11-10-02_15_17"
 
 NS_PER_MS = 1000000.0
 MIN_READINGS_T_STALE = 10
