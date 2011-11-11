@@ -36,7 +36,14 @@ public class FileLatencyModel implements LatencyModel {
           if (latencyBuckets.get(numReplicas) == null) {
             latencyBuckets.put(numReplicas, new TreeMap<Double, Long>());
           }
-          latencyBuckets.get(numReplicas).put(latency, numElements);
+          if(latencyBuckets.get(numReplicas).get(latency) == null)
+          {
+              latencyBuckets.get(numReplicas).put(latency, numElements);
+          }
+          else
+          {
+              latencyBuckets.get(numReplicas).put(latency, latencyBuckets.get(numReplicas).get(latency)+numElements);
+          }
         }
         // Build cumulativeLatencyBuckets
         for (Integer numReplicas : latencyBuckets.keySet()) {
