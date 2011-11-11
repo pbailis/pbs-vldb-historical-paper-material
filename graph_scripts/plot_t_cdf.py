@@ -1,6 +1,7 @@
 
 
 from plot_utils import *
+from analytical_utils import *
 from math import ceil
 from pylab import *
 
@@ -47,6 +48,10 @@ for result in results:
 
     plot(tstales, percentiles, label=str(result.config.lmbda)[:5])
 
+
+for result in results:
+    config = result.config
+    print sweep_t(config.rootresultsdir, config)
 
 ax = gca()
 ax.set_xscale("symlog")

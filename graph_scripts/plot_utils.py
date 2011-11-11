@@ -23,13 +23,13 @@ def get_lmbdas(resultsdir):
     return lmbdas
 
 def fetch_result(resultsdir, N, R, W, lmbda):
-    config = ConfigSettings(N, R, W, lmbda)
+    config = ConfigSettings(N, R, W, lmbda, resultsdir)
     resultdir = "%s/%dN%dR%dW-%s/" % (resultsdir, N, R, W, lmbda)
     for s in listdir(resultdir):
         if s.find("PROXY") != -1:
             proxy = s
 
-    return parse_file(config, resultdir+s+"/cassandra.log")
+    return parse_file(config, resultdir+proxy+"/cassandra.log")
 
 def fetch_results(resultsdir):
     ret = []
@@ -45,7 +45,7 @@ def fetch_results(resultsdir):
             W=int(d[4])
             lmbda = float(d[7:])
 
-            config = ConfigSettings(N, R, W, lmbda)
+            config = ConfigSettings(N, R, W, lmbda, resultsdir)
             
             yield(parse_file(config, resultsdir+"/"+d+"/"+s+"/cassandra.log"))
 
