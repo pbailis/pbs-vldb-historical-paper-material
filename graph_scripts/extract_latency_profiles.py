@@ -33,6 +33,7 @@ for line in open(proxyfile):
         write_start_clock = int(line.split()[6])
 
         version_to_starttimes[write_start_version] = write_start_clock
+
     elif line.find("WC") != -1:
         write_end = int(line.split()[2].strip(','))/NS_PER_MS
 
@@ -62,7 +63,7 @@ for serverfile in serverfiles:
             latency = whenapplied-version_to_starttimes[version]
             
             if latency < 0:
-                latency = 0
+                continue
 
             if latency not in onewaywrite_latencies:
                 onewaywrite_latencies[latency] = 0
