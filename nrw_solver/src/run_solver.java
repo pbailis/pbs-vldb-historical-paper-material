@@ -33,7 +33,7 @@ public class run_solver {
 
         int r = 1;
         String r_str= configFile.getProperty("r");
-        if(r_str.length() != 0)
+        if(r_str != null)
         {
             r = Integer.parseInt(r_str);
         }
@@ -64,7 +64,7 @@ public class run_solver {
 
         LatencyModel rmodel = new FileLatencyModel((String)configFile.getProperty("r-latency-model"));
         LatencyModel wmodel = new FileLatencyModel((String)configFile.getProperty("w-latency-model"));
-        LatencyModel ackmodel = new FileLatencyModel((String)configFile.getProperty("ack-latency-model"));
+        LatencyModel ackmodel = new FileLatencyModel((String)configFile.getProperty("oneway-latency-model"));
 
         try{
             LatencyModelValidator.ValidateModel(rmodel);
