@@ -10,29 +10,46 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.Date
 import java.lang.Math
 
+import ernst.solver.FileLatencyModel
+
 class ReadOutput (var version_at_start: Int, var version_read: Int,
                   var start_time: Long)
 class ReadPlot (var read: ReadOutput, var commit_time_at_start: Long) 
 
-class KVServer(lambda: Double) {
+class KVServer(sendF: String, ackF: String) {
   private val kv: ConcurrentMap[Int, Int] = new ConcurrentHashMap[Int, Int]
   var rand = new Random()
   val MAX_DELAY = 20
   val exec = new ScheduledThreadPoolExecutor(10)
+  var sendLatencyModel = new FileLatencyModel(sendF)
+  var ackLatencyModel = new FileLatencyModel(ackF)
+  val LAMBDA = 0.05
 
   def getExpRandom() : Long = {
-    return Math.round(Math.log(1-rand.nextDouble())/(-lambda))
+    return Math.round(Math.log(1-rand.nextDouble())/(-LAMBDA))
   }
 
   def getUniformRandom(): Long = {
     return rand.nextInt(MAX_DELAY)
   }
 
+  def getWriteSendDelay(): Long = {
+    return Math.round(sendLatencyModel.getInverseCDF(1,
+        rand.nextDouble()))
+  }
+  def getReadSendDelay(): Long = getWriteSendDelay
+
+  def getWriteAckDelay(): Long = {
+    return Math.round(ackLatencyModel.getInverseCDF(1,
+        rand.nextDouble()))
+  }
+  def getReadAckDelay(): Long = getWriteAckDelay
+
   def write(k: Int, v: Int, latch: CountDownLatch, 
       nlatch: CountDownLatch, m: ConcurrentMap[Int, Long]) = {
     var r = new Runnable() {
       def run = {
-        Thread.sleep(getExpRandom())
+        Thread.sleep(getWriteSendDelay())
         if (v > kv.getOrElse(k, 0))
           kv.put(k,v)
         nlatch.countDown()
@@ -41,7 +58,7 @@ class KVServer(lambda: Double) {
           m.put(v, fin)
         }
         //println("write replica " + v + " finished at " + fin)
-        Thread.sleep(getExpRandom())
+        Thread.sleep(getWriteAckDelay())
         latch.countDown()
       }
     }
@@ -52,10 +69,10 @@ class KVServer(lambda: Double) {
     var t = new Callable[Int]() {
       def call: Int = {
         try {
-          Thread.sleep(getExpRandom())
+          Thread.sleep(getReadSendDelay())
           val ret = kv.getOrElse(k, 0)
           // println("read " + ret + " at " + new Date().getTime())
-          Thread.sleep(getExpRandom())
+          Thread.sleep(getReadAckDelay())
           return ret
         } finally {
           latch.countDown()
@@ -141,20 +158,23 @@ object Simulator {
   var W = 2
   var R = 1
   var ITERATIONS = 100 
-  var LAMBDA = 0.05
+  var sendDelayFile: String = ""
+  var ackDelayFile: String = ""
   val key = 100
 
   def main (args: Array[String]) {
     args match {
-      case Array(n, r, w, iters, lambda) => {
+      case Array(n, r, w, iters, sendF, ackF) => {
         N = n.toInt
         R = r.toInt
         W = w.toInt
         ITERATIONS = iters.toInt
-        LAMBDA = lambda.toDouble
+        sendDelayFile = sendF
+        ackDelayFile = ackF
       }
       case _ => {
-        System.err.println("Usage: Simulator <N> <R> <W> <iters> <lambda>")
+        System.err.println(
+          "Usage: Simulator <N> <R> <W> <iters> <sendF> <ackF>")
         System.exit(1)
       }
     }
@@ -164,7 +184,8 @@ object Simulator {
     val readOutputs = new ListBuffer[ReadOutput]
 
     val replicas = new ListBuffer[KVServer]
-    for (i <- 0 until N+1) replicas += new KVServer(LAMBDA)
+    for (i <- 0 until N+1) 
+      replicas += new KVServer(sendDelayFile, ackDelayFile)
 
     val w = new Thread(new Writer(replicas.toList, 
         ITERATIONS, W, key, lastCommitted, finishTimes, commitTimes))
@@ -190,7 +211,7 @@ object Simulator {
     var reads = readPlotValues.sortBy(
       x => x.read.start_time - x.commit_time_at_start).reverse
 
-    println("Percentile " + LAMBDA)
+    //println("Percentile " + LAMBDA)
     for (p <- percentiles) {
       var tstale: Long = 0
       var staler = 0
