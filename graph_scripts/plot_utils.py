@@ -7,15 +7,13 @@ from config_settings import *
 from os import listdir
 from pylab import *
 
-resultsfile = "../results/2011-11-10-02_15_17"
+resultsfile = "../results/2011-11-11-14_57_02"
 
 NS_PER_MS = 1000000.0
-MIN_READINGS_T_STALE = 10
 
 def get_lmbdas(resultsdir):
     lmbdas = set()
     for d in listdir(resultsdir):
-        print d
         if d.find("N") == -1:
             continue
         lmbdas.add(d[7:])
@@ -23,12 +21,12 @@ def get_lmbdas(resultsdir):
     return lmbdas
 
 def fetch_result(resultsdir, N, R, W, lmbda):
-    config = ConfigSettings(N, R, W, lmbda, resultsdir)
     resultdir = "%s/%dN%dR%dW-%s/" % (resultsdir, N, R, W, lmbda)
     for s in listdir(resultdir):
         if s.find("PROXY") != -1:
             proxy = s
 
+    config = ConfigSettings(N, R, W, lmbda, resultdir)
     return parse_file(config, resultdir+proxy+"/cassandra.log")
 
 def fetch_results(resultsdir):
@@ -45,7 +43,7 @@ def fetch_results(resultsdir):
             W=int(d[4])
             lmbda = float(d[7:])
 
-            config = ConfigSettings(N, R, W, lmbda, resultsdir)
+            config = ConfigSettings(N, R, W, lmbda, resultsdir+"/"+s)
             
             yield(parse_file(config, resultsdir+"/"+d+"/"+s+"/cassandra.log"))
 
@@ -108,17 +106,21 @@ def parse_file(config, f):
                     last_write = writes[search_index]
                     break
                 if search_index == 0:
-                  break
+                    break
                 search_index -= 1
 
             # Read was before any write
             if search_index == 0:
-              last_committed_version_at_read_start = -1
-              last_committed_version_time_at_read_start = -1
+                last_committed_version_at_read_start = -1
+                last_committed_version_time_at_read_start = -1
             else:
-              last_committed_version_at_read_start = last_write.version
-              last_committed_version_time_at_read_start = last_write.endtime
-              assert read_start >= last_committed_version_time_at_read_start
+                last_committed_version_at_read_start = last_write.version
+                last_committed_version_time_at_read_start = last_write.endtime
+                assert read_start >= last_committed_version_time_at_read_start
+
+            if search_index != 0 and search_index != len(writes)-1:
+                assert read_start-writes[search_index].endtime > 0
+                assert read_start-writes[search_index+1].endtime < 0
 
         elif line.find("RC") != -1:
             read_end = int(line.split()[2])/NS_PER_MS
@@ -206,7 +208,7 @@ def get_t_staleness_series(k, result):
     percentiles = []
     tstales = []
 
-    for percentile in xrange(900, 1000, 10):
+    for percentile in xrange(900, 1000, 1):
         tstale=0
         staler = 0
         #current w.r.t. k
@@ -229,3 +231,23 @@ def get_t_staleness_series(k, result):
         percentiles.append(percentile/1000.0)
 
     return tstales, percentiles
+
+def plot_cdf(results, fmt, lbl, color):
+
+    vals = []
+    freqs = []
+
+    results.sort()
+
+    prev = -1
+    for i in range(0, len(results)):
+        if results[i] == prev:
+            continue
+        else:
+            print prev, (i-1)/float(len(results))
+            if prev != -1:
+                vals.append(prev)
+                freqs.append((i-1)/float(len(results)))
+            prev = results[i]
+
+    plot(vals, freqs, fmt, label=lbl, color = color)
