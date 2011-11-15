@@ -1,3 +1,5 @@
+package ernst.solver;
+
 import java.util.List;
 
 public interface LatencyModel {

@@ -1,3 +1,4 @@
+package ernst.solver;
 
 import org.apache.commons.math.util.MathUtils;
 import java.util.List;
