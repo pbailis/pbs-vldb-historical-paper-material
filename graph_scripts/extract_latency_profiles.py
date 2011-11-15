@@ -6,6 +6,7 @@ version_to_endtimes = {}
 write_latencies = {}
 read_latencies = {}
 onewaywrite_latencies = {}
+onewayack_latencies = {}
 
 if(len(argv) < 4):
     print "USAGE: outdir, proxyfile, serverfile(s)"
@@ -37,6 +38,7 @@ for line in open(proxyfile):
 
     elif line.find("WC") != -1:
         write_end = int(line.split()[2].strip(','))/NS_PER_MS
+        write_end_clock = int(line.split()[4].strip(','))
 
         latency = write_end-write_start
 
@@ -44,7 +46,7 @@ for line in open(proxyfile):
             write_latencies[latency] = 0
         write_latencies[latency] += 1
 
-        version_to_endtimes[write_start_version] = write_end
+        version_to_endtimes[write_start_version] = write_end_clock
         
     elif line.find("RS") != -1:
         read_start = int(line.split()[4])/NS_PER_MS
