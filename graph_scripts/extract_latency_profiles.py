@@ -2,6 +2,7 @@
 from sys import argv
 
 version_to_starttimes = {}
+version_to_endtimes = {}
 write_latencies = {}
 read_latencies = {}
 onewaywrite_latencies = {}
@@ -21,7 +22,7 @@ def write_out_latencies(outfile, latencies):
     latencysort = latencies.keys()
     latencysort.sort()
     for latency in latencysort:
-        f.write("1 %d %d\n" % (latencies[latency], latency))
+        f.write("1 %f %d\n" % (latency, latencies[latency]))
     f.close()
 
 #collect write info
@@ -42,6 +43,8 @@ for line in open(proxyfile):
         if latency not in write_latencies:
             write_latencies[latency] = 0
         write_latencies[latency] += 1
+
+        version_to_endtimes[write_start_version] = write_end
         
     elif line.find("RS") != -1:
         read_start = int(line.split()[4])/NS_PER_MS
@@ -58,6 +61,7 @@ for serverfile in serverfiles:
     for line in open(serverfile):
         if line.find("remote applied") != -1:
             version = int(line.split()[3])
+
             whenapplied = int(line.split()[7])
         
             latency = whenapplied-version_to_starttimes[version]
@@ -69,8 +73,18 @@ for serverfile in serverfiles:
                 onewaywrite_latencies[latency] = 0
             onewaywrite_latencies[latency] += 1
 
+            latency = version_to_endtimes[version]-whenapplied
+            
+            if latency < 0:
+                continue
+
+            if latency not in onewayack_latencies:
+                onewayack_latencies[latency] = 0
+            onewayack_latencies[latency] += 1
+
 
 write_out_latencies("wlatency.dist", write_latencies)
 write_out_latencies("rlatency.dist", read_latencies)
 write_out_latencies("onewaywrite.dist", onewaywrite_latencies)
+write_out_latencies("onewayack.dist", onewayack_latencies)
     
