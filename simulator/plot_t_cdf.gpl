@@ -1,0 +1,37 @@
+#!/bin/sh
+if [ $# -ne 2 ]
+then
+  echo "Usage: `basename $0` <data points> <output.pdf>"
+  exit 0;
+fi
+
+gnuplot << EOF
+set term pdfcairo enhanced font "Times,26" size 11in,8.5in lw 4
+set output "$2"
+set xlabel "Time (milliseconds)"
+set ylabel "CDF"
+set border 3
+
+set xtics nomirror
+set ytics nomirror
+
+set style line 1 lt 3 lw 4 pt 1
+set style line 2 lt 8 lw 4 pt 2
+set style line 3 lt 7 lw 4 pt 3
+set style line 4 lt 9 lw 4 pt 4
+set style line 5 lt 5 lw 4 pt 1
+
+#set log x
+#set yrange[0:0.5]
+#set key out center top
+#set key spacing 0.8
+
+set pointsize 2.5
+
+plot "$1" using (\$2):(\$1/1000) with lines title columnheader(2) ls 1, \
+     "$1" using (\$3):(\$1/1000) with lines title columnheader(3) ls 2, \
+     "$1" using (\$4):(\$1/1000) with lines title columnheader(4) ls 3, \
+     "$1" using (\$5):(\$1/1000) with lines title columnheader(5) ls 4, \
+     "$1" using (\$6):(\$1/1000) with lines title columnheader(6) ls 5
+EOF
+#plot "$1" using (\$1):(1./100.) smooth cumulative title "lambda" ls 1 

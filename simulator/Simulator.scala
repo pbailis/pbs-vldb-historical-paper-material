@@ -10,6 +10,10 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.Date
 import java.lang.Math
 
+class ReadOutput (var version_at_start: Int, var version_read: Int,
+                  var start_time: Long)
+class ReadPlot (var read: ReadOutput, var commit_time_at_start: Long) 
+
 class KVServer(lambda: Double) {
   private val kv: ConcurrentMap[Int, Int] = new ConcurrentHashMap[Int, Int]
   var rand = new Random()
@@ -47,12 +51,15 @@ class KVServer(lambda: Double) {
   def read(k: Int, latch: CountDownLatch) : ScheduledFuture[Int] = {
     var t = new Callable[Int]() {
       def call: Int = {
-        Thread.sleep(getExpRandom())
-        val ret = kv.getOrElse(k, 0)
-        // println("read " + ret + " at " + new Date().getTime())
-        Thread.sleep(getExpRandom())
-        latch.countDown()
-        return ret
+        try {
+          Thread.sleep(getExpRandom())
+          val ret = kv.getOrElse(k, 0)
+          // println("read " + ret + " at " + new Date().getTime())
+          Thread.sleep(getExpRandom())
+          return ret
+        } finally {
+          latch.countDown()
+        }
       }
     }
     return exec.schedule(t, 0, TimeUnit.MILLISECONDS)
@@ -65,7 +72,8 @@ class KVServer(lambda: Double) {
 }
 
 class Writer(replicas: List[KVServer], numWrites: Int, W: Int, k: Int,
-    lc:AtomicInteger, m: ConcurrentMap[Int, Long]) extends Runnable {
+    lc:AtomicInteger, m: ConcurrentMap[Int, Long], 
+    wf:ConcurrentMap[Int, Long]) extends Runnable {
   def run() = {
     for (i <- 0 until numWrites) {
       val latch = new CountDownLatch(W)
@@ -74,6 +82,7 @@ class Writer(replicas: List[KVServer], numWrites: Int, W: Int, k: Int,
         replica.write(k, i, latch, nlatch, m)
       }
       latch.await()
+      wf.put(i, new Date().getTime())
       lc.set(i)
       //println("Write " + i + " finished at " + new Date().getTime())
     }
@@ -81,7 +90,7 @@ class Writer(replicas: List[KVServer], numWrites: Int, W: Int, k: Int,
 }
 
 class Reader(replicas: List[KVServer], numReads: Int, R: Int, k: Int,
-    lc: AtomicInteger, rs: ListBuffer[Pair[Int, Long]]) extends Runnable {
+    lc: AtomicInteger, rs: ListBuffer[ReadOutput]) extends Runnable {
   var staleReads = 0 
   var kStaleness = new ListBuffer[Int]
   def run() = {
@@ -106,22 +115,24 @@ class Reader(replicas: List[KVServer], numReads: Int, R: Int, k: Int,
             finalValue = f.get
         }
       }
-      if (numFinished < R) { 
-        println("Too few futures finished !" + numFinished + " " + R)
+      if (numFinished < R) {
+        // Race condition ? Ignore ? 
+        Console.err.println("Too few futures finished !" + numFinished + " " + R)
       }
       if (finalValue < lastCommitedAtStart) { 
         staleReads = staleReads + 1
         kStaleness += (lastCommitedAtStart - finalValue)
-        rs.append(Pair(lastCommitedAtStart, readStartTime))
         // println("Expected " + lastCommitedAtStart + " got " +
         //     finalValue)
       }
+      rs.append(new ReadOutput(
+        lastCommitedAtStart, finalValue, readStartTime))
       //println("Read " + i + " finished at " + finishTime + " value " +
       //    finalValue + " lc at start " + lastCommitedAtStart)
     }
-    println("Reads total: " + numReads + " stale: " + staleReads)
-    println("Avg k-staleness " + 
-      kStaleness.sum.toDouble/kStaleness.length.toDouble)
+    // println("Reads total: " + numReads + " stale: " + staleReads)
+    // println("Avg k-staleness " + 
+    //   kStaleness.sum.toDouble/kStaleness.length.toDouble)
   }
 }
 
@@ -149,15 +160,16 @@ object Simulator {
     }
     val lastCommitted = new AtomicInteger(0)
     val finishTimes = new ConcurrentHashMap[Int, Long]
-    val readStartTimes = new ListBuffer[Pair[Int, Long]]
+    val commitTimes = new ConcurrentHashMap[Int, Long]
+    val readOutputs = new ListBuffer[ReadOutput]
 
     val replicas = new ListBuffer[KVServer]
     for (i <- 0 until N+1) replicas += new KVServer(LAMBDA)
 
     val w = new Thread(new Writer(replicas.toList, 
-        ITERATIONS, W, key, lastCommitted, finishTimes))
+        ITERATIONS, W, key, lastCommitted, finishTimes, commitTimes))
     val r = new Thread(new Reader(replicas.toList, 
-        ITERATIONS, R, key, lastCommitted, readStartTimes))
+        ITERATIONS, R, key, lastCommitted, readOutputs))
 
     w.start()
     Thread.sleep(2)
@@ -167,19 +179,55 @@ object Simulator {
     r.join()
 
     for (r <- replicas.toList) r.join
-    
-    val tStaleness = new ListBuffer[Long]
-    // Calculate t-visibility stalness for each read
-    for (r <- readStartTimes) {
-      val wFinishTime = finishTimes.getOrElse(r._1, -1): Long
-      if (wFinishTime - r._2 < 0) 
-        println("wFinishTime " + wFinishTime + " read start " + r._2 + 
-          " key " + r._1)
-      else 
-        tStaleness.append(wFinishTime - r._2) 
+
+    val readPlotValues = new ListBuffer[ReadPlot]
+    for (r <- readOutputs) {
+      val wCommitTime = commitTimes.getOrElse(r.version_at_start, -1): Long
+      readPlotValues.append(new ReadPlot(r, wCommitTime))
     }
-    println("Avg t-staleness " + tStaleness.sum.toDouble /
-      tStaleness.length.toDouble)
+
+    var percentiles = new Range(900, 1000, 1)
+    var reads = readPlotValues.sortBy(
+      x => x.read.start_time - x.commit_time_at_start).reverse
+
+    println("Percentile " + LAMBDA)
+    for (p <- percentiles) {
+      var tstale: Long = 0
+      var staler = 0
+      var current = 0
+      var tstaleComputed = false
+
+      var pst: Double = (1-p/1000.0)
+
+      var how_many_stale = Math.ceil(reads.length*pst) 
+      for (r <- reads) {
+        if (r.read.version_read >= r.read.version_at_start)
+          current = current + 1
+        else
+          staler = staler + 1
+
+        if (staler > how_many_stale && !tstaleComputed) {
+          tstaleComputed = true
+          tstale = r.read.start_time - r.commit_time_at_start
+        }
+      }
+      println(p + " " + tstale)
+    }
+    
+    // val tStaleness = new ListBuffer[Long]
+    // Calculate t-visibility stalness for each read
+    // for (r <- readStartTimes) {
+    //   val wFinishTime = finishTimes.getOrElse(r._1, -1): Long
+    //   if (wFinishTime - r._2 < 0) 
+    //     println("wFinishTime " + wFinishTime + " read start " + r._2 + 
+    //       " key " + r._1)
+    //   else 
+    //     tStaleness.append(wFinishTime - r._2) 
+    // }
+    // println("Avg t-staleness " + tStaleness.sum.toDouble /
+    //  tStaleness.length.toDouble)
+
+    // For each read
     exit(0)
   }
 }
