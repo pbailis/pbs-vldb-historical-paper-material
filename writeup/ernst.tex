@@ -159,6 +159,11 @@ We make the following contributions in this paper:
 
 \section{Motivation}
 
+What kind of consistency do eventually consistent data stores provide?
+Rather than provide yet another design and a new consistency model, we
+turn to the problem of diagnosing what consistency our existing stores
+provide.
+
 \textbf{Predictability.} Can we predict the staleness of 
 eventually-consistent data stores? At its core, eventual consistency
 is quite weak, only guaranteeing that the latest write will not be
@@ -262,17 +267,18 @@ to.
 \end{comment}
 
 
-\section{Probabilistically Bounded Staleness}
+\section{Probabilistically Bounded\\Staleness}
 \label{sec:theory}
 
-In this section, we develop the theory of Probabilistically Bounded
-Staleness, an extension of prior work on probabilistic quorums that
-accounts for staleness of both versions and across time.  We introduce
-the notions of PBS $k$-quorums, which stochastically bounds the
-staleness of versions returned by read quorums, PBS $t$-visibility,
-which stochastically bounds the time before a committed version
-appears to readers, and PBS $<k, t>$-quorums, a combination of the two
-prior models.
+In this section, we introduce the theory of Probabilistically Bounded
+Staleness to describe the consistency that existing eventually
+consistent data stores provide.  PBS is an extension of prior work on
+probabilistic quorums that accounts for staleness of both versions and
+across time.  We introduce the notions of PBS $k$-quorums, which
+stochastically bounds the staleness of versions returned by read
+quorums, PBS $t$-visibility, which stochastically bounds the time
+before a committed version appears to readers, and PBS $<k,
+t>$-quorums, a combination of the two prior models.
 
 \subsection{Quorum Foundations: Theory}
 
@@ -555,7 +561,7 @@ began (and may not be committed yet).
 By definition, $P_w(c,0) = 1$ $\forall c \in [0, w]$.  Intuitively, at
 commit time, $w$ replicas will have the value, so the probability that
 zero to $w$ replicas have the value immediately after commit is
-exactly $1$.  We can model the probability of PBS $RT$-consistency for an interval $t$ by summing the conditional probabilities of each possible $\mathcal{W}$:
+exactly $1$.  We can model the probability of PBS $t$-visibility for an interval $t$ by summing the conditional probabilities of each possible $\mathcal{W}$:
 
 \begin{equation}
 p_{staler} = P_l(w, t)+\sum_{c\in(w, n]} \frac{{n-c \choose r}}{{n \choose r}}\cdot [P_w(c+1, t)-P_w(c,t)]
@@ -597,7 +603,7 @@ probabilistic $\langle k, t \rangle$-quorum consistency. probabilistic
 $k$-quorum consistency is simply probabilistic $\langle k, 0
 \rangle$-quorum consistency, probabilistic monotonic reads consistency
 is $\langle 1+\frac{\gamma_{gw}}{\gamma_{cr}}, 0 \rangle$-quorum
-consistency, and $RT$-consistency is $\langle 0, RT \rangle$-quorum
+consistency, and $t$-visibility is $\langle 0, RT \rangle$-quorum
 consistency.
 
 \section{Applying Theory to Practice}
@@ -607,6 +613,20 @@ In this section, we discuss probabilitic quorums in the context of
 Dynamo-style data storage systems.  We describe how to model the
 probability of staleness in these systems as well as how to optimize
 replica choice for a particular
+
+\subsection{Dynamo-style Inconsistency}
+
+Dynamo-style quorum systems are inconsistent as a result of read and
+write message reordering.  Figure~\ref{fig:dynamostale} shows a
+space-time diagram for messages between a sender and a single replica.
+When reads and writes are executed, they are sent to all $N$
+
+\begin{figure}
+\centering
+\includegraphics[width=.8\columnwidth]{figs/dynamostale.pdf}
+\caption{Expected latency of write quorums of $w$ replicas in Dynamo-style operation versus quorum element correlation.}
+\label{fig:dynamostale}
+\end{figure}
 
 \subsection{Dynamo-style Operation Latency}
 
@@ -681,14 +701,6 @@ Similarly, to determine how many replicas have a particular value (even if they 
 P_{w:have}(\mathcal{W}, t) = 1-(1-(L_w(t))^{\mathcal{W}-w})^{n-w \choose \mathcal{W}-w}
 \end{equation}
 
-\begin{figure}
-\centering
-\includegraphics[width=.8\columnwidth]{figs/dynamostale.pdf}
-\caption{Expected latency of write quorums of $w$ replicas in Dynamo-style operation versus quorum element correlation.}
-\label{fig:dynamostale}
-\end{figure}
-
-
 Thus far, we have only considered the write operation latencies.  The
 read quorum latency may be different from the write latency depending
 on node-level actions such as forced logging or disk-bound operations.
@@ -741,7 +753,83 @@ Voldemort: does not provide production configs besides testing (N=2)
 \section{Experimental Evaluation}
 \label{sec:eval}
 
+We evaluated Dynamo-style partial quorums through the lens of PBS.  We
+first implemented PBS policies on top of an open source Dynamo clone,
+Cassandra, and compared our theory to observed results in a cloud
+computing environment.  We subsequently predicted and measured and
+predicted the PBS $k$-quorum and $t$-visibility consisistency across
+several environmental configurations.
+
 \subsection{Implementation}
+
+We implemented PBS policies on top of Cassandra, an open source data
+management system.  Cassandra provides Dynamo-style partial quorum
+semantics, offering per-request quorum sizes and a BigTable-like
+schemas~\cite{needed}.  Our changes to Cassandra were minimal: we
+added support for partial quorums of size greater than
+three---requiring changes to the wire protocol and request handling
+code---and instrumented parts of the database to provide timing
+information about reads and writes.  By analyzing Cassandra logs, we
+were able to reconstruct the latency distributions of write requests,
+write acknowledgements, read requests, and read responses.
+
+We disabled read repair in Cassandra.  When a read quorum returns
+divergent versions, we return the highest-valued version and do not
+attempt read repair, essentially writing the new value back to the
+stale replicas.  For a read request, Cassandra sends out a read
+request to one node and ``digest'' requests for hashes of data items
+to $R-1$ replicas on a read request.  If there is a mismatch between
+any digest and the value read, Cassandra begins read repair, incurring
+another set of round trips between the read coordinator and the
+replicas.  We disable this feature and send out vanilla read requests
+to all replicas instead.  Accordingly, we overestimate the staleness
+of versions returned.
+
+We implemented a staleness predictor using Monte Carlo simulation.
+The closed-form solution is tractable, but there are several reasons
+why we preferred simulation.  Simulating the message delays is simple.
+One simply has to draw from each distribution and compare latencies to
+determine the degree of staleness.  The Dynamo model is easily
+implemented in an event-based simulation.  The analytical model is
+much more complicated.  We found that implementing the analytical
+model is rather onerous, requiring a large amount of numerical
+integration and difficult code.  This is potentially a barrier for
+adoption for practitioners.  Finally, when operating over discrete,
+experimentally-gathered distributions (without curve-fitting), Monte
+Carlo simulation was significantly faster.  Accordingly, our predicted
+results here are derived from repeated simulation trials.
+
+\subsection{Experimental Deployment}
+
+We deployed Cassandra on Amazon EC2.  To provide a single point of
+order for the series of reads and writes in the system, we deployed
+$N+1$ Cassandra nodes for each experiment involving $N$ nodes.  After
+configuring the Cassandra schema, we determined the node that did not
+store the data and sent all requests through it, effectively creating
+a remote proxy.  Our model is more general than the specific proxy
+configuration, however using a centralized proxy allows us to avoid
+most issues with clock skew between replicas and rely less heavily on
+globally synchronized clocks.
+
+We used \texttt{m1.small} instances throughout our experiments within
+the \texttt{us-east-1} availability zone.  To model network and remote
+processing delays, we injected delays into both the request and
+response sending modules in Cassandra.  We discuss our choice of
+distributions and their effects in Subsection~\ref{subsec:delay}.
+
+\begin{comment}
+
+One major challenge in performing our experiments was the possibility
+of clock skew across replicas; we relied on synchronization between
+the Xen hypervisors running our virtual machines.
+
+\end{comment}
+
+\subsection{Observed Staleness}
+
+
+
+\begin{comment}
 
 \subsection{Operation Latency}
 \label{sec:real-latency}
@@ -789,6 +877,8 @@ In an environment where half of the nodes are co-located on a rack, we can treat
   of Twitter clone.}
 \label{fig:twissandra}
 \end{figure}
+
+\end{comment}
 
 \section{Discussion}
 \label{sec:discussion}
@@ -883,13 +973,14 @@ Vadhat
 \begin{appendix}
 \section{Dynamo-style Staleness}
 
-We present an analytical closed-form solution to the probability that
-a Dynamo-style quorum is not strongly consistent (that is, does not
-return the most recent value when the read began). In this section,
-when we refer to the ``last committed version'', we are referring to
-the last committed version before the read began. We consider the
-pathological case where a read occurs immediately after a write
-occurs.
+We present an analytical closed-form solution to $p_{staler}$ for
+$t$-visible partial quorums unde Dynamo-style.  What is the
+probability that a read result is not strongly consistent (that is,
+does not return the most recent value when the read began)? In this
+section, when we refer to the ``last committed version'', we are
+referring to the last committed version before the read began. We
+consider the pathological case where a read occurs immediately after a
+write occurs.
 
 We assume that each writes to a replica is independently delayed by a
 randomly distributed variate $W$, each write acknowledgement from a
