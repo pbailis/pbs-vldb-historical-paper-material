@@ -7,6 +7,7 @@ import scala.collection.JavaConversions._
 import scala.util.Random
 import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.{ArrayList, Collections}
 import java.util.Date
 import java.lang.Math
 
@@ -107,9 +108,21 @@ class Writer(replicas: List[KVServer], numWrites: Int, W: Int, k: Int,
 }
 
 class Reader(replicas: List[KVServer], numReads: Int, R: Int, k: Int,
-    lc: AtomicInteger, rs: ListBuffer[ReadOutput]) extends Runnable {
+    lc: AtomicInteger, rs: java.util.List[ReadOutput]) extends Runnable {
   var staleReads = 0 
   var kStaleness = new ListBuffer[Int]
+  def getFinalValue(futures: ListBuffer[ScheduledFuture[Int]]): (Int,Int) = {
+      var finalValue = 0
+      var numFinished = 0
+      for (f <- futures) {
+        if (f.isDone()) {
+          numFinished = numFinished + 1
+          if (f.get > finalValue)
+            finalValue = f.get
+        }
+      }
+      return (finalValue, numFinished)
+  }
   def run() = {
     for (i <- 0 until numReads) {
       val lastCommitedAtStart = lc.get()
@@ -121,32 +134,32 @@ class Reader(replicas: List[KVServer], numReads: Int, R: Int, k: Int,
       }
       latch.await()
       val finishTime = new Date().getTime()
-      var finalValue = 0
-      var numFinished = 0
       // R futures should have completed
-      // Give it a millisecond to make sure
-      for (f <- futures) {
-        if (f.isDone()) {
-          numFinished = numFinished + 1
-          if (f.get > finalValue)
-            finalValue = f.get
-        }
-      }
-      if (numFinished < R) {
-        // Race condition ? Ignore ? 
+      var tuple = getFinalValue(futures)
+      var finalValue = tuple._1
+      var numFinished = tuple._2
+
+      while (numFinished < R) {
+        // Race condition ? Try again 
         Console.err.println("Too few futures finished !" + numFinished + " " + R)
+        // Give it a millisecond to make sure
+        Thread.sleep(1)
+        var tuple = getFinalValue(futures)
+        finalValue = tuple._1
+        numFinished = tuple._2
       }
-      if (finalValue < lastCommitedAtStart) { 
+      if (finalValue < lastCommitedAtStart) {
         staleReads = staleReads + 1
         kStaleness += (lastCommitedAtStart - finalValue)
         // println("Expected " + lastCommitedAtStart + " got " +
         //     finalValue)
       }
-      rs.append(new ReadOutput(
+      rs.add(new ReadOutput(
         lastCommitedAtStart, finalValue, readStartTime))
       //println("Read " + i + " finished at " + finishTime + " value " +
       //    finalValue + " lc at start " + lastCommitedAtStart)
     }
+    // Console.err.println("Stale reads " + staleReads)
     // println("Reads total: " + numReads + " stale: " + staleReads)
     // println("Avg k-staleness " + 
     //   kStaleness.sum.toDouble/kStaleness.length.toDouble)
@@ -161,6 +174,7 @@ object Simulator {
   var sendDelayFile: String = ""
   var ackDelayFile: String = ""
   val key = 100
+  val NUM_READERS = 5
 
   def main (args: Array[String]) {
     args match {
@@ -181,7 +195,7 @@ object Simulator {
     val lastCommitted = new AtomicInteger(0)
     val finishTimes = new ConcurrentHashMap[Int, Long]
     val commitTimes = new ConcurrentHashMap[Int, Long]
-    val readOutputs = new ListBuffer[ReadOutput]
+    val readOutputs = Collections.synchronizedList(new ArrayList[ReadOutput])
 
     val replicas = new ListBuffer[KVServer]
     for (i <- 0 until N+1) 
@@ -189,15 +203,21 @@ object Simulator {
 
     val w = new Thread(new Writer(replicas.toList, 
         ITERATIONS, W, key, lastCommitted, finishTimes, commitTimes))
-    val r = new Thread(new Reader(replicas.toList, 
-        ITERATIONS, R, key, lastCommitted, readOutputs))
+
+
+    val readerThreads = new ListBuffer[Thread]
+    for (i <- 0 until NUM_READERS)
+      readerThreads.append(new Thread(new Reader(replicas.toList, 
+        ITERATIONS, R, key, lastCommitted, readOutputs)))
 
     w.start()
     Thread.sleep(2)
-    r.start()
+    for (reader <- readerThreads)
+      reader.start()
 
     w.join()
-    r.join()
+    for (reader <- readerThreads)
+      reader.join()
 
     for (r <- replicas.toList) r.join
 
@@ -210,6 +230,7 @@ object Simulator {
     var percentiles = new Range(900, 1000, 1)
     var reads = readPlotValues.sortBy(
       x => x.read.start_time - x.commit_time_at_start).reverse
+    // Console.err.println("Number of reads " + reads.length)
 
     //println("Percentile " + LAMBDA)
     for (p <- percentiles) {
