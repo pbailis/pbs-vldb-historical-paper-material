@@ -33,16 +33,23 @@ arbitrarily stale data.
 
 Distributed quorums are often used to ensure strong consistency across
 multiple replicas of a data item by overlapping read and write
-sets. However, to achieve favorable performance and handle
-intermittent failures, users often employ \textit{non-strict or
-  partial quorums}, in which read and write sets are not guaranteed to
-overlap (given $n$ replicas and read and write quorum sizes $r$ and
-$w$, $r+w \leq n$).  Modern quorum-based scalable data systems such as
-Dynamo~\cite{dynamo} (and its open source descendants
-Cassandra~\cite{cassandra}, Riak~\cite{riak}, and
-Voldemort~\cite{voldemort}) provide no guarantees on the staleness or
-consistency returned by non-strict quorums other than that the system
-will ``eventually'' provide the most recent version in the absence of new
+sets. However, service latency is critical. For example, at Amazon,
+100 ms of additional latency resulted in 1\% drop in
+sales~\cite{amazon-latency}, while 500 ms of additional latency at
+Google due to increasing the number of search results computed
+resulted in a corresponding 20\% decrease in search
+traffic~\cite{google-talk}.  At scale, these decreases correspond to
+billions of dollars of lost revenue.  To lower operation latency, data
+system operators often employ \textit{non-strict or partial quorums},
+in which read and write sets are not guaranteed to overlap (given $n$
+replicas and read and write quorum sizes $r$ and $w$, $r+w \leq n$).
+Modern quorum-based scalable data systems such as Dynamo~\cite{dynamo}
+(and its open source descendants Cassandra~\cite{cassandra},
+Riak~\cite{riak}, and Voldemort~\cite{voldemort}) provide two
+categories of quorum operation: overlapping quorums and strong
+consistency or variable-sized partial quorums with no guarantees on
+the staleness or consistency returned, other than that the system will
+``eventually'' provide the most recent version in the absence of new
 writes. Further, operators of distributed storage system are required
 to choose the a fixed size for the read and write sets which affects
 the availability and latency of requests for a given workload.
@@ -85,14 +92,12 @@ constraints~\cite{vahdat-bounded} that arise naturally from the data store's
 propagation algorithms, we provide quantitative insight into the
 consistency-latency trade-offs they offer.
 
-
-We demonstrate the
-trade-offs between consistency and performance and show that these
-trade-offs need not be painstakingly experimentally measured---they
-can be predicted.  Using a combination of simple theory and online
-estimation, we can provide expected bounds on the consistency of a
-data storage solution and optimize configuration parameters
-accordingly.
+We demonstrate the trade-offs between consistency and performance and
+show that these trade-offs need not be painstakingly experimentally
+measured---they can be predicted.  Using a combination of simple
+theory and online estimation, we can provide expected bounds on the
+consistency of a data storage solution and optimize configuration
+parameters accordingly.
 
 \begin{comment}
 
@@ -147,34 +152,36 @@ We make the following contributions in this paper:
   demonstrate its utility in practice under both synthetic
   benchmarking and worst-case stress tests (Section~\ref{sec:eval}).
 
-\item We perform a large state-space exploration of latency parameters
-  and find that Dynamo-style eventually consistent data stores are
-  rarely inconsistent.  Despite the hype and fear surrounding
-  BASE-style ``NoSQL'' systems, we find that single-key operations are
-  often strongly consistent, prompting a re-consideration of
-  widely-deployed eventually consistent data stores
-  (Section~\ref{sec:discussion}).
-
 \end{itemize}
 
 \section{Motivation}
 
 What kind of consistency do eventually consistent data stores provide?
-Rather than provide yet another design and a new consistency model, we
-turn to the problem of diagnosing what consistency our existing stores
-provide.
+At its core, eventual consistency is quite weak, only guaranteeing
+that the latest write will not be lost and will, at some point in the
+future, reside on all replicas.  Despite the weakness of this
+guarantee, many systems opt only the most basic of eventual
+consistency guarantees, with no bounds on the staleness of versions
+observed.  To address this deficiency, a proliferation of proposed
+systems fall across on of models in the consistency spectrum, from
+session guarantees~\cite{session} to causal consistency to parallel
+snapshot isolation~\cite{psi}.  However, many of the most widely
+deployed systems do not provide these models; simple eventual
+consistency is simple to implement, if difficult to reason about.
+Rather than propose another consistency model external to existing
+systems, we should provide better insight into how simple eventually
+consistent systems operate.  We turn to the problem of diagnosing what
+consistency our existing stores provide.
 
-\textbf{Predictability.} Can we predict the staleness of 
-eventually-consistent data stores? At its core, eventual consistency
-is quite weak, only guaranteeing that the latest write will not be
-lost and will, at some point in the future, reside on all replicas.
-However, eventually consistent data stores often return more recent
-versions.  We should be able to predict the staleness of values
-returned from our data stores.  This ability would be invaluable for
-programmers, who might like to specify constraints on the staleness of
-values in terms of versions, wall-clock time, or both.  A streaming
-``news feed''-style application can tolerate some staleness, but
-staleness past an hour is likely undesirable.
+\textbf{Predictability.} Can we predict the staleness of
+eventually-consistent data stores? However, eventually consistent data
+stores often return fairly recent versions.  We should be able to
+predict the staleness of values returned from our data stores.  This
+ability would be invaluable for programmers, who might like to specify
+constraints on the staleness of values in terms of versions,
+wall-clock time, or both.  A streaming ``news feed''-style application
+can tolerate some staleness, but staleness past an hour is likely
+undesirable.
 
 \textbf{Analysis.} How consistent are eventually consistent data
 stores in practice?  There is a wide range of consistency models in
@@ -773,6 +780,8 @@ information about reads and writes.  By analyzing Cassandra logs, we
 were able to reconstruct the latency distributions of write requests,
 write acknowledgements, read requests, and read responses.
 
+READ REPAIR: DEPENDENT ON READ AND WRITE
+
 We disabled read repair in Cassandra.  When a read quorum returns
 divergent versions, we return the highest-valued version and do not
 attempt read repair, essentially writing the new value back to the
@@ -827,9 +836,64 @@ the Xen hypervisors running our virtual machines.
 
 \subsection{Observed Staleness}
 
+We issued reads and writes to a single key distributed across a
+Cassandra cluster and measured the observed staleness.  While we ran
+multiple configurations, to begin, we will discuss the configuration
+where $N=3$, $R=1$, and $W=1$, Cassandra's default settings.
+
+With a single reader and a single writer, under normal operation, we
+observed little to no staleness.  Reads completed in 2.59 ms (99th
+percentile: 30.61 ms) and writes completed in 2.34 ms (99th
+percentile: 22.36 ms).  This was too narrow a window to observe the
+message reordering required for any staleness.  However, our experiment is somewhat synthetic
+
+\begin{figure}
+\centering
+\includegraphics[width=.8\columnwidth]{figs/t-cdf.pdf}
+\caption{Expected latency of write quorums of $w$ replicas in Dynamo-style operation versus quorum element correlation.}
+\label{fig:correlation}
+\end{figure}
+
+
+\begin{figure}
+\centering
+\includegraphics[width=.8\columnwidth]{figs/t-cdf-k.pdf}
+\caption{Expected latency of write quorums of $w$ replicas in Dynamo-style operation versus quorum element correlation.}
+\label{fig:correlation}
+\end{figure}
+
+
+\begin{figure}
+\centering
+\includegraphics[width=.8\columnwidth]{figs/write-cdf.pdf}
+\caption{Expected latency of write quorums of $w$ replicas in Dynamo-style operation versus quorum element correlation.}
+\label{fig:correlation}
+\end{figure}
+
+
 
 
 \begin{comment}
+
+N: 3 R: 1 W: 2 lambda 0.000000
+Avg write latency: 2.340356 (stddev: 3.320391, 99th %ile: 22.360338)
+Avg read latency: 2.588911 (stddev: 6.489868, 99th %ile: 30.617551)
+
+N: 3 R: 1 W: 3 lambda 0.000000
+Avg write latency: 4.412850 (stddev: 8.626731, 99th %ile: 50.466737)
+Avg read latency: 2.277779 (stddev: 6.003202, 99th %ile: 28.037702)
+
+N: 3 R: 2 W: 1 lambda 0.000000
+Avg write latency: 1.786696 (stddev: 2.229738, 99th %ile: 6.011726)
+Avg read latency: 2.047036 (stddev: 5.385266, 99th %ile: 23.046278)
+
+N: 3 R: 2 W: 2 lambda 0.000000
+Avg write latency: 2.314494 (stddev: 3.058672, 99th %ile: 16.398516)
+Avg read latency: 2.068930 (stddev: 5.495067, 99th %ile: 22.539867)
+
+N: 3 R: 3 W: 1 lambda 0.000000
+Avg write latency: 1.869139 (stddev: 3.258769, 99th %ile: 14.491754)
+Avg read latency: 3.309529 (stddev: 8.348639, 99th %ile: 44.156379)
 
 \subsection{Operation Latency}
 \label{sec:real-latency}
@@ -891,6 +955,8 @@ addressed.  Here, we briefly discuss improvements to our models.
 One Cassandra committer noted that although he had a patch for session guarantees, no Cassandra users had requested the functionality or claimed to require it.
 
 \subsection{Additional Functionality}
+
+READ-MODIFY-WRITE
 
 \textbf{Staleness detection.} Each of the $p_{staler}$ bounds
 describes a probability that a particular key is no staler than
@@ -988,9 +1054,10 @@ replica to a writer is independently delayed by a randomly distributed
 variate $A$, each read request to a replica is independently delayed
 by a randomly distributed variate $R$, and each read response from a
 replica to a reader is delayed according to a randomly distributed
-variate $S$.  We make no assumptions as to the distribution of $W$,
-$A$, $R$, and $S$, except that their domain is strictly positive (no
-negative delay). 
+variate $S$.  We make no assumptions as to the distribution of $W,$
+$A,$ $R,$ and $S$, except that their domain is strictly positive (no
+negative delay) and that values drawn from each are independently,
+identically distributed (IID).
 
 The probability that a read quorum does not contain the last committed
 version is equivalent to the probability that each of the first $R$
@@ -1015,7 +1082,7 @@ We can use simple order statistics to calculate the return time of the $i$th rea
  the write command for the last committed version reached the replica.
  Denote the time required to commit the last version (alternatively, the time required for $W$ of $N$ replicas to acknowledge the last write) as $w_t$.
 \begin{multline*}
-\Pr(stale_i \mid S_i = t) = \int_{0}^{\infty} \Pr(R=\tau)\cdot\Pr(S=t-\tau)\\\cdot\Pr(R+w_t < W \mid R = \tau) d\tau
+\Pr(stale_i \mid S_i = t) = \int_{0}^{t} \Pr(R=\tau)\cdot\Pr(S=t-\tau)\\\cdot\Pr(R+w_t < W \mid R = \tau) d\tau
 \end{multline*}
 \begin{multline*}
   \Pr(R+w_t < W \mid R = \tau) = \int_{\tau}^{\infty} \Pr(W-w_t = x) dx
@@ -1024,12 +1091,12 @@ We can use simple order statistics to calculate the return time of the $i$th rea
   \Pr(W-w_t = z) = \int_{0}^{\infty} \Pr(W = y) \cdot \Pr(-w_t = z-y) dy
 \end{multline*}
 Finally, to calculate $w_t$, we calculate the probabilty that
-$\mathcal{W}$ of $N$ acknowledgements come in by time $t$:
+$\mathcal{W}$ of $N$ acknowledgements come in at time $t$:
 \begin{multline*}
-\Pr(w_t = t) = \frac{N!}{(\mathcal{W}-1)!(N-\mathcal{W})!}\cdot[\Pr(W+S< t)]^{\mathcal{W}-1}\\\cdot\Pr(W+S = t)\cdot[\Pr(W+S > t)]^{N-\mathcal{W}}
+\Pr(w_t = t) = \frac{N!}{(\mathcal{W}-1)!(N-\mathcal{W})!}\cdot[\Pr(W+A< t)]^{\mathcal{W}-1}\\\cdot\Pr(W+A = t)\cdot[\Pr(W+A > t)]^{N-\mathcal{W}}
 \end{multline*}
 Combining these equations, we have a closed-form solution for the
-staleness dependent on $W$,$A$, $R$, and $S$, as desired.  To consider
+staleness dependent on $W,$ $A,$ $R,$ and $S$, as desired.  To consider
 multiple version staleness, exponentiate $p_s$ by the number of
 versions stale.
 
