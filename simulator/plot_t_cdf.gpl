@@ -9,7 +9,7 @@ gnuplot << EOF
 set term pdfcairo enhanced font "Times,26" size 11in,8.5in lw 4
 set output "$2"
 set xlabel "Time (milliseconds)"
-set ylabel "CDF"
+set ylabel "1-pstale"
 set border 3
 
 set xtics nomirror
@@ -26,7 +26,7 @@ set style line 5 lt 5 lw 4 pt 1
 #set key out center top
 #set key spacing 0.8
 
-set pointsize 2.5
+#set pointsize 2.5
 
 plot "$1" using (\$2):(\$1/1000) with lines title columnheader(2) ls 1, \
      "$1" using (\$3):(\$1/1000) with lines title columnheader(3) ls 2, \
