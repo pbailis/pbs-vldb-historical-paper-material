@@ -4,8 +4,7 @@ from sys import argv
 version_to_starttimes = {}
 version_to_endtimes = {}
 write_latencies = {}
-read_latencies = {}
-onewaywrite_latencies = {}
+
 
 if(len(argv) < 4):
     print "USAGE: outdir, proxyfile, serverfile(s)"
@@ -45,7 +44,7 @@ for line in open(proxyfile):
         write_latencies[latency] += 1
 
         version_to_endtimes[write_start_version] = write_end
-        
+    '''
     elif line.find("RS") != -1:
         read_start = int(line.split()[4])/NS_PER_MS
     elif line.find("RC") != -1:
@@ -56,6 +55,7 @@ for line in open(proxyfile):
         if latency not in read_latencies:
             read_latencies[latency] = 0
         read_latencies[latency] += 1
+   '''
 
 for serverfile in serverfiles:
     for line in open(serverfile):
@@ -82,9 +82,14 @@ for serverfile in serverfiles:
                 onewayack_latencies[latency] = 0
             onewayack_latencies[latency] += 1
 
+            write_latency = version_to_endtimes[version]-version_to_starttimes[version]-latency
 
+            if write_latency not in write_latencies:
+                write_latencies[write_latency] = 0
+            write_latencies[latency] += 1
+            
 write_out_latencies("wlatency.dist", write_latencies)
-write_out_latencies("rlatency.dist", read_latencies)
+write_out_latencies("rlatency.dist", write_latencies)
 write_out_latencies("onewaywrite.dist", onewaywrite_latencies)
-write_out_latencies("onewayack.dist", onewayack_latencies)
+write_out_latencies("onewayack.dist", onewaywrite_latencies)
     
