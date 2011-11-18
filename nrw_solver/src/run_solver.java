@@ -1,3 +1,4 @@
+package ernst.solver;
 
 import com.sun.security.auth.login.ConfigFile;
 

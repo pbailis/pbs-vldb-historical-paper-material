@@ -1,4 +1,6 @@
 
+package ernst.solver;
+
 import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -100,6 +102,22 @@ public class FileLatencyModel implements LatencyModel {
       else {
         return 0.0;
       }
+    }
+
+    /**
+     * Returns the inverse CDF i.e random variable that would has the
+     * given cdf
+     */
+    public double getInverseCDF(int numReplicas, double cdf)
+    {
+      for ( Map.Entry<Double, Long> e: cumulativeLatencyBuckets.get(numReplicas).entrySet() )
+      {
+        if ( (double)e.getValue()/(double)(totalElements.get(numReplicas)) >= cdf )
+        {
+          return e.getKey();
+        }
+      }
+      return 0;
     }
 
     public List<Double> getRange(int numReplicas)

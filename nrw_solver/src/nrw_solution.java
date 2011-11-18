@@ -1,3 +1,4 @@
+package ernst.solver;
 
 public class nrw_solution {
 
