@@ -6,8 +6,78 @@ import java.util.*;
 import ernst.solver.FileLatencyModel;
 import ernst.solver.LatencyModel;
 import ernst.solver.LatencyModelValidator;
-import sun.reflect.generics.tree.Tree;
 
+/*
+    LEGACY CLASSES, PORTED
+ */
+
+class ReadOutput
+{
+    int version_at_start;
+    int version_read;
+    long start_time;
+
+    public int getVersion_at_start() {
+        return version_at_start;
+    }
+
+    public int getVersion_read() {
+        return version_read;
+    }
+
+    public long getStart_time() {
+        return start_time;
+    }
+
+    public ReadOutput(int version_at_start, int version_read, long start_time)
+    {
+        this.version_at_start = version_at_start;
+        this.version_read = version_read;
+        this.start_time = start_time;
+    }
+}
+
+class ReadPlot implements Comparable
+{
+    ReadOutput read;
+    long commit_time_at_start;
+
+    public ReadOutput getRead() {
+        return read;
+    }
+
+    public long getCommit_time_at_start() {
+        return commit_time_at_start;
+    }
+
+    public ReadPlot(ReadOutput read, long commit_time_at_start)
+    {
+        this.read = read;
+        this.commit_time_at_start = commit_time_at_start;
+    }
+
+    public int compareTo(Object anotherPlot) throws ClassCastException
+    {
+        if(!(anotherPlot instanceof ReadPlot))
+            throw new ClassCastException("A ReadPlot object expected.");
+
+        ReadPlot comparePlot = ((ReadPlot) anotherPlot);
+
+        long thisdelta = this.read.getStart_time()-this.commit_time_at_start;
+        long theirdelta = comparePlot.getRead().getStart_time()-comparePlot.getCommit_time_at_start();
+
+        if(thisdelta < theirdelta)
+            return -1;
+        else if(thisdelta == theirdelta)
+            return 0;
+        else
+            return 1;
+    }
+}
+
+/*
+    END LEGACY CLASSES
+ */
 
 class DelayModel
 {
@@ -135,21 +205,23 @@ class WriteInstance implements Comparable
         else
             return 1;
     }
-
-
 }
 
-class CommitTimes {
+class CommitTimes
+{
     TreeMap<Long, Integer> commits;
+    HashMap<Integer, Long> versiontotime;
 
     public CommitTimes()
     {
         commits = new TreeMap<Long, Integer>();
+        versiontotime = new HashMap<Integer, Long>();
     }
 
     public void record(long time, int version)
     {
       commits.put(time, version);
+      versiontotime.put(version, time);
     }
 
     public int last_committed_version(long time)
@@ -157,6 +229,11 @@ class CommitTimes {
       if(commits.containsKey(time))
           return commits.get(time);
       return commits.get(commits.headMap(time).firstKey());
+    }
+
+    public long get_commit_time(int version)
+    {
+        return versiontotime.get(version);
     }
 }
 
@@ -182,8 +259,6 @@ class KVServer {
 }
 
 public class Simulator {
-
-
   public static void main (String [] args) {
       if(args.length != 6)
       {
@@ -193,7 +268,7 @@ public class Simulator {
       }
 
       int NUM_READERS = 5;
-      int NUM_WRITERS = 5;
+      int NUM_WRITERS = 1;
 
       int N = Integer.parseInt(args[0]);
       int R = Integer.parseInt(args[1]);
@@ -215,7 +290,10 @@ public class Simulator {
       Vector<WriteInstance> writes = new Vector<WriteInstance>();
       CommitTimes commits = new CommitTimes();
 
+      Vector<ReadPlot> readPlots = new Vector<ReadPlot>();
+
       long maxtime = 0;
+      long firsttime = 1000;
 
       for(int wid = 0; wid < NUM_WRITERS; wid++)
       {
@@ -239,6 +317,8 @@ public class Simulator {
 
           if(time > maxtime)
               maxtime = time;
+          if(time < firsttime)
+              firsttime = time;
       }
 
       Collections.sort(writes);
@@ -255,7 +335,7 @@ public class Simulator {
 
       for(int rid = 0; rid < NUM_READERS; ++rid)
       {
-          long time = 0;
+          long time = firsttime*2;
           while(time < maxtime)
           {
               Vector<ReadInstance> readRound = new Vector<ReadInstance>();
@@ -279,97 +359,46 @@ public class Simulator {
                     maxversion = readVersion;
               }
 
+              readPlots.add(new ReadPlot(
+                                new ReadOutput(commits.last_committed_version(time), maxversion, time),
+                                commits.get_commit_time(maxversion)));
               int staleness = maxversion-commits.last_committed_version(time);
 
               time += endtime;
           }
       }
 
-      /*
+      Collections.sort(readPlots);
+      Collections.reverse(readPlots);
 
-    val lastCommitted = new AtomicInteger(0)
-    val finishTimes = new ConcurrentHashMap[Int, Long]
-    val commitTimes = new ConcurrentHashMap[Int, Long]
-    val readOutputs = Collections.synchronizedList(new ArrayList[ReadOutput])
+      for(int p = 900; p < 1000; ++p)
+      {
+          long tstale = 0;
+          int staler = 0;
+          int current = 0;
+          boolean tstaleComputed = false;
+          Double pst = (1-p)/1000.0;
 
-    var server = new KVServer(sendDelayFile, ackDelayFile)
-    for (i <- 0 until 1000000)
-      System.out.println(server.getReadAckDelay())
+          long how_many_stale = (long)Math.ceil(readPlots.size()*pst);
 
-    val replicas = new ListBuffer[KVServer]
-    for (i <- 0 until N+1) 
-      replicas += new KVServer(sendDelayFile, ackDelayFile)
+          for(ReadPlot r : readPlots)
+          {
+            if(r.getRead().getVersion_read() >= r.getRead().getVersion_at_start())
+            {
+                current += 1;
+            }
+            else
+            {
+                staler += 1;
+            }
 
-    val w = new Thread(new Writer(replicas.toList, 
-        ITERATIONS, W, key, lastCommitted, finishTimes, commitTimes))
-
-
-    val readerThreads = new ListBuffer[Thread]
-    for (i <- 0 until NUM_READERS)
-      readerThreads.append(new Thread(new Reader(replicas.toList, 
-        ITERATIONS, R, key, lastCommitted, readOutputs)))
-
-    w.start()
-    Thread.sleep(2)
-    for (reader <- readerThreads)
-      reader.start()
-
-    w.join()
-    for (reader <- readerThreads)
-      reader.join()
-
-    for (r <- replicas.toList) r.join
-
-    val readPlotValues = new ListBuffer[ReadPlot]
-    for (r <- readOutputs) {
-      val wCommitTime = commitTimes.getOrElse(r.version_at_start, -1): Long
-      readPlotValues.append(new ReadPlot(r, wCommitTime))
-    }
-
-    var percentiles = new Range(900, 1000, 1)
-    var reads = readPlotValues.sortBy(
-      x => x.read.start_time - x.commit_time_at_start).reverse
-    // Console.err.println("Number of reads " + reads.length)
-
-    //println("Percentile " + LAMBDA)
-    for (p <- percentiles) {
-      var tstale: Long = 0
-      var staler = 0
-      var current = 0
-      var tstaleComputed = false
-
-      var pst: Double = (1-p/1000.0)
-
-      var how_many_stale = Math.ceil(reads.length*pst) 
-      for (r <- reads) {
-        if (r.read.version_read >= r.read.version_at_start)
-          current = current + 1
-        else
-          staler = staler + 1
-
-        if (staler > how_many_stale && !tstaleComputed) {
-          tstaleComputed = true
-          tstale = r.read.start_time - r.commit_time_at_start
-        }
+            if((staler > how_many_stale) && !tstaleComputed)
+            {
+                tstaleComputed = true;
+                tstale = r.getRead().getStart_time() - r.getCommit_time_at_start();
+            }
+          }
+          System.out.println(p+" "+tstale);
       }
-      //println(p + " " + tstale)
-    }
-    
-    // val tStaleness = new ListBuffer[Long]
-    // Calculate t-visibility stalness for each read
-    // for (r <- readStartTimes) {
-    //   val wFinishTime = finishTimes.getOrElse(r._1, -1): Long
-    //   if (wFinishTime - r._2 < 0) 
-    //     println("wFinishTime " + wFinishTime + " read start " + r._2 + 
-    //       " key " + r._1)
-    //   else 
-    //     tStaleness.append(wFinishTime - r._2) 
-    // }
-    // println("Avg t-staleness " + tStaleness.sum.toDouble /
-    //  tStaleness.length.toDouble)
-
-    // For each read
-    exit(0)
-    */
   }
 }
