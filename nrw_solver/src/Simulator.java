@@ -2,6 +2,8 @@ package ernst.simulator;
 
 import java.lang.Math;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 
 import ernst.solver.FileLatencyModel;
 import ernst.solver.LatencyModel;
@@ -79,19 +81,102 @@ class ReadPlot implements Comparable
     END LEGACY CLASSES
  */
 
-class DelayModel
+interface DelayModel
+{
+    public long getWriteSendDelay();
+    public long getReadSendDelay();
+    public long getWriteAckDelay();
+    public long getReadAckDelay();
+}
+
+class ParetoDelayModel implements DelayModel
+{
+    double wmin, walpha, arsmin, arsalpha;
+    Random rand;
+    public ParetoDelayModel(double wmin, double walpha, double arsmin, double arsalpha)
+    {
+        this.wmin = wmin;
+        this.walpha = walpha;
+        this.arsmin = arsmin;
+        this.arsalpha = arsalpha;
+        this.rand = new Random();
+    }
+
+    long getNextPareto(double m, double a)
+    {
+        return Math.round(m / Math.pow(rand.nextDouble(), 1/a));
+    }
+
+    public long getWriteSendDelay()
+    {
+        return getNextPareto(wmin, walpha);
+    }
+
+    public long getReadSendDelay()
+    {
+        return getNextPareto(arsmin, arsalpha);
+    }
+
+    public long getWriteAckDelay()
+    {
+        return getReadSendDelay();
+    }
+
+    public long getReadAckDelay()
+    {
+        return getReadSendDelay();
+    }
+}
+
+
+class ExponentialDelayModel implements DelayModel
+{
+    double wlambda, arslambda;
+    Random rand;
+    public ExponentialDelayModel(double wlambda, double arslambda)
+    {
+        this.wlambda = wlambda;
+        this.arslambda = arslambda;
+        this.rand = new Random();
+    }
+
+    long getNextExponential(double lambda)
+    {
+        return Math.round(Math.log(1-rand.nextDouble())/(-lambda));
+    }
+
+    public long getWriteSendDelay()
+    {
+        return getNextExponential(wlambda);
+    }
+
+    public long getReadSendDelay()
+    {
+        return getNextExponential(arslambda);
+    }
+
+    public long getWriteAckDelay()
+    {
+        return getReadSendDelay();
+    }
+
+    public long getReadAckDelay()
+    {
+        return getReadSendDelay();
+    }
+}
+
+class EmpiricalDelayModel implements DelayModel
 {
     LatencyModel ackLatencyModel;
     LatencyModel sendLatencyModel;
-    double LAMBDA;
-    Random rand;
-    int MAX_DELAY = 1000;
 
-    public DelayModel(String sendF, String writeF)
+    Random rand;
+
+    //empirical distribution
+    public EmpiricalDelayModel(String sendF, String writeF)
     {
       rand = new Random();
-      LAMBDA = 0.05;
-
 
       try{
         sendLatencyModel = new FileLatencyModel(sendF);
@@ -107,20 +192,12 @@ class DelayModel
        }
     }
 
-    public long getExpRandom() {
-      return Math.round(Math.log(1-rand.nextDouble())/(-LAMBDA));
-    }
-
-    public long getUniformRandom() {
-      return rand.nextInt(MAX_DELAY);
-    }
-
     public long getWriteSendDelay() {
       return Math.round(sendLatencyModel.getInverseCDF(1,
           rand.nextDouble()));
     }
 
-    public long getReadSendDelay() { return getWriteSendDelay(); };
+    public long getReadSendDelay() { return getWriteAckDelay(); };
 
     public long getWriteAckDelay() {
       return Math.round(ackLatencyModel.getInverseCDF(1,
@@ -260,26 +337,51 @@ class KVServer {
 
 public class Simulator {
   public static void main (String [] args) {
-      if(args.length != 6)
+      if(args.length != 7 && args.length != 9)
       {
         System.err.println(
-          "Usage: Simulator <N> <R> <W> <iters> <sendF> <ackF>");
+          "Usage: Simulator <N> <R> <W> <iters> FILE <sendF> <ackF>\nUsage: Simulator <N> <R> <W> <iters> PARETO <W-min> <W-alpha> <ARS-min> <ARS-alpha>\nUsage: Simulator <N> <R> <W> <iters> EXPONENTIAL <W-lambda> <ARS-lambda>");
         System.exit(1);
       }
 
       int NUM_READERS = 5;
       int NUM_WRITERS = 1;
 
-      int N = Integer.parseInt(args[0]);
-      int R = Integer.parseInt(args[1]);
+      final int N = Integer.parseInt(args[0]);
+      final int R = Integer.parseInt(args[1]);
       int W = Integer.parseInt(args[2]);
       int ITERATIONS = Integer.parseInt(args[3]);
-      String sendDelayFile = args[4];
-      String ackDelayFile = args[5];
 
-      DelayModel delay = new DelayModel(sendDelayFile, ackDelayFile);
+      final DelayModel delay;
 
-      Vector<KVServer> replicas = new Vector<KVServer>();
+
+      if(args[4].equals("FILE"))
+      {
+          String sendDelayFile = args[5];
+          String ackDelayFile = args[6];
+
+          delay = new EmpiricalDelayModel(sendDelayFile, ackDelayFile);
+      }
+      else if(args[4].equals("PARETO"))
+      {
+          assert args.length == 9;
+          delay = new ParetoDelayModel(Double.parseDouble(args[5]),
+                                       Double.parseDouble(args[6]),
+                                       Double.parseDouble(args[7]),
+                                       Double.parseDouble(args[8]));
+      }
+      else if(args[4].equals("EXPONENTIAL"))
+      {
+          delay = new ExponentialDelayModel(Double.parseDouble(args[5]),
+                                            Double.parseDouble(args[6]));
+      }
+      else
+      {
+          throw new RuntimeException("Bad command line args");
+      }
+
+
+      final Vector<KVServer> replicas = new Vector<KVServer>();
       for(int i = 0; i < N; ++i)
       {
           replicas.add(new KVServer());
@@ -288,12 +390,12 @@ public class Simulator {
 
       HashMap<Integer, Long> commitTimes = new HashMap<Integer, Long>();
       Vector<WriteInstance> writes = new Vector<WriteInstance>();
-      CommitTimes commits = new CommitTimes();
+      final CommitTimes commits = new CommitTimes();
 
-      Vector<ReadPlot> readPlots = new Vector<ReadPlot>();
+      final ConcurrentLinkedQueue<ReadPlot> readPlotConcurrent = new ConcurrentLinkedQueue<ReadPlot>();
 
-      long maxtime = 0;
-      long firsttime = 1000;
+      long ltime = 0;
+      long ftime = 1000;
 
       for(int wid = 0; wid < NUM_WRITERS; wid++)
       {
@@ -307,7 +409,7 @@ public class Simulator {
                   long oneway = delay.getWriteSendDelay();
                   long ack = delay.getWriteAckDelay();
                   oneways.add(time+oneway);
-                  rtts.add(oneway+ack);
+                  rtts.add(oneway + ack);
               }
               Collections.sort(rtts);
               long committime = time+rtts.get(W-1);
@@ -315,11 +417,14 @@ public class Simulator {
               time = committime;
           }
 
-          if(time > maxtime)
-              maxtime = time;
-          if(time < firsttime)
-              firsttime = time;
+          if(time > ltime)
+              ltime = time;
+          if(time < ftime)
+              ftime = time;
       }
+
+      final long maxtime = ltime;
+      final long firsttime = ftime;
 
       Collections.sort(writes);
 
@@ -333,40 +438,61 @@ public class Simulator {
           commits.record(curWrite.getCommittime(), wno);
       }
 
+      final CountDownLatch latch = new CountDownLatch(NUM_READERS);
+
       for(int rid = 0; rid < NUM_READERS; ++rid)
       {
-          long time = firsttime*2;
-          while(time < maxtime)
+          Thread t = new Thread(new Runnable ()
           {
-              Vector<ReadInstance> readRound = new Vector<ReadInstance>();
-              for(int sno = 0; sno < N; ++sno)
+              public void run()
               {
-                  long onewaytime = delay.getReadSendDelay();
-                  int version = replicas.get(sno).read(time+onewaytime);
-                  long rtt = onewaytime+delay.getReadAckDelay();
-                  readRound.add(new ReadInstance(version, rtt));
+                  long time = firsttime*2;
+                  while(time < maxtime)
+                  {
+                      Vector<ReadInstance> readRound = new Vector<ReadInstance>();
+                      for(int sno = 0; sno < N; ++sno)
+                      {
+                          long onewaytime = delay.getReadSendDelay();
+                          int version = replicas.get(sno).read(time+onewaytime);
+                          long rtt = onewaytime+delay.getReadAckDelay();
+                          readRound.add(new ReadInstance(version, rtt));
+                      }
+
+                      Collections.sort(readRound);
+                      long endtime = readRound.get(R-1).getFinishtime();
+
+                      int maxversion = -1;
+
+                      for(int rno = 0; rno < R; ++rno)
+                      {
+                        int readVersion = readRound.get(rno).getVersion();
+                        if(readVersion > maxversion)
+                            maxversion = readVersion;
+                      }
+
+                      readPlotConcurrent.add(new ReadPlot(
+                                        new ReadOutput(commits.last_committed_version(time), maxversion, time),
+                                        commits.get_commit_time(commits.last_committed_version(time))));
+                      int staleness = maxversion-commits.last_committed_version(time);
+
+                      time += endtime;
+                  }
+
+                  latch.countDown();
               }
-
-              Collections.sort(readRound);
-              long endtime = readRound.get(R-1).getFinishtime();
-
-              int maxversion = -1;
-
-              for(int rno = 0; rno < R; ++rno)
-              {
-                int readVersion = readRound.get(rno).getVersion();
-                if(readVersion > maxversion)
-                    maxversion = readVersion;
-              }
-
-              readPlots.add(new ReadPlot(
-                                new ReadOutput(commits.last_committed_version(time), maxversion, time),
-                                commits.get_commit_time(commits.last_committed_version(time))));
-              int staleness = maxversion-commits.last_committed_version(time);
-
-              time += endtime;
-          }
+          });
+          t.start();
       }
+
+      try {
+        latch.await();
+      }
+      catch (Exception e)
+      {
+          System.out.println(e.getMessage());
+      }
+
+      Vector<ReadPlot> readPlots = new Vector<ReadPlot>(readPlotConcurrent);
 
       Collections.sort(readPlots);
       Collections.reverse(readPlots);
