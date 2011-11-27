@@ -337,10 +337,10 @@ class KVServer {
 
 public class Simulator {
   public static void main (String [] args) {
-      if(args.length != 7 && args.length != 9)
+      if(args.length != 8 && args.length != 10)
       {
         System.err.println(
-          "Usage: Simulator <N> <R> <W> <iters> FILE <sendF> <ackF>\nUsage: Simulator <N> <R> <W> <iters> PARETO <W-min> <W-alpha> <ARS-min> <ARS-alpha>\nUsage: Simulator <N> <R> <W> <iters> EXPONENTIAL <W-lambda> <ARS-lambda>");
+          "Usage: Simulator <N> <R> <W> <k> <iters> FILE <sendF> <ackF>\nUsage: Simulator <N> <R> <W> <iters> PARETO <W-min> <W-alpha> <ARS-min> <ARS-alpha>\nUsage: Simulator <N> <R> <W> <iters> EXPONENTIAL <W-lambda> <ARS-lambda>");
         System.exit(1);
       }
 
@@ -350,30 +350,32 @@ public class Simulator {
       final int N = Integer.parseInt(args[0]);
       final int R = Integer.parseInt(args[1]);
       int W = Integer.parseInt(args[2]);
-      int ITERATIONS = Integer.parseInt(args[3]);
+      int K = Integer.parseInt(args[3]);
+      assert K >= 1;
+      int ITERATIONS = Integer.parseInt(args[4]);
 
       final DelayModel delay;
 
 
-      if(args[4].equals("FILE"))
+      if(args[5].equals("FILE"))
       {
-          String sendDelayFile = args[5];
-          String ackDelayFile = args[6];
+          String sendDelayFile = args[6];
+          String ackDelayFile = args[7];
 
           delay = new EmpiricalDelayModel(sendDelayFile, ackDelayFile);
       }
-      else if(args[4].equals("PARETO"))
+      else if(args[5].equals("PARETO"))
       {
-          assert args.length == 9;
-          delay = new ParetoDelayModel(Double.parseDouble(args[5]),
-                                       Double.parseDouble(args[6]),
+          assert args.length == 10;
+          delay = new ParetoDelayModel(Double.parseDouble(args[6]),
                                        Double.parseDouble(args[7]),
-                                       Double.parseDouble(args[8]));
+                                       Double.parseDouble(args[8]),
+                                       Double.parseDouble(args[9]));
       }
-      else if(args[4].equals("EXPONENTIAL"))
+      else if(args[5].equals("EXPONENTIAL"))
       {
-          delay = new ExponentialDelayModel(Double.parseDouble(args[5]),
-                                            Double.parseDouble(args[6]));
+          delay = new ExponentialDelayModel(Double.parseDouble(args[6]),
+                                            Double.parseDouble(args[7]));
       }
       else
       {
@@ -509,7 +511,7 @@ public class Simulator {
 
           for(ReadPlot r : readPlots)
           {
-            if(r.getRead().getVersion_read() >= r.getRead().getVersion_at_start())
+            if(r.getRead().getVersion_read() >= r.getRead().getVersion_at_start()-K-1)
             {
                 current += 1;
             }
