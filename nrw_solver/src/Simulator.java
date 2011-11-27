@@ -228,7 +228,7 @@ class CommitTimes
     {
       if(commits.containsKey(time))
           return commits.get(time);
-      return commits.get(commits.headMap(time).firstKey());
+      return commits.get(commits.headMap(time).lastKey());
     }
 
     public long get_commit_time(int version)
@@ -254,7 +254,7 @@ class KVServer {
   {
     if(timeVersions.containsKey(time))
         return timeVersions.get(time);
-    return timeVersions.get(timeVersions.headMap(time).firstKey());
+    return timeVersions.get(timeVersions.headMap(time).lastKey());
   }
 }
 
@@ -361,7 +361,7 @@ public class Simulator {
 
               readPlots.add(new ReadPlot(
                                 new ReadOutput(commits.last_committed_version(time), maxversion, time),
-                                commits.get_commit_time(maxversion)));
+                                commits.get_commit_time(commits.last_committed_version(time))));
               int staleness = maxversion-commits.last_committed_version(time);
 
               time += endtime;
@@ -377,7 +377,7 @@ public class Simulator {
           int staler = 0;
           int current = 0;
           boolean tstaleComputed = false;
-          Double pst = (1-p)/1000.0;
+          Double pst = (1000-p)/1000.0;
 
           long how_many_stale = (long)Math.ceil(readPlots.size()*pst);
 
