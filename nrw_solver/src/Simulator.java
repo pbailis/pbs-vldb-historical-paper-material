@@ -410,7 +410,7 @@ public class Simulator {
               {
                   long oneway = delay.getWriteSendDelay();
                   long ack = delay.getWriteAckDelay();
-                  oneways.add(time+oneway);
+                  oneways.add(time + oneway);
                   rtts.add(oneway + ack);
               }
               Collections.sort(rtts);
@@ -499,33 +499,33 @@ public class Simulator {
       Collections.sort(readPlots);
       Collections.reverse(readPlots);
 
+      HashMap<Long, ReadPlot> manystalemap = new HashMap<Long, ReadPlot>();
+
+
+      long stale = 0;
+      for(ReadPlot r : readPlots)
+      {
+        if(r.getRead().getVersion_read() < r.getRead().getVersion_at_start()-K-1)
+        {
+            stale += 1;
+            manystalemap.put(stale, r);
+        }
+      }
+
       for(int p = 900; p < 1000; ++p)
       {
           long tstale = 0;
-          int staler = 0;
-          int current = 0;
-          boolean tstaleComputed = false;
           Double pst = (1000-p)/1000.0;
 
           long how_many_stale = (long)Math.ceil(readPlots.size()*pst);
 
-          for(ReadPlot r : readPlots)
-          {
-            if(r.getRead().getVersion_read() >= r.getRead().getVersion_at_start()-K-1)
-            {
-                current += 1;
-            }
-            else
-            {
-                staler += 1;
-            }
+          ReadPlot r = manystalemap.get(how_many_stale);
 
-            if((staler > how_many_stale) && !tstaleComputed)
-            {
-                tstaleComputed = true;
-                tstale = r.getRead().getStart_time() - r.getCommit_time_at_start();
-            }
-          }
+          if(r == null)
+              tstale = 0;
+          else
+              tstale = r.getRead().getStart_time() - r.getCommit_time_at_start();
+
           System.out.println(p+" "+tstale);
       }
   }
