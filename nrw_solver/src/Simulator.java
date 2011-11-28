@@ -316,32 +316,32 @@ class CommitTimes
 
 class KVServer {
   TreeMap<Long, Integer> timeVersions;
-  long lasttime;
-  int lastversion;
 
   public KVServer()
   {
-    lasttime = -1;
-    lastversion = -1;
     timeVersions = new TreeMap<Long, Integer>();
   }
 
   public void write(long time, int version)
   {
-    if(time > lasttime && version < lastversion)
+    //don't store old versions!
+    if(read(time) > version)
     {
         return;
     }
     timeVersions.put(time, version);
-    lasttime = time;
-    lastversion = version;
   }
 
   public int read(long time)
   {
     if(timeVersions.containsKey(time))
         return timeVersions.get(time);
-    return timeVersions.get(timeVersions.headMap(time).lastKey());
+
+
+    SortedMap<Long, Integer> mapFromTime = timeVersions.headMap(time);
+    if(mapFromTime.isEmpty())
+        return -1;
+    return timeVersions.get(mapFromTime.lastKey());
   }
 }
 
