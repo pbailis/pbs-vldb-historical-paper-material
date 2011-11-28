@@ -316,15 +316,25 @@ class CommitTimes
 
 class KVServer {
   TreeMap<Long, Integer> timeVersions;
+  long lasttime;
+  int lastversion;
 
   public KVServer()
   {
+    lasttime = -1;
+    lastversion = -1;
     timeVersions = new TreeMap<Long, Integer>();
   }
 
   public void write(long time, int version)
   {
+    if(time > lasttime && version < lastversion)
+    {
+        return;
+    }
     timeVersions.put(time, version);
+    lasttime = time;
+    lastversion = version;
   }
 
   public int read(long time)
@@ -337,12 +347,7 @@ class KVServer {
 
 public class Simulator {
   public static void main (String [] args) {
-      if(args.length != 8 && args.length != 10)
-      {
-        System.err.println(
-          "Usage: Simulator <N> <R> <W> <k> <iters> FILE <sendF> <ackF>\nUsage: Simulator <N> <R> <W> <iters> PARETO <W-min> <W-alpha> <ARS-min> <ARS-alpha>\nUsage: Simulator <N> <R> <W> <iters> EXPONENTIAL <W-lambda> <ARS-lambda>");
-        System.exit(1);
-      }
+      assert args.length > 5;
 
       int NUM_READERS = 5;
       int NUM_WRITERS = 1;
@@ -354,34 +359,52 @@ public class Simulator {
       assert K >= 1;
       int ITERATIONS = Integer.parseInt(args[4]);
 
-      final DelayModel delay;
-
+      DelayModel delaymodel = null;
 
       if(args[5].equals("FILE"))
       {
           String sendDelayFile = args[6];
           String ackDelayFile = args[7];
 
-          delay = new EmpiricalDelayModel(sendDelayFile, ackDelayFile);
+          delaymodel = new EmpiricalDelayModel(sendDelayFile, ackDelayFile);
       }
       else if(args[5].equals("PARETO"))
       {
-          assert args.length == 10;
-          delay = new ParetoDelayModel(Double.parseDouble(args[6]),
+          delaymodel = new ParetoDelayModel(Double.parseDouble(args[6]),
                                        Double.parseDouble(args[7]),
                                        Double.parseDouble(args[8]),
                                        Double.parseDouble(args[9]));
       }
       else if(args[5].equals("EXPONENTIAL"))
       {
-          delay = new ExponentialDelayModel(Double.parseDouble(args[6]),
+          delaymodel = new ExponentialDelayModel(Double.parseDouble(args[6]),
                                             Double.parseDouble(args[7]));
       }
       else
       {
-          throw new RuntimeException("Bad command line args");
+          System.err.println(
+             "Usage: Simulator <N> <R> <W> <k> <iters> FILE <sendF> <ackF> OPT\n" +
+                     "Usage: Simulator <N> <R> <W> <iters> PARETO <W-min> <W-alpha> <ARS-min> <ARS-alpha> OPT\n" +
+                     "Usage: Simulator <N> <R> <W> <iters> EXPONENTIAL <W-lambda> <ARS-lambda> OPT\n +" +
+                     "OPT= O <SWEEP|LATS>");
+          System.exit(1);
       }
 
+      final DelayModel delay = delaymodel;
+
+      String optsinput = "";
+
+      for(int i = 0; i < args.length; ++i)
+      {
+          if(args[i].equals("O"))
+          {
+              optsinput = args[i+1];
+              assert optsinput.equals("SWEEP") || optsinput.equals("LATS");
+              break;
+          }
+      }
+
+      final String opts = optsinput;
 
       final Vector<KVServer> replicas = new Vector<KVServer>();
       for(int i = 0; i < N; ++i)
@@ -414,7 +437,12 @@ public class Simulator {
                   rtts.add(oneway + ack);
               }
               Collections.sort(rtts);
-              long committime = time+rtts.get(W-1);
+              long wlat = rtts.get(W-1);
+              if(opts.equals("LAT"))
+              {
+                  System.out.printf("W %d\n", wlat);
+              }
+              long committime = time+wlat;
               writes.add(new WriteInstance(oneways, time, committime));
               time = committime;
           }
@@ -463,6 +491,11 @@ public class Simulator {
                       Collections.sort(readRound);
                       long endtime = readRound.get(R-1).getFinishtime();
 
+                      if(opts.equals("LAT"))
+                      {
+                          System.out.printf("R %d\n", endtime);
+                      }
+
                       int maxversion = -1;
 
                       for(int rno = 0; rno < R; ++rno)
@@ -494,39 +527,42 @@ public class Simulator {
           System.out.println(e.getMessage());
       }
 
-      Vector<ReadPlot> readPlots = new Vector<ReadPlot>(readPlotConcurrent);
-
-      Collections.sort(readPlots);
-      Collections.reverse(readPlots);
-
-      HashMap<Long, ReadPlot> manystalemap = new HashMap<Long, ReadPlot>();
-
-
-      long stale = 0;
-      for(ReadPlot r : readPlots)
+      if(opts.equals("SWEEP"))
       {
-        if(r.getRead().getVersion_read() < r.getRead().getVersion_at_start()-K-1)
-        {
-            stale += 1;
-            manystalemap.put(stale, r);
-        }
-      }
 
-      for(int p = 900; p < 1000; ++p)
-      {
-          long tstale = 0;
-          Double pst = (1000-p)/1000.0;
+          Vector<ReadPlot> readPlots = new Vector<ReadPlot>(readPlotConcurrent);
 
-          long how_many_stale = (long)Math.ceil(readPlots.size()*pst);
+          Collections.sort(readPlots);
+          Collections.reverse(readPlots);
 
-          ReadPlot r = manystalemap.get(how_many_stale);
+          HashMap<Long, ReadPlot> manystalemap = new HashMap<Long, ReadPlot>();
 
-          if(r == null)
-              tstale = 0;
-          else
-              tstale = r.getRead().getStart_time() - r.getCommit_time_at_start();
+          long stale = 0;
+          for(ReadPlot r : readPlots)
+          {
+            if(r.getRead().getVersion_read() < r.getRead().getVersion_at_start()-K-1)
+            {
+                stale += 1;
+                manystalemap.put(stale, r);
+            }
+          }
 
-          System.out.println(p+" "+tstale);
+          for(int p = 900; p < 1000; ++p)
+          {
+              long tstale = 0;
+              Double pst = (1000-p)/1000.0;
+
+              long how_many_stale = (long)Math.ceil(readPlots.size()*pst);
+
+              ReadPlot r = manystalemap.get(how_many_stale);
+
+              if(r == null)
+                  tstale = 0;
+              else
+                  tstale = r.getRead().getStart_time() - r.getCommit_time_at_start();
+
+              System.out.println(p+" "+tstale);
+          }
       }
   }
 }
