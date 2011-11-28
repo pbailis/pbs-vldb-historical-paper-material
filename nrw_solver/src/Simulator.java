@@ -261,14 +261,14 @@ class EmpiricalDelayModel implements DelayModel
 
     public double getWriteSendDelay() {
       return sendLatencyModel.getInverseCDF(1,
-          rand.nextDouble());
+              rand.nextDouble());
     }
 
     public double getReadSendDelay() { return getWriteAckDelay(); };
 
     public double getWriteAckDelay() {
       return ackLatencyModel.getInverseCDF(1,
-          rand.nextDouble());
+              rand.nextDouble());
     }
 
     public double getReadAckDelay() { return getWriteAckDelay(); };
@@ -442,6 +442,15 @@ public class Simulator {
                                        Double.parseDouble(args[8]),
                                        Double.parseDouble(args[9]));
       }
+      else if(args[5].equals("MULTIDC"))
+      {
+          delaymodel = new MultiDCDelayModel(Double.parseDouble(args[6]),
+                                       Double.parseDouble(args[7]),
+                                       Double.parseDouble(args[8]),
+                                       Double.parseDouble(args[9]),
+                                       Double.parseDouble(args[10]),
+                                       N);
+      }
       else if(args[5].equals("EXPONENTIAL"))
       {
           delaymodel = new ExponentialDelayModel(Double.parseDouble(args[6]),
@@ -453,6 +462,7 @@ public class Simulator {
              "Usage: Simulator <N> <R> <W> <k> <iters> FILE <sendF> <ackF> OPT\n" +
                      "Usage: Simulator <N> <R> <W> <iters> PARETO <W-min> <W-alpha> <ARS-min> <ARS-alpha> OPT\n" +
                      "Usage: Simulator <N> <R> <W> <iters> EXPONENTIAL <W-lambda> <ARS-lambda> OPT\n +" +
+                     "Usage: Simulator <N> <R> <W> <iters> MULTIDC <W-min> <W-alpha> <ARS-min> <ARS-alpha> <DC-delay> OPT\n +" +
                      "OPT= O <SWEEP|LATS>");
           System.exit(1);
       }
