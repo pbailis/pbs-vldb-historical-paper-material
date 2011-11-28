@@ -89,73 +89,6 @@ interface DelayModel
     public double getReadAckDelay();
 }
 
-class MultiDCDelayModel implements DelayModel
-{
-    long Wno, Ano, Rno, Sno;
-    double dcdelay;
-    int N;
-    ParetoDelayModel internalDelay;
-
-    public MultiDCDelayModel(double wmin, double walpha, double arsmin, double arsalpha, double dcdelay, int N)
-    {
-        internalDelay = new ParetoDelayModel(wmin, walpha, arsmin, arsalpha);
-        this.dcdelay = dcdelay;
-        this.N = N;
-        this.Wno = this.Ano = this.Rno = this.Sno = 0;
-    }
-
-    public double getWriteSendDelay()
-    {
-        Wno++;
-
-        double delay;
-        if((Wno % N) == 0)
-            delay = dcdelay;
-        else
-            delay = 0;
-
-        return delay+internalDelay.getWriteSendDelay();
-    }
-
-    public double getWriteAckDelay()
-    {
-        Ano++;
-
-        double delay;
-        if((Ano % N) == 0)
-            delay = dcdelay;
-        else
-            delay = 0;
-
-        return delay+internalDelay.getWriteAckDelay();
-    }
-
-    public double getReadSendDelay()
-    {
-        Rno++;
-
-        double delay;
-        if((Rno % N) == 0)
-            delay = dcdelay;
-        else
-            delay = 0;
-
-        return delay+internalDelay.getReadSendDelay();
-    }
-
-    public double getReadAckDelay()
-    {
-        Sno++;
-
-        double delay;
-        if((Sno % N) == 0)
-            delay = dcdelay;
-        else
-            delay = 0;
-        return delay+internalDelay.getReadAckDelay();
-    }
-}
-
 class ParetoDelayModel implements DelayModel
 {
     double wmin, walpha, arsmin, arsalpha;
@@ -418,6 +351,8 @@ public class Simulator {
 
       int NUM_READERS = 5;
       int NUM_WRITERS = 1;
+      boolean inputmultidc = false;
+      double inputdcdelay = 0;
 
       final int N = Integer.parseInt(args[0]);
       final int R = Integer.parseInt(args[1]);
@@ -435,7 +370,7 @@ public class Simulator {
 
           delaymodel = new EmpiricalDelayModel(sendDelayFile, ackDelayFile);
       }
-      else if(args[5].equals("PARETO"))
+      else if(args[5].equals("PARETO") || args[5].equals("MULTIDC"))
       {
           delaymodel = new ParetoDelayModel(Double.parseDouble(args[6]),
                                        Double.parseDouble(args[7]),
@@ -444,12 +379,8 @@ public class Simulator {
       }
       else if(args[5].equals("MULTIDC"))
       {
-          delaymodel = new MultiDCDelayModel(Double.parseDouble(args[6]),
-                                       Double.parseDouble(args[7]),
-                                       Double.parseDouble(args[8]),
-                                       Double.parseDouble(args[9]),
-                                       Double.parseDouble(args[10]),
-                                       N);
+          inputmultidc = true;
+          inputdcdelay = Double.parseDouble(args[10]);
       }
       else if(args[5].equals("EXPONENTIAL"))
       {
@@ -467,6 +398,8 @@ public class Simulator {
           System.exit(1);
       }
 
+      final double finaldcdelay = inputdcdelay;
+      final boolean multidc = inputmultidc;
       final DelayModel delay = delaymodel;
 
       String optsinput = "";
@@ -508,10 +441,25 @@ public class Simulator {
           {
               Vector<Double> oneways = new Vector<Double>();
               Vector<Double> rtts = new Vector<Double>();
+
+              int chosenDC = 0;
+
+              if(multidc)
+                  chosenDC = (new Random()).nextInt(N);
+
               for(int w = 0; w < N; ++w)
               {
-                  double oneway = delay.getWriteSendDelay();
-                  double ack = delay.getWriteAckDelay();
+                  double onewaydcdelay = 0;
+                  double ackdcdelay = 0;
+
+                  if(multidc && w == chosenDC)
+                  {
+                      onewaydcdelay = finaldcdelay;
+                      ackdcdelay = finaldcdelay;
+                  }
+
+                  double oneway = delay.getWriteSendDelay()+onewaydcdelay;
+                  double ack = delay.getWriteAckDelay()+ackdcdelay;
                   oneways.add(time + oneway);
                   rtts.add(oneway + ack);
               }
@@ -540,6 +488,7 @@ public class Simulator {
       for(int wno = 0; wno < writes.size(); ++wno)
       {
           WriteInstance curWrite = writes.get(wno);
+
           for(int sno = 0; sno < N; ++sno)
           {
               replicas.get(sno).write(curWrite.getOneway().get(sno), wno);
@@ -551,6 +500,7 @@ public class Simulator {
 
       for(int rid = 0; rid < NUM_READERS; ++rid)
       {
+          final int thisrid = rid;
           Thread t = new Thread(new Runnable ()
           {
               public void run()
@@ -561,9 +511,18 @@ public class Simulator {
                       Vector<ReadInstance> readRound = new Vector<ReadInstance>();
                       for(int sno = 0; sno < N; ++sno)
                       {
-                          double onewaytime = delay.getReadSendDelay();
+                          double onewaydcdelay = 0;
+                          double ackdcdelay = 0;
+
+                          if(multidc && sno == thisrid)
+                          {
+                              onewaydcdelay = finaldcdelay;
+                              ackdcdelay = finaldcdelay;
+                          }
+
+                          double onewaytime = onewaydcdelay+delay.getReadSendDelay();
                           int version = replicas.get(sno).read(time+onewaytime);
-                          double rtt = onewaytime+delay.getReadAckDelay();
+                          double rtt = onewaytime+ackdcdelay+delay.getReadAckDelay();
                           readRound.add(new ReadInstance(version, rtt));
                       }
 
