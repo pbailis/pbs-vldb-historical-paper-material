@@ -17,7 +17,7 @@ class ReadOutput
 {
     int version_at_start;
     int version_read;
-    long start_time;
+    double start_time;
 
     public int getVersion_at_start() {
         return version_at_start;
@@ -27,11 +27,11 @@ class ReadOutput
         return version_read;
     }
 
-    public long getStart_time() {
+    public double getStart_time() {
         return start_time;
     }
 
-    public ReadOutput(int version_at_start, int version_read, long start_time)
+    public ReadOutput(int version_at_start, int version_read, double start_time)
     {
         this.version_at_start = version_at_start;
         this.version_read = version_read;
@@ -42,17 +42,17 @@ class ReadOutput
 class ReadPlot implements Comparable
 {
     ReadOutput read;
-    long commit_time_at_start;
+    double commit_time_at_start;
 
     public ReadOutput getRead() {
         return read;
     }
 
-    public long getCommit_time_at_start() {
+    public double getCommit_time_at_start() {
         return commit_time_at_start;
     }
 
-    public ReadPlot(ReadOutput read, long commit_time_at_start)
+    public ReadPlot(ReadOutput read, double commit_time_at_start)
     {
         this.read = read;
         this.commit_time_at_start = commit_time_at_start;
@@ -65,8 +65,8 @@ class ReadPlot implements Comparable
 
         ReadPlot comparePlot = ((ReadPlot) anotherPlot);
 
-        long thisdelta = this.read.getStart_time()-this.commit_time_at_start;
-        long theirdelta = comparePlot.getRead().getStart_time()-comparePlot.getCommit_time_at_start();
+        double thisdelta = this.read.getStart_time()-this.commit_time_at_start;
+        double theirdelta = comparePlot.getRead().getStart_time()-comparePlot.getCommit_time_at_start();
 
         if(thisdelta < theirdelta)
             return -1;
@@ -83,10 +83,77 @@ class ReadPlot implements Comparable
 
 interface DelayModel
 {
-    public long getWriteSendDelay();
-    public long getReadSendDelay();
-    public long getWriteAckDelay();
-    public long getReadAckDelay();
+    public double getWriteSendDelay();
+    public double getReadSendDelay();
+    public double getWriteAckDelay();
+    public double getReadAckDelay();
+}
+
+class MultiDCDelayModel implements DelayModel
+{
+    long Wno, Ano, Rno, Sno;
+    double dcdelay;
+    int N;
+    ParetoDelayModel internalDelay;
+
+    public MultiDCDelayModel(double wmin, double walpha, double arsmin, double arsalpha, double dcdelay, int N)
+    {
+        internalDelay = new ParetoDelayModel(wmin, walpha, arsmin, arsalpha);
+        this.dcdelay = dcdelay;
+        this.N = N;
+        this.Wno = this.Ano = this.Rno = this.Sno = 0;
+    }
+
+    public double getWriteSendDelay()
+    {
+        Wno++;
+
+        double delay;
+        if((Wno % N) == 0)
+            delay = dcdelay;
+        else
+            delay = 0;
+
+        return delay+internalDelay.getWriteSendDelay();
+    }
+
+    public double getWriteAckDelay()
+    {
+        Ano++;
+
+        double delay;
+        if((Ano % N) == 0)
+            delay = dcdelay;
+        else
+            delay = 0;
+
+        return delay+internalDelay.getWriteAckDelay();
+    }
+
+    public double getReadSendDelay()
+    {
+        Rno++;
+
+        double delay;
+        if((Rno % N) == 0)
+            delay = dcdelay;
+        else
+            delay = 0;
+
+        return delay+internalDelay.getReadSendDelay();
+    }
+
+    public double getReadAckDelay()
+    {
+        Sno++;
+
+        double delay;
+        if((Sno % N) == 0)
+            delay = dcdelay;
+        else
+            delay = 0;
+        return delay+internalDelay.getReadAckDelay();
+    }
 }
 
 class ParetoDelayModel implements DelayModel
@@ -102,27 +169,27 @@ class ParetoDelayModel implements DelayModel
         this.rand = new Random();
     }
 
-    long getNextPareto(double m, double a)
+    double getNextPareto(double m, double a)
     {
-        return Math.round(m / Math.pow(rand.nextDouble(), 1/a));
+        return m / Math.pow(rand.nextDouble(), 1/a);
     }
 
-    public long getWriteSendDelay()
+    public double getWriteSendDelay()
     {
         return getNextPareto(wmin, walpha);
     }
 
-    public long getReadSendDelay()
+    public double getReadSendDelay()
     {
         return getNextPareto(arsmin, arsalpha);
     }
 
-    public long getWriteAckDelay()
+    public double getWriteAckDelay()
     {
         return getReadSendDelay();
     }
 
-    public long getReadAckDelay()
+    public double getReadAckDelay()
     {
         return getReadSendDelay();
     }
@@ -140,27 +207,27 @@ class ExponentialDelayModel implements DelayModel
         this.rand = new Random();
     }
 
-    long getNextExponential(double lambda)
+    double getNextExponential(double lambda)
     {
-        return Math.round(Math.log(1-rand.nextDouble())/(-lambda));
+        return Math.log(1-rand.nextDouble())/(-lambda);
     }
 
-    public long getWriteSendDelay()
+    public double getWriteSendDelay()
     {
         return getNextExponential(wlambda);
     }
 
-    public long getReadSendDelay()
+    public double getReadSendDelay()
     {
         return getNextExponential(arslambda);
     }
 
-    public long getWriteAckDelay()
+    public double getWriteAckDelay()
     {
         return getReadSendDelay();
     }
 
-    public long getReadAckDelay()
+    public double getReadAckDelay()
     {
         return getReadSendDelay();
     }
@@ -192,35 +259,35 @@ class EmpiricalDelayModel implements DelayModel
        }
     }
 
-    public long getWriteSendDelay() {
-      return Math.round(sendLatencyModel.getInverseCDF(1,
-          rand.nextDouble()));
+    public double getWriteSendDelay() {
+      return sendLatencyModel.getInverseCDF(1,
+          rand.nextDouble());
     }
 
-    public long getReadSendDelay() { return getWriteAckDelay(); };
+    public double getReadSendDelay() { return getWriteAckDelay(); };
 
-    public long getWriteAckDelay() {
-      return Math.round(ackLatencyModel.getInverseCDF(1,
-          rand.nextDouble()));
+    public double getWriteAckDelay() {
+      return ackLatencyModel.getInverseCDF(1,
+          rand.nextDouble());
     }
 
-    public long getReadAckDelay() { return getWriteAckDelay(); };
+    public double getReadAckDelay() { return getWriteAckDelay(); };
 }
 
 class ReadInstance implements Comparable
 {
     int version;
-    long finishtime;
+    double finishtime;
 
     public int getVersion() {
         return version;
     }
 
-    public long getFinishtime() {
+    public double getFinishtime() {
         return finishtime;
     }
 
-    public ReadInstance(int version, long finishtime)
+    public ReadInstance(int version, double finishtime)
     {
         this.version = version;
         this.finishtime = finishtime;
@@ -231,7 +298,7 @@ class ReadInstance implements Comparable
         if(!(anotherRead instanceof ReadInstance))
             throw new ClassCastException("A ReadInstance object expected.");
 
-        long otherFinishTime = ((ReadInstance) anotherRead).getFinishtime();
+        double otherFinishTime = ((ReadInstance) anotherRead).getFinishtime();
 
         if(this.finishtime < otherFinishTime)
             return -1;
@@ -243,25 +310,25 @@ class ReadInstance implements Comparable
 
 class WriteInstance implements Comparable
 {
-    List<Long> oneway;
-    long committime;
-    long starttime;
+    List<Double> oneway;
+    double committime;
+    double starttime;
 
 
-    public long getStarttime() {
+    public double getStarttime() {
         return starttime;
     }
 
 
-    public List<Long> getOneway() {
+    public List<Double> getOneway() {
         return oneway;
     }
 
-    public long getCommittime() {
+    public double getCommittime() {
         return committime;
     }
 
-    public WriteInstance(List<Long> oneway, long starttime, long committime)
+    public WriteInstance(List<Double> oneway, double starttime, double committime)
     {
         this.oneway = oneway;
         this.starttime = starttime;
@@ -273,7 +340,7 @@ class WriteInstance implements Comparable
         if(!(anotherWrite instanceof WriteInstance))
             throw new ClassCastException("A WriteInstance object expected.");
 
-        long otherStartTime = ((WriteInstance) anotherWrite).getStarttime();
+        double otherStartTime = ((WriteInstance) anotherWrite).getStarttime();
 
         if(this.starttime < otherStartTime)
             return -1;
@@ -286,43 +353,43 @@ class WriteInstance implements Comparable
 
 class CommitTimes
 {
-    TreeMap<Long, Integer> commits;
-    HashMap<Integer, Long> versiontotime;
+    TreeMap<Double, Integer> commits;
+    HashMap<Integer, Double> versiontotime;
 
     public CommitTimes()
     {
-        commits = new TreeMap<Long, Integer>();
-        versiontotime = new HashMap<Integer, Long>();
+        commits = new TreeMap<Double, Integer>();
+        versiontotime = new HashMap<Integer, Double>();
     }
 
-    public void record(long time, int version)
+    public void record(double time, int version)
     {
       commits.put(time, version);
       versiontotime.put(version, time);
     }
 
-    public int last_committed_version(long time)
+    public int last_committed_version(double time)
     {
       if(commits.containsKey(time))
           return commits.get(time);
       return commits.get(commits.headMap(time).lastKey());
     }
 
-    public long get_commit_time(int version)
+    public double get_commit_time(int version)
     {
         return versiontotime.get(version);
     }
 }
 
 class KVServer {
-  TreeMap<Long, Integer> timeVersions;
+  TreeMap<Double, Integer> timeVersions;
 
   public KVServer()
   {
-    timeVersions = new TreeMap<Long, Integer>();
+    timeVersions = new TreeMap<Double, Integer>();
   }
 
-  public void write(long time, int version)
+  public void write(double time, int version)
   {
     //don't store old versions!
     if(read(time) > version)
@@ -332,13 +399,13 @@ class KVServer {
     timeVersions.put(time, version);
   }
 
-  public int read(long time)
+  public int read(double time)
   {
     if(timeVersions.containsKey(time))
         return timeVersions.get(time);
 
 
-    SortedMap<Long, Integer> mapFromTime = timeVersions.headMap(time);
+    SortedMap<Double, Integer> mapFromTime = timeVersions.headMap(time);
     if(mapFromTime.isEmpty())
         return -1;
     return timeVersions.get(mapFromTime.lastKey());
@@ -413,36 +480,36 @@ public class Simulator {
       }
 
 
-      HashMap<Integer, Long> commitTimes = new HashMap<Integer, Long>();
+      HashMap<Integer, Double> commitTimes = new HashMap<Integer, Double>();
       Vector<WriteInstance> writes = new Vector<WriteInstance>();
       final CommitTimes commits = new CommitTimes();
 
       final ConcurrentLinkedQueue<ReadPlot> readPlotConcurrent = new ConcurrentLinkedQueue<ReadPlot>();
 
-      long ltime = 0;
-      long ftime = 1000;
+      double ltime = 0;
+      double ftime = 1000;
 
       for(int wid = 0; wid < NUM_WRITERS; wid++)
       {
-          long time = 0;
+          double time = 0;
           for(int i = 0; i < ITERATIONS; ++i)
           {
-              Vector<Long> oneways = new Vector<Long>();
-              Vector<Long> rtts = new Vector<Long>();
+              Vector<Double> oneways = new Vector<Double>();
+              Vector<Double> rtts = new Vector<Double>();
               for(int w = 0; w < N; ++w)
               {
-                  long oneway = delay.getWriteSendDelay();
-                  long ack = delay.getWriteAckDelay();
+                  double oneway = delay.getWriteSendDelay();
+                  double ack = delay.getWriteAckDelay();
                   oneways.add(time + oneway);
                   rtts.add(oneway + ack);
               }
               Collections.sort(rtts);
-              long wlat = rtts.get(W-1);
+              double wlat = rtts.get(W-1);
               if(opts.equals("LAT"))
               {
-                  System.out.printf("W %d\n", wlat);
+                  System.out.printf("W %f\n", wlat);
               }
-              long committime = time+wlat;
+              double committime = time+wlat;
               writes.add(new WriteInstance(oneways, time, committime));
               time = committime;
           }
@@ -453,8 +520,8 @@ public class Simulator {
               ftime = time;
       }
 
-      final long maxtime = ltime;
-      final long firsttime = ftime;
+      final double maxtime = ltime;
+      final double firsttime = ftime;
 
       Collections.sort(writes);
 
@@ -476,24 +543,24 @@ public class Simulator {
           {
               public void run()
               {
-                  long time = firsttime*2;
+                  double time = firsttime*2;
                   while(time < maxtime)
                   {
                       Vector<ReadInstance> readRound = new Vector<ReadInstance>();
                       for(int sno = 0; sno < N; ++sno)
                       {
-                          long onewaytime = delay.getReadSendDelay();
+                          double onewaytime = delay.getReadSendDelay();
                           int version = replicas.get(sno).read(time+onewaytime);
-                          long rtt = onewaytime+delay.getReadAckDelay();
+                          double rtt = onewaytime+delay.getReadAckDelay();
                           readRound.add(new ReadInstance(version, rtt));
                       }
 
                       Collections.sort(readRound);
-                      long endtime = readRound.get(R-1).getFinishtime();
+                      double endtime = readRound.get(R-1).getFinishtime();
 
                       if(opts.equals("LAT"))
                       {
-                          System.out.printf("R %d\n", endtime);
+                          System.out.printf("R %f\n", endtime);
                       }
 
                       int maxversion = -1;
@@ -549,7 +616,7 @@ public class Simulator {
 
           for(int p = 900; p < 1000; ++p)
           {
-              long tstale = 0;
+              double tstale = 0;
               Double pst = (1000-p)/1000.0;
 
               long how_many_stale = (long)Math.ceil(readPlots.size()*pst);
