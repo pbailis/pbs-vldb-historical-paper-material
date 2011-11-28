@@ -629,7 +629,7 @@ public class Simulator {
           {
               double tstale = 0;
 
-              long how_many_stale = (long)Math.ceil(readPlots.size()*p);
+              long how_many_stale = (long)Math.ceil(readPlots.size()*(1-p));
 
               ReadPlot r = manystalemap.get(how_many_stale);
 
