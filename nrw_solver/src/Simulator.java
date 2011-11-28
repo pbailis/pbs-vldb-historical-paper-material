@@ -489,6 +489,8 @@ public class Simulator {
           replicas.add(new KVServer());
       }
 
+      Vector<Double> writelats = new Vector<Double>();
+      final ConcurrentLinkedQueue<Double> readlats = new ConcurrentLinkedQueue<Double>();
 
       HashMap<Integer, Double> commitTimes = new HashMap<Integer, Double>();
       Vector<WriteInstance> writes = new Vector<WriteInstance>();
@@ -515,9 +517,9 @@ public class Simulator {
               }
               Collections.sort(rtts);
               double wlat = rtts.get(W-1);
-              if(opts.equals("LAT"))
+              if(opts.equals("LATS"))
               {
-                  System.out.printf("W %f\n", wlat);
+                  writelats.add(wlat);
               }
               double committime = time+wlat;
               writes.add(new WriteInstance(oneways, time, committime));
@@ -568,9 +570,9 @@ public class Simulator {
                       Collections.sort(readRound);
                       double endtime = readRound.get(R-1).getFinishtime();
 
-                      if(opts.equals("LAT"))
+                      if(opts.equals("LATS"))
                       {
-                          System.out.printf("R %f\n", endtime);
+                          readlats.add(endtime);
                       }
 
                       int maxversion = -1;
@@ -606,7 +608,6 @@ public class Simulator {
 
       if(opts.equals("SWEEP"))
       {
-
           Vector<ReadPlot> readPlots = new Vector<ReadPlot>(readPlotConcurrent);
 
           Collections.sort(readPlots);
@@ -624,12 +625,11 @@ public class Simulator {
             }
           }
 
-          for(int p = 900; p < 1000; ++p)
+          for(double p = .9; p < 1; p += .001)
           {
               double tstale = 0;
-              Double pst = (1000-p)/1000.0;
 
-              long how_many_stale = (long)Math.ceil(readPlots.size()*pst);
+              long how_many_stale = (long)Math.ceil(readPlots.size()*p);
 
               ReadPlot r = manystalemap.get(how_many_stale);
 
@@ -639,6 +639,25 @@ public class Simulator {
                   tstale = r.getRead().getStart_time() - r.getCommit_time_at_start();
 
               System.out.println(p+" "+tstale);
+          }
+      }
+
+      if(opts.equals("LATS"))
+      {
+          System.out.println("WRITE");
+          Collections.sort(writelats);
+          for(double p = 0; p < 1; p += .01)
+          {
+              System.out.printf("%f %f\n", p, writelats.get((int) Math.round(p * writelats.size())));
+          }
+
+          Vector<Double> readLatencies = new Vector<Double>(readlats);
+
+          System.out.println("READ");
+          Collections.sort(readLatencies);
+          for(double p = 0; p < 1; p += .01)
+          {
+              System.out.printf("%f %f\n", p, readLatencies.get((int)Math.round(p*readLatencies.size())));
           }
       }
   }
