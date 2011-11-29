@@ -359,7 +359,7 @@ public class Simulator {
       int W = Integer.parseInt(args[2]);
       int K = Integer.parseInt(args[3]);
       assert K >= 1;
-      int ITERATIONS = Integer.parseInt(args[4]);
+      final int ITERATIONS = Integer.parseInt(args[4]);
 
       DelayModel delaymodel = null;
 
@@ -376,11 +376,12 @@ public class Simulator {
                                        Double.parseDouble(args[7]),
                                        Double.parseDouble(args[8]),
                                        Double.parseDouble(args[9]));
-      }
-      else if(args[5].equals("MULTIDC"))
-      {
-          inputmultidc = true;
-          inputdcdelay = Double.parseDouble(args[10]);
+
+          if(args[5].equals("MULTIDC"))
+          {
+              inputmultidc = true;
+              inputdcdelay = Double.parseDouble(args[10]);
+          }
       }
       else if(args[5].equals("EXPONENTIAL"))
       {
@@ -391,9 +392,9 @@ public class Simulator {
       {
           System.err.println(
              "Usage: Simulator <N> <R> <W> <k> <iters> FILE <sendF> <ackF> OPT\n" +
-                     "Usage: Simulator <N> <R> <W> <iters> PARETO <W-min> <W-alpha> <ARS-min> <ARS-alpha> OPT\n" +
-                     "Usage: Simulator <N> <R> <W> <iters> EXPONENTIAL <W-lambda> <ARS-lambda> OPT\n +" +
-                     "Usage: Simulator <N> <R> <W> <iters> MULTIDC <W-min> <W-alpha> <ARS-min> <ARS-alpha> <DC-delay> OPT\n +" +
+                     "Usage: Simulator <N> <R> <W> <k> <iters> PARETO <W-min> <W-alpha> <ARS-min> <ARS-alpha> OPT\n" +
+                     "Usage: Simulator <N> <R> <W> <k> <iters> EXPONENTIAL <W-lambda> <ARS-lambda> OPT\n +" +
+                     "Usage: Simulator <N> <R> <W> <k> <iters> MULTIDC <W-min> <W-alpha> <ARS-min> <ARS-alpha> <DC-delay> OPT\n +" +
                      "OPT= O <SWEEP|LATS>");
           System.exit(1);
       }
@@ -462,13 +463,13 @@ public class Simulator {
                   double ack = delay.getWriteAckDelay()+ackdcdelay;
                   oneways.add(time + oneway);
                   rtts.add(oneway + ack);
+                  if(opts.equals("LATS"))
+                  {
+                    writelats.add(oneway+ack);
+                  }
               }
               Collections.sort(rtts);
               double wlat = rtts.get(W-1);
-              if(opts.equals("LATS"))
-              {
-                  writelats.add(wlat);
-              }
               double committime = time+wlat;
               writes.add(new WriteInstance(oneways, time, committime));
               time = committime;
@@ -506,8 +507,14 @@ public class Simulator {
               public void run()
               {
                   double time = firsttime*2;
+                  long it = 0;
                   while(time < maxtime)
                   {
+                      it++;
+
+                      if(it > ITERATIONS*3)
+                          break;
+
                       Vector<ReadInstance> readRound = new Vector<ReadInstance>();
                       for(int sno = 0; sno < N; ++sno)
                       {
@@ -523,16 +530,16 @@ public class Simulator {
                           double onewaytime = onewaydcdelay+delay.getReadSendDelay();
                           int version = replicas.get(sno).read(time+onewaytime);
                           double rtt = onewaytime+ackdcdelay+delay.getReadAckDelay();
+
+                          if(opts.equals("LATS"))
+                          {
+                            readlats.add(rtt);
+                          }
                           readRound.add(new ReadInstance(version, rtt));
                       }
 
                       Collections.sort(readRound);
                       double endtime = readRound.get(R-1).getFinishtime();
-
-                      if(opts.equals("LATS"))
-                      {
-                          readlats.add(endtime);
-                      }
 
                       int maxversion = -1;
 
@@ -584,7 +591,7 @@ public class Simulator {
             }
           }
 
-          for(double p = .9; p < 1; p += .001)
+          for(double p = 0; p < 1; p += .001)
           {
               double tstale = 0;
 
