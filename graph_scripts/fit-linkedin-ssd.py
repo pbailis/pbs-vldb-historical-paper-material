@@ -3,8 +3,8 @@ from random import random
 from pylab import *
 
 
-yammer_read_latencies = [3.75, 4.17, 5.20, 6.045, 6.59]
-yammer_read_pcts = [.5, .75, .95, .98, .99]
+linkedin_ssd_latencies = [1, 2]
+linkedin_ssd_pcts = [.95, .99]
 
 
 def get_exponential(lmbda):
@@ -18,16 +18,15 @@ def get_pareto(alpha, m):
 
     return m/r
 
-def get_samples(l1, m1, l2, m2):
+def get_samples(l1, m1,  l2, m2):
     samples = []
 
-    
     for i in range(0, 10000):
         lats = []
         for r in range(0, 3):
             lats.append(get_pareto(l1, m1)+get_pareto(l2, m2))
         lats.sort()
-        samples.append(lats[1])
+        samples.append(lats[0])
 
     samples.sort()
     return samples
@@ -41,35 +40,47 @@ def get_error(samples, real, pcts):
         err = get_pct(samples, pcts[i])-real[i]
         #print pcts[i], real[i], get_pct(samples, pcts[i])
         if err < 0:
+            print pcts[i], err
             return -10000
-        toterr += pow(err, 2)
+        toterr += pow(err,2)
+
+    err = average(samples)-.58
+    if err < 0:
+        print pcts[i], err
+        return -10000
+
+    toterr += pow(err, 2)
 
     return toterr
 
-besterr = 100000
+minerr = 100000
 bestm = -1
 bestl = -1
-
-for m in range(1375, 1390):
-    m = m/1000.0
-    for l in range(2860, 2875):
-        l = l/1000.0
+for m in range(10, 20):
+    m = m/100.0
+    for l in range(90, 98):
+        l = l/100.0
         test = get_samples(l, m, l, m)
-        err = get_error(test, yammer_read_latencies, yammer_read_pcts)
+        err = get_error(test, linkedin_ssd_latencies, linkedin_ssd_pcts)
         if err < 0:
             break
-        if err < besterr:
-            besterr = err
+        if err < minerr:
             bestm = m
             bestl = l
-        print l, m, err
+            minerr = err
+        print l,m, err
 
-print "BEST:", bestl, bestm, besterr
+print bestl, bestm, minerr
 
-test=get_samples(2.866, 1.385, 2.866, 1.385)
+test=get_samples(.9, .15, .9, .15)
 print min(test)
-plot(yammer_read_latencies,yammer_read_pcts,  'o-', label="REAL")
-plot([get_pct(test, pct) for pct in yammer_read_pcts], yammer_read_pcts, 'o-', label="PREDICT")
+plot(linkedin_ssd_latencies,linkedin_ssd_pcts,  'o-', label="REAL", color="green")
+plot([get_pct(test, pct) for pct in linkedin_ssd_pcts], linkedin_ssd_pcts, 'o-', label="PREDICT", color="blue")
+
+plot([.58], [.5], "o", color="green")
+plot([average(test)], [.5], "o", color="blue")
+
+
 title("YAMMER READ")
 legend(loc="lower right")
 ylabel("CDF")

@@ -13,15 +13,20 @@ def get_exponential(lmbda):
     return log(1-random())/(-lmbda)
 
 def get_pareto(alpha, m):
-    return m/pow(random(), 1/alpha)
+    r = pow(random(), 1/alpha)
 
-def get_samples(l1):
+    if r == 0:
+        return 10000000000
+
+    return m/r
+
+def get_samples(l1, m1):
     samples = []
 
     for i in range(0, 100000):
         lats = []
         for w in range(0, 3):
-            lats.append(get_pareto(l1, 2.7)+get_pareto(2.97, 1.55/1.1))
+            lats.append(get_pareto(l1, m1)+get_pareto(2.866, 1.385))
         lats.sort()
         samples.append(lats[1])
 
@@ -36,6 +41,7 @@ def get_error(samples, real, pcts):
     for i in range(0, len(pcts)):
         err = get_pct(samples, pcts[i])-real[i]
         #print pcts[i], real[i], get_pct(samples, pcts[i])
+
         if err < 0:
             print pcts[i], err
             return -10000
@@ -43,13 +49,28 @@ def get_error(samples, real, pcts):
 
     return toterr
 
-for i in range(230, 240):
-    continue
-    l = i/100.0
-    test = get_samples(l)
-    print l, get_error(test, yammer_write_latencies, yammer_write_pcts)
+besterr = 100000
+bestm = -1
+bestl = -1
 
-test=get_samples(2.32)
+for m in range(268, 272):
+    m = m/100.0
+    for l in range(228, 235):
+        continue
+        l = l/100.0
+        test = get_samples(l, m)
+        err = get_error(test, yammer_write_latencies, yammer_write_pcts)
+        if err < 0:
+            break
+        if err < besterr:
+            besterr = err
+            bestm = m
+            bestl = l
+        print l, m, err
+
+print "BEST:", bestl, bestm, besterr
+
+test=get_samples(2.34, 2.7)
 plot(yammer_write_latencies,yammer_write_pcts,  'o-', label="REAL")
 plot([get_pct(test, pct) for pct in yammer_write_pcts], yammer_write_pcts, 'o-', label="PREDICT")
 title("YAMMER WRITE")
