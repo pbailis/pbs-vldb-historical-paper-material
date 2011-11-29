@@ -213,19 +213,28 @@ class ReadInstance implements Comparable
 {
     int version;
     double finishtime;
+    int server;
 
-    public int getVersion() {
+    public int getVersion()
+    {
         return version;
     }
 
-    public double getFinishtime() {
+    public int getServer()
+    {
+        return server;
+    }
+
+    public double getFinishtime()
+    {
         return finishtime;
     }
 
-    public ReadInstance(int version, double finishtime)
+    public ReadInstance(int version, double finishtime, int sno)
     {
         this.version = version;
         this.finishtime = finishtime;
+        this.server = sno;
     }
 
     public int compareTo(Object anotherRead) throws ClassCastException
@@ -290,17 +299,25 @@ class CommitTimes
 {
     TreeMap<Double, Integer> commits;
     HashMap<Integer, Double> versiontotime;
+    HashMap<Double, WriteInstance> timetowrite;
 
     public CommitTimes()
     {
         commits = new TreeMap<Double, Integer>();
         versiontotime = new HashMap<Integer, Double>();
+        timetowrite = new HashMap<Double, WriteInstance>();
     }
 
-    public void record(double time, int version)
+    public void record(WriteInstance write, int version)
     {
-      commits.put(time, version);
-      versiontotime.put(version, time);
+        commits.put(write.getCommittime(), version);
+        versiontotime.put(version, write.getCommittime());
+        timetowrite.put(write.getCommittime(), write);
+    }
+
+    public WriteInstance get_instance_from_time(double time)
+    {
+        return timetowrite.get(time);
     }
 
     public int last_committed_version(double time)
@@ -407,7 +424,7 @@ public class Simulator {
                      "Usage: Simulator <N> <R> <W> <k> <iters> <write spacing> <readsperwrite> PARETO <W-min> <W-alpha> <ARS-min> <ARS-alpha> OPT\n" +
                      "Usage: Simulator <N> <R> <W> <k> <iters> <write spacing> <readsperwrite> EXPONENTIAL <W-lambda> <ARS-lambda> OPT\n" +
                      "Usage: Simulator <N> <R> <W> <k> <iters> <write spacing> <readsperwrite> MULTIDC <W-min> <W-alpha> <ARS-min> <ARS-alpha> <DC-delay> OPT\n" +
-                     "OPT= O <SWEEP|LATS>");
+                     "OPT= O <SWEEP|LATS|BESTCASE|WORSTCASE>");
           System.exit(1);
       }
 
@@ -422,7 +439,7 @@ public class Simulator {
           if(args[i].equals("O"))
           {
               optsinput = args[i+1];
-              assert optsinput.equals("SWEEP") || optsinput.equals("LATS");
+              assert optsinput.equals("SWEEP") || optsinput.equals("LATS") || optsinput.equals("BESTCASE")||optsinput.equals("WORSTCASE");
               break;
           }
       }
@@ -438,7 +455,6 @@ public class Simulator {
       Vector<Double> writelats = new Vector<Double>();
       final ConcurrentLinkedQueue<Double> readlats = new ConcurrentLinkedQueue<Double>();
 
-      HashMap<Integer, Double> commitTimes = new HashMap<Integer, Double>();
       Vector<WriteInstance> writes = new Vector<WriteInstance>();
       final CommitTimes commits = new CommitTimes();
 
@@ -472,10 +488,10 @@ public class Simulator {
                   }
 
                   double oneway = delay.getWriteSendDelay()+onewaydcdelay;
+
                   double ack = delay.getWriteAckDelay()+ackdcdelay;
                   oneways.add(time + oneway);
                   rtts.add(oneway + ack);
-
               }
               Collections.sort(rtts);
               double wlat = rtts.get(W-1);
@@ -509,10 +525,10 @@ public class Simulator {
           {
               replicas.get(sno).write(curWrite.getOneway().get(sno), wno);
           }
-          commits.record(curWrite.getCommittime(), wno);
+          commits.record(curWrite, wno);
       }
 
-      if(opts.equals("SWEEP"))
+      if(opts.equals("SWEEP") || opts.equals("BESTCASE") || opts.equals("WORSTCASE"))
       {
           HashMap<Double, Long> t_to_current = new HashMap<Double, Long>();
           HashMap<Double, Long> t_to_stale = new HashMap<Double, Long>();
@@ -548,11 +564,44 @@ public class Simulator {
                           int version = replicas.get(sno).read(time+onewaytime);
                           double rtt = onewaytime+ackdcdelay+delay.getReadAckDelay();
 
-                          readRound.add(new ReadInstance(version, rtt));
+                          readRound.add(new ReadInstance(version, rtt, sno));
                       }
 
-                      Collections.sort(readRound);
-                      double endtime = readRound.get(R-1).getFinishtime();
+                      Vector<ReadInstance> readRoundSort = (Vector<ReadInstance>)readRound.clone();
+                      Collections.sort(readRoundSort);
+                      double endtime = readRoundSort.get(R-1).getFinishtime();
+
+                      if(opts.equals("BESTCASE") || opts.equals("WORSTCASE"))
+                      {
+                          WriteInstance w = commits.get_instance_from_time(commits.get_commit_time(commits.last_committed_version(time)));
+                          List<Double> oneway_writes = w.getOneway();
+
+                          Map<Double, Integer> map = new TreeMap<Double, Integer>();
+                          for(int i = 0; i < oneway_writes.size(); ++i)
+                          {
+                              map.put(oneway_writes.get(i), i);
+                          }
+
+                          Vector<ReadInstance> filteredReadRound = new Vector<ReadInstance>();
+                          List<Integer> index_to_order = new Vector<Integer>(map.values());
+
+                          if(opts.equals("BESTCASE"))
+                          {
+                             for(int i = 0; i < R; ++i)
+                             {
+                                 filteredReadRound.add(readRound.get(index_to_order.get(i)));
+                             }
+                          }
+                          else if(opts.equals("WORSTCASE"))
+                          {
+                             for(int i = N-R; i < N; ++i)
+                             {
+                                 filteredReadRound.add(readRound.get(index_to_order.get(i)));
+                             }
+                          }
+
+                          readRound = filteredReadRound;
+                      }
 
                       int maxversion = -1;
 
@@ -592,6 +641,9 @@ public class Simulator {
 
           List<Double> times = new Vector<Double>(t_to_stale.keySet());
           Collections.sort(times);
+
+          if(times.isEmpty())
+              System.out.println("0.0 1.0");
 
           for(double ts : times)
           {
