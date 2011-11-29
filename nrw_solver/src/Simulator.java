@@ -371,10 +371,10 @@ public class Simulator {
 
       int NUM_READERS = 1;
       int NUM_WRITERS = 1;
-      boolean inputmultidc = false;
-      double inputdcdelay = 0;
       int N = 3, R = 1, W = 1, K = 1, ITERATIONS = 1000, writespacing = 1, readsperwrite = 10;
       DelayModel delaymodel = null;
+      boolean multidc = false;
+      double dcdelay = 0;
 
 
       try
@@ -406,8 +406,8 @@ public class Simulator {
 
               if(args[7].equals("MULTIDC"))
               {
-                  inputmultidc = true;
-                  inputdcdelay = Double.parseDouble(args[12]);
+                  multidc = true;
+                  dcdelay = Double.parseDouble(args[12]);
               }
           }
           else if(args[7].equals("EXPONENTIAL"))
@@ -427,10 +427,6 @@ public class Simulator {
                      "OPT= O <SWEEP|LATS|BESTCASE|WORSTCASE>");
           System.exit(1);
       }
-
-      final double finaldcdelay = inputdcdelay;
-      final boolean multidc = inputmultidc;
-      final DelayModel delay = delaymodel;
 
       String optsinput = "";
 
@@ -483,13 +479,13 @@ public class Simulator {
 
                   if(multidc && w != chosenDC)
                   {
-                      onewaydcdelay = finaldcdelay;
-                      ackdcdelay = finaldcdelay;
+                      onewaydcdelay = dcdelay;
+                      ackdcdelay = dcdelay;
                   }
 
-                  double oneway = delay.getWriteSendDelay()+onewaydcdelay;
+                  double oneway = delaymodel.getWriteSendDelay()+onewaydcdelay;
 
-                  double ack = delay.getWriteAckDelay()+ackdcdelay;
+                  double ack = delaymodel.getWriteAckDelay()+ackdcdelay;
                   oneways.add(time + oneway);
                   rtts.add(oneway + ack);
               }
@@ -547,7 +543,7 @@ public class Simulator {
                   {
                       Vector<ReadInstance> readRound = new Vector<ReadInstance>();
 
-                      int thisdc = (r % N);
+                      int thisdc = (new Random()).nextInt(N);
 
                       for(int sno = 0; sno < N; ++sno)
                       {
@@ -556,13 +552,13 @@ public class Simulator {
 
                           if(multidc && (sno != thisdc))
                           {
-                              onewaydcdelay = finaldcdelay;
-                              ackdcdelay = finaldcdelay;
+                              onewaydcdelay = dcdelay;
+                              ackdcdelay = dcdelay;
                           }
 
-                          double onewaytime = onewaydcdelay+delay.getReadSendDelay();
+                          double onewaytime = onewaydcdelay+delaymodel.getReadSendDelay();
                           int version = replicas.get(sno).read(time+onewaytime);
-                          double rtt = onewaytime+ackdcdelay+delay.getReadAckDelay();
+                          double rtt = onewaytime+ackdcdelay+delaymodel.getReadAckDelay();
 
                           readRound.add(new ReadInstance(version, rtt, sno));
                       }
@@ -602,6 +598,8 @@ public class Simulator {
 
                           readRound = filteredReadRound;
                       }
+
+                      Collections.sort(readRound);
 
                       int maxversion = -1;
 
@@ -681,7 +679,7 @@ public class Simulator {
           {
               Vector<Double> thisreadround = new Vector<Double>();
 
-              int thisdc = (i % N);
+              int thisdc = (new Random()).nextInt(N);
 
               for(int sno = 0; sno < N; ++sno)
               {
@@ -690,12 +688,12 @@ public class Simulator {
 
                   if(multidc && (sno != thisdc))
                   {
-                      onewaydcdelay = finaldcdelay;
-                      ackdcdelay = finaldcdelay;
+                      onewaydcdelay = dcdelay;
+                      ackdcdelay = dcdelay;
                   }
 
-                  double onewaytime = onewaydcdelay+delay.getReadSendDelay();
-                  double rtt = onewaytime+ackdcdelay+delay.getReadAckDelay();
+                  double onewaytime = onewaydcdelay+delaymodel.getReadSendDelay();
+                  double rtt = onewaytime+ackdcdelay+delaymodel.getReadAckDelay();
                   thisreadround.add(rtt);
               }
 
