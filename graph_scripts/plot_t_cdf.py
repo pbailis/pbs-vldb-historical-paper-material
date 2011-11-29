@@ -11,9 +11,9 @@ results = []
 
 lmbdas = get_lmbdas(resultsfile)
 for lmbda in lmbdas:
-    results.append(fetch_result(resultsfile, 3, 1, 1, lmbda))
+    results.append(fetch_result(resultsfile, 3, 1, 1, lmbda[0], lmbda[1]))
 
-results.sort(key=lambda result: result.config.lmbda)
+results.sort(key=lambda result: result.config.wlmbda)
 
 def chunkBins(seq, num):
   avg = len(seq) / float(num)
@@ -46,34 +46,44 @@ for result in results:
 
     '''
 
-    print result.config.lmbda
+    print result.config.wlmbda, result.config.rlmbda
+    
+    wlatency =  average([w.latency for w in result.writes])
+    rlatency = average([r.latency for r in result.reads])
 
-    plot(tstales, percentiles, 'o-', label=str(result.config.lmbda)[:5])
+    hist([w.latency for w in result.writes], 100)
+    show()
+    cla()
+
+    print wlatency, rlatency
+
+    ratio = wlatency/rlatency
+
+    roundratio = round(ratio, 2)
+
+    plot(tstales, percentiles, 'o-', label=str(roundratio)+","+str(wlatency))
 
 for result in results:
+    continue
     config = result.config
-    '''
-    print config.lmbda
-    if float(config.lmbda) == .002:
-        times, stales = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900], [0.895129, 0.924491, 0.946839, 0.963284, 0.975073, 0.983337, 0.988995, 0.992792, 0.995309, 0.996961]
-    elif float(config.lmbda) == .005:
-        times, stales= [0, 100, 200, 300, 400, 500, 600, 700, 800, 900], [0.903216, 0.959166, 0.98458, 0.994605, 0.998155, 0.999346, 0.999756, 0.999913, 0.999977, 0.999998]
-    else:
-        continue
-    '''
+
     times, stales = sweep_t(config.rootconfigdir, config, k)
 
     print times, stales
     stales = [1-stale for stale in stales]
-    plot(times, stales, 'o-', label=str(result.config.lmbda)[:5]+"A", ms=5)
+    plot(times, stales, 'o-', label=str(result.config.wlmbda)[:5]+"A", ms=5)
 
 ax = gca()
 
 title("N: %d, R: %d, W: %d" % (result.config.N, result.config.R, result.config.W))
 xlabel("Time After Commit (ms)")
-ylabel("pstale")
+ylabel("1-pstaler")
 
-legend()
+legend(loc="lower right", title="Write:Read Latency")
 
-show()
+ax.set_xscale('symlog')
+
+savefig("t-cdf.pdf")
+
+#show()
         

@@ -6,7 +6,7 @@ from pylab import *
 
 results = fetch_results(resultsfile)
 
-percentile = .99
+percentile = .999
 
 def ktocolor(k):
     if k == 0:

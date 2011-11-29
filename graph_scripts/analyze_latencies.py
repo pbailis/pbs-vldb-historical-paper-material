@@ -30,9 +30,9 @@ for result in results:
      std(read_latencies),
      get_nth_percentile(read_latencies, percentile)))
 
-    hist([4+expovariate(result.config.lmbda) for i in range(0, len(result.reads))], 100, label="expected")
-    hist([read.latency for read in result.reads], 100, label="observedreads")
-    hist([read.latency for read in result.writes], 100, label="observedwrites")
+    #hist([4+expovariate(result.config.lmbda) for i in range(0, len(result.reads))], 100, label="expected")
+    #hist([read.latency for read in result.reads], 100, label="observedreads")
+    #hist([read.latency for read in result.writes], 100, label="observedwrites")
 
     legend()
 

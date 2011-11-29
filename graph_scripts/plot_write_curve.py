@@ -39,15 +39,17 @@ for result in results:
     config = result.config
     lats  = get_latencies(config.rootconfigdir, "wlatency.dist", config, k)
 
-    plot_cdf(lats, '-', "observed "+result.config.lmbda, lambda_to_color[float(config.lmbda)])
-    plot_cdf(gen_gamma_exponential(len(lats), float(config.lmbda)), "--", "expected "+result.config.lmbda, lambda_to_color[float(config.lmbda)])
+    plot_cdf(lats, '-', result.config.lmbda, lambda_to_color[float(config.lmbda)])
+    #plot_cdf(gen_gamma_exponential(len(lats), float(config.lmbda)), "--", "expected "+result.config.lmbda, lambda_to_color[float(config.lmbda)])
     ax = gca()
 
-    title("N: %d, R: %d, W: %d Lambda: %s" % (result.config.N, result.config.R, result.config.W, result.config.lmbda))
-    xlabel("time")
-    ylabel("samples")
-    legend()
+    title("N: %d, R: %d, W: %d" % (result.config.N, result.config.R, result.config.W))
+    xlabel("Write Latency (ms)")
+    ylabel("Cumulative Density")
+    legend(loc="lower right", title="Lambda")
 
 
-show()
+ax.set_xscale('log')
+
+savefig("write-cdf.pdf")
         

@@ -23,8 +23,8 @@ def get_samples(l1, m1,  l2, m2):
 
     for i in range(0, 10000):
         lats = []
-        for r in range(0, 3):
-            lats.append(get_pareto(l1, m1)+get_pareto(l2, m2))
+        #lats.append(get_pareto(l1, m1)+get_pareto(l2, m2))
+        lats.append(get_exponential(l1)+get_exponential(l2))
         lats.sort()
         samples.append(lats[0])
 
@@ -56,23 +56,21 @@ def get_error(samples, real, pcts):
 minerr = 100000
 bestm = -1
 bestl = -1
-for m in range(10, 20):
-    m = m/100.0
-    for l in range(90, 98):
-        l = l/100.0
-        test = get_samples(l, m, l, m)
-        err = get_error(test, linkedin_ssd_latencies, linkedin_ssd_pcts)
-        if err < 0:
-            break
-        if err < minerr:
-            bestm = m
-            bestl = l
-            minerr = err
-        print l,m, err
+for l in range(300, 375):
+    l = l/100.0
+    test = get_samples(l, m, l, m)
+    err = get_error(test, linkedin_ssd_latencies, linkedin_ssd_pcts)
+    if err < 0:
+        break
+    if err < minerr:
+        bestm = m
+        bestl = l
+        minerr = err
+    print l,m, err
 
-print bestl, bestm, minerr
+print "BEST:", bestl, bestm, minerr
 
-test=get_samples(.9, .15, .9, .15)
+test=get_samples(3.28, 3.28)
 print min(test)
 plot(linkedin_ssd_latencies,linkedin_ssd_pcts,  'o-', label="REAL", color="green")
 plot([get_pct(test, pct) for pct in linkedin_ssd_pcts], linkedin_ssd_pcts, 'o-', label="PREDICT", color="blue")

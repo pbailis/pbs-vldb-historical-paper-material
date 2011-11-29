@@ -7,26 +7,31 @@ from config_settings import *
 from os import listdir
 from pylab import *
 
-resultsfile = "../results/2011-11-11-14_57_02"
+resultsfile = "../results/2011-11-17-01_50_03"
 
 NS_PER_MS = 1000000.0
 
 def get_lmbdas(resultsdir):
-    lmbdas = set()
+    ret = []
     for d in listdir(resultsdir):
         if d.find("N") == -1:
             continue
-        lmbdas.add(d[7:])
+        lmbdas = d[7:]
+        lmbdas = lmbdas.split('-')
+        wl = lmbdas[0][2:]
+        rl = lmbdas[1][2:]
+        if [wl, rl] not in ret:
+            ret.append([wl, rl])
 
-    return lmbdas
+    return ret
 
-def fetch_result(resultsdir, N, R, W, lmbda):
-    resultdir = "%s/%dN%dR%dW-%s/" % (resultsdir, N, R, W, lmbda)
+def fetch_result(resultsdir, N, R, W, wlmbda, rlmbda):
+    resultdir = "%s/%dN%dR%dW-WL%s-AL%s-RL%s-SL%s/" % (resultsdir, N, R, W, wlmbda, rlmbda, rlmbda, rlmbda)
     for s in listdir(resultdir):
         if s.find("PROXY") != -1:
             proxy = s
 
-    config = ConfigSettings(N, R, W, lmbda, resultdir)
+    config = ConfigSettings(N, R, W, wlmbda, rlmbda, resultdir)
     return parse_file(config, resultdir+proxy+"/cassandra.log")
 
 def fetch_results(resultsdir):
@@ -41,9 +46,12 @@ def fetch_results(resultsdir):
             N=int(d[0])
             R=int(d[2])
             W=int(d[4])
-            lmbda = float(d[7:])
+            lmbdas = d[7:]
+            lmbdas = lmbdas.split('-')
+            wlmbda = lmbdas[0][2:]
+            rlmbda = lmbdas[1][2:]
 
-            config = ConfigSettings(N, R, W, lmbda, resultsdir+"/"+s)
+            config = ConfigSettings(N, R, W, wlmbda, rlmbda, resultsdir+"/"+s)
             
             yield(parse_file(config, resultsdir+"/"+d+"/"+s+"/cassandra.log"))
 
@@ -177,6 +185,8 @@ def get_latency_staleness_results(k, result, percentile):
     #compute the probability of staleness at each t
     for read in result.reads:
         if read.version >= read.last_committed_version_at_read_start-(k-1):
+            #if read.version-read.last_committed_version_at_read_start-(k-1) < 0:
+            #print k, read.version-read.last_committed_version_at_read_start-(k-1)
             current += 1
         else:
             staler += 1
