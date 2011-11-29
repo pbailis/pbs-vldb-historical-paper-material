@@ -463,13 +463,16 @@ public class Simulator {
                   double ack = delay.getWriteAckDelay()+ackdcdelay;
                   oneways.add(time + oneway);
                   rtts.add(oneway + ack);
-                  if(opts.equals("LATS"))
-                  {
-                    writelats.add(oneway+ack);
-                  }
+
               }
               Collections.sort(rtts);
               double wlat = rtts.get(W-1);
+
+              if(opts.equals("LATS"))
+              {
+                  writelats.add(wlat);
+              }
+
               double committime = time+wlat;
               writes.add(new WriteInstance(oneways, time, committime));
               time = committime;
@@ -531,15 +534,16 @@ public class Simulator {
                           int version = replicas.get(sno).read(time+onewaytime);
                           double rtt = onewaytime+ackdcdelay+delay.getReadAckDelay();
 
-                          if(opts.equals("LATS"))
-                          {
-                            readlats.add(rtt);
-                          }
                           readRound.add(new ReadInstance(version, rtt));
                       }
 
                       Collections.sort(readRound);
                       double endtime = readRound.get(R-1).getFinishtime();
+
+                      if(opts.equals("LATS"))
+                      {
+                        readlats.add(endtime);
+                      }
 
                       int maxversion = -1;
 
