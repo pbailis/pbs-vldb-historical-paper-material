@@ -1,6 +1,8 @@
 package ernst.simulator;
 
 import java.lang.Math;
+import java.lang.reflect.Array;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
@@ -329,6 +331,7 @@ class KVServer {
     {
         return;
     }
+
     timeVersions.put(time, version);
   }
 
@@ -336,7 +339,6 @@ class KVServer {
   {
     if(timeVersions.containsKey(time))
         return timeVersions.get(time);
-
 
     SortedMap<Double, Integer> mapFromTime = timeVersions.headMap(time);
     if(mapFromTime.isEmpty())
@@ -346,55 +348,65 @@ class KVServer {
 }
 
 public class Simulator {
+
   public static void main (String [] args) {
       assert args.length > 5;
 
-      int NUM_READERS = 5;
+      int NUM_READERS = 1;
       int NUM_WRITERS = 1;
       boolean inputmultidc = false;
       double inputdcdelay = 0;
-
-      final int N = Integer.parseInt(args[0]);
-      final int R = Integer.parseInt(args[1]);
-      int W = Integer.parseInt(args[2]);
-      int K = Integer.parseInt(args[3]);
-      assert K >= 1;
-      final int ITERATIONS = Integer.parseInt(args[4]);
-
+      int N = 3, R = 1, W = 1, K = 1, ITERATIONS = 1000, writespacing = 1, readsperwrite = 10;
       DelayModel delaymodel = null;
 
-      if(args[5].equals("FILE"))
-      {
-          String sendDelayFile = args[6];
-          String ackDelayFile = args[7];
 
-          delaymodel = new EmpiricalDelayModel(sendDelayFile, ackDelayFile);
-      }
-      else if(args[5].equals("PARETO") || args[5].equals("MULTIDC"))
+      try
       {
-          delaymodel = new ParetoDelayModel(Double.parseDouble(args[6]),
-                                       Double.parseDouble(args[7]),
-                                       Double.parseDouble(args[8]),
-                                       Double.parseDouble(args[9]));
+          N = Integer.parseInt(args[0]);
+          R = Integer.parseInt(args[1]);
+          W = Integer.parseInt(args[2]);
+          K = Integer.parseInt(args[3]);
+          assert K >= 1;
+          ITERATIONS = Integer.parseInt(args[4]);
+          writespacing = Integer.parseInt(args[5]);
+          readsperwrite = Integer.parseInt(args[6]);
 
-          if(args[5].equals("MULTIDC"))
+          delaymodel = null;
+
+          if(args[7].equals("FILE"))
           {
-              inputmultidc = true;
-              inputdcdelay = Double.parseDouble(args[10]);
+              String sendDelayFile = args[8];
+              String ackDelayFile = args[9];
+
+              delaymodel = new EmpiricalDelayModel(sendDelayFile, ackDelayFile);
+          }
+          else if(args[7].equals("PARETO") || args[7].equals("MULTIDC"))
+          {
+              delaymodel = new ParetoDelayModel(Double.parseDouble(args[8]),
+                                           Double.parseDouble(args[9]),
+                                           Double.parseDouble(args[10]),
+                                           Double.parseDouble(args[11]));
+
+              if(args[7].equals("MULTIDC"))
+              {
+                  inputmultidc = true;
+                  inputdcdelay = Double.parseDouble(args[12]);
+              }
+          }
+          else if(args[7].equals("EXPONENTIAL"))
+          {
+              delaymodel = new ExponentialDelayModel(Double.parseDouble(args[8]),
+                                                Double.parseDouble(args[9]));
           }
       }
-      else if(args[5].equals("EXPONENTIAL"))
+      catch(Exception e)
       {
-          delaymodel = new ExponentialDelayModel(Double.parseDouble(args[6]),
-                                            Double.parseDouble(args[7]));
-      }
-      else
-      {
+          e.printStackTrace();
           System.err.println(
-             "Usage: Simulator <N> <R> <W> <k> <iters> FILE <sendF> <ackF> OPT\n" +
-                     "Usage: Simulator <N> <R> <W> <k> <iters> PARETO <W-min> <W-alpha> <ARS-min> <ARS-alpha> OPT\n" +
-                     "Usage: Simulator <N> <R> <W> <k> <iters> EXPONENTIAL <W-lambda> <ARS-lambda> OPT\n +" +
-                     "Usage: Simulator <N> <R> <W> <k> <iters> MULTIDC <W-min> <W-alpha> <ARS-min> <ARS-alpha> <DC-delay> OPT\n +" +
+             "Usage: Simulator <N> <R> <W> <k> <iters> <write spacing> <readsperwrite> FILE <sendF> <ackF> OPT\n" +
+                     "Usage: Simulator <N> <R> <W> <k> <iters> <write spacing> <readsperwrite> PARETO <W-min> <W-alpha> <ARS-min> <ARS-alpha> OPT\n" +
+                     "Usage: Simulator <N> <R> <W> <k> <iters> <write spacing> <readsperwrite> EXPONENTIAL <W-lambda> <ARS-lambda> OPT\n" +
+                     "Usage: Simulator <N> <R> <W> <k> <iters> <write spacing> <readsperwrite> MULTIDC <W-min> <W-alpha> <ARS-min> <ARS-alpha> <DC-delay> OPT\n" +
                      "OPT= O <SWEEP|LATS>");
           System.exit(1);
       }
@@ -453,7 +465,7 @@ public class Simulator {
                   double onewaydcdelay = 0;
                   double ackdcdelay = 0;
 
-                  if(multidc && w == chosenDC)
+                  if(multidc && w != chosenDC)
                   {
                       onewaydcdelay = finaldcdelay;
                       ackdcdelay = finaldcdelay;
@@ -475,7 +487,7 @@ public class Simulator {
 
               double committime = time+wlat;
               writes.add(new WriteInstance(oneways, time, committime));
-              time = committime;
+              time += writespacing;
           }
 
           if(time > ltime)
@@ -500,31 +512,33 @@ public class Simulator {
           commits.record(curWrite.getCommittime(), wno);
       }
 
-      final CountDownLatch latch = new CountDownLatch(NUM_READERS);
-
-      for(int rid = 0; rid < NUM_READERS; ++rid)
+      if(opts.equals("SWEEP"))
       {
-          final int thisrid = rid;
-          Thread t = new Thread(new Runnable ()
+          HashMap<Double, Long> t_to_current = new HashMap<Double, Long>();
+          HashMap<Double, Long> t_to_stale = new HashMap<Double, Long>();
+          boolean last_was_one = false;
+          for(double ts = 0; ts < 300; ts++)
           {
-              public void run()
+              long current = 0;
+              long stale = 0;
+              for(WriteInstance write : writes)
               {
-                  double time = firsttime*2;
-                  long it = 0;
-                  while(time < maxtime)
+                  double time = write.getCommittime()+ts;
+                  if(time > maxtime)
+                      continue;
+
+                  for(int r = 0; r < readsperwrite; r++)
                   {
-                      it++;
-
-                      if(it > ITERATIONS*3)
-                          break;
-
                       Vector<ReadInstance> readRound = new Vector<ReadInstance>();
+
+                      int thisdc = (r % N);
+
                       for(int sno = 0; sno < N; ++sno)
                       {
                           double onewaydcdelay = 0;
                           double ackdcdelay = 0;
 
-                          if(multidc && sno == thisrid)
+                          if(multidc && (sno != thisdc))
                           {
                               onewaydcdelay = finaldcdelay;
                               ackdcdelay = finaldcdelay;
@@ -540,11 +554,6 @@ public class Simulator {
                       Collections.sort(readRound);
                       double endtime = readRound.get(R-1).getFinishtime();
 
-                      if(opts.equals("LATS"))
-                      {
-                        readlats.add(endtime);
-                      }
-
                       int maxversion = -1;
 
                       for(int rno = 0; rno < R; ++rno)
@@ -554,61 +563,41 @@ public class Simulator {
                             maxversion = readVersion;
                       }
 
-                      readPlotConcurrent.add(new ReadPlot(
-                                        new ReadOutput(commits.last_committed_version(time), maxversion, time),
-                                        commits.get_commit_time(commits.last_committed_version(time))));
-                      int staleness = maxversion-commits.last_committed_version(time);
+                      double t = time-commits.get_commit_time(commits.last_committed_version(time));
 
-                      time += endtime;
+                      t = Math.round(t*10)/10.0d;
+
+                      if(maxversion < commits.last_committed_version(time)-(K-1))
+                      {
+                          if(!t_to_stale.containsKey(t))
+                          {
+                              t_to_stale.put(t, 0l);
+                          }
+
+                          t_to_stale.put(t, t_to_stale.get(t)+1);
+                      }
+                      else
+                      {
+                          if(!t_to_current.containsKey(t))
+                          {
+                              t_to_current.put(t, 0l);
+                          }
+
+                          t_to_current.put(t, t_to_current.get(t)+1);
+                      }
                   }
-
-                  latch.countDown();
               }
-          });
-          t.start();
-      }
-
-      try {
-        latch.await();
-      }
-      catch (Exception e)
-      {
-          System.out.println(e.getMessage());
-      }
-
-      if(opts.equals("SWEEP"))
-      {
-          Vector<ReadPlot> readPlots = new Vector<ReadPlot>(readPlotConcurrent);
-
-          Collections.sort(readPlots);
-          Collections.reverse(readPlots);
-
-          HashMap<Long, ReadPlot> manystalemap = new HashMap<Long, ReadPlot>();
-
-          long stale = 0;
-          for(ReadPlot r : readPlots)
-          {
-            if(r.getRead().getVersion_read() < r.getRead().getVersion_at_start()-K-1)
-            {
-                stale += 1;
-                manystalemap.put(stale, r);
-            }
           }
 
-          for(double p = 0; p < 1; p += .001)
+
+          List<Double> times = new Vector<Double>(t_to_stale.keySet());
+          Collections.sort(times);
+
+          for(double ts : times)
           {
-              double tstale = 0;
-
-              long how_many_stale = (long)Math.ceil(readPlots.size()*(1-p));
-
-              ReadPlot r = manystalemap.get(how_many_stale);
-
-              if(r == null)
-                  tstale = 0;
-              else
-                  tstale = r.getRead().getStart_time() - r.getCommit_time_at_start();
-
-              System.out.println(p+" "+tstale);
+              long stales = t_to_stale.get(ts);
+              long current = t_to_current.containsKey(ts) ? t_to_current.get(ts) : 0;
+              System.out.println((float)(current)/(current+stales)+" "+ts);
           }
       }
 
@@ -618,17 +607,71 @@ public class Simulator {
           Collections.sort(writelats);
           for(double p = 0; p < 1; p += .01)
           {
-              System.out.printf("%f %f\n", p, writelats.get((int) Math.round(p * writelats.size())));
+              int index = (int)Math.round(p*writelats.size());
+              if(index >= writelats.size())
+                  break;
+              System.out.printf("%f %f\n", p, writelats.get(index));
           }
 
-          Vector<Double> readLatencies = new Vector<Double>(readlats);
+          double lastp = .99;
+          for(int i = 3; i < 7; ++i)
+          {
+              lastp += 9*Math.pow(10, -i);
+              int index = (int)Math.round(lastp*writelats.size());
+              if(index >= writelats.size())
+                  break;
+              System.out.printf("%f %f\n", lastp, writelats.get(index));
+          }
+
+          Vector<Double> readLatencies = new Vector<Double>();
+
+          for(int i = 0; i < ITERATIONS; ++i)
+          {
+              Vector<Double> thisreadround = new Vector<Double>();
+
+              int thisdc = (i % N);
+
+              for(int sno = 0; sno < N; ++sno)
+              {
+                  double onewaydcdelay = 0;
+                  double ackdcdelay = 0;
+
+                  if(multidc && (sno != thisdc))
+                  {
+                      onewaydcdelay = finaldcdelay;
+                      ackdcdelay = finaldcdelay;
+                  }
+
+                  double onewaytime = onewaydcdelay+delay.getReadSendDelay();
+                  double rtt = onewaytime+ackdcdelay+delay.getReadAckDelay();
+                  thisreadround.add(rtt);
+              }
+
+              Collections.sort(thisreadround);
+              double endtime = thisreadround.get(R-1);
+              readLatencies.add(endtime);
+          }
 
           System.out.println("READ");
           Collections.sort(readLatencies);
           for(double p = 0; p < 1; p += .01)
           {
-              System.out.printf("%f %f\n", p, readLatencies.get((int)Math.round(p*readLatencies.size())));
+              int index = (int)Math.round(p*readLatencies.size());
+              if(index >= readLatencies.size())
+                  break;
+              System.out.printf("%f %f\n", p, readLatencies.get(index));
           }
+
+          lastp = .99;
+          for(int i = 3; i < 7; ++i)
+          {
+              lastp += 9*Math.pow(10, -i);
+              int index = (int)Math.round(lastp*readLatencies.size());
+              if(index >= readLatencies.size())
+                  break;
+              System.out.printf("%f %f\n", lastp, readLatencies.get((int) Math.round(lastp * readLatencies.size())));
+          }
+
       }
   }
 }
