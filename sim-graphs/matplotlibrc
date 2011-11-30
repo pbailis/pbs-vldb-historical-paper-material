@@ -1,0 +1,21 @@
+backend: MacOSX
+
+ps.useafm: True
+pdf.use14corefonts: True
+text.usetex: True
+
+legend.fontsize: medium
+legend.frameon: false
+legend.numpoints: 1
+
+text.dvipnghack : True
+font.family: sans-serif
+font.serif: Computer Modern Roman
+font.sans-serif: Helvetica
+text.latex.preamble: \usepackage{sfmath}
+
+figure.figsize: 6, 4
+figure.subplot.top: .94
+figure.subplot.bottom: .12
+figure.subplot.right: .97
+figure.subplot.left: .1
