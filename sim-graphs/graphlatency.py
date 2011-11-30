@@ -13,7 +13,7 @@ readlats = {}
 writelats = {}
 
 for config in configs:
-    run_sim(N, R, W, k, iters, config.simparams, "LATS", "latencies.txt")
+    run_sim(N, R, W, k, iters, 1000, 10, config.simparams, "LATS", "latencies.txt")
     wpcts = []
     wlats = []
     rpcts = []
