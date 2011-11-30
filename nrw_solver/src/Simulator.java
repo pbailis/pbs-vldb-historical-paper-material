@@ -663,9 +663,6 @@ public class Simulator {
 
           Collections.sort(times);
 
-          if(times.isEmpty())
-              System.out.println("0.0 1.0");
-
           for(double ts : times)
           {
               long stales = t_to_stale.containsKey(ts) ? t_to_stale.get(ts) : 0;
