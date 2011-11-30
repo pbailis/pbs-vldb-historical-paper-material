@@ -18,6 +18,8 @@ for R in [1, 2]:
         if R+W > N:
             continue
         for config in configs:
+            if config.name == "WAN":
+                continue
             run_sim(N, R, W, k, iters, writespacing, readsperwrite, config.simparams, "SWEEP", "tstale.txt")
             t = []
             stale = []
@@ -40,16 +42,20 @@ for R in [1, 2]:
             results[config] = [t, stale, wt, wstale]
 
         for config in configs:
+            if config.name == "WAN":
+                continue
             plot(results[config][0], results[config][1], config.markerfmt[1:], label=config.name, color=config.color)
-            plot(results[config][2], results[config][3], '--', color=config.color)
+            plot(results[config][2], results[config][3], '--', color=config.color, lw=2)
 
         xlabel("t-visibility (ms)")
-        ylabel("1-p_stale")
+        #ylabel("1-p_stale")
+        ylabel("Probability of Strong Consistency")
         title("N=%d R=%d W=%d" % (N, R, W))
         #ylim(ymin=.65)
         semilogx()
 
         legend(loc="lower right")
+        xlim(xmax=100)
         savefig("worstcase-%dN%dR%dW.pdf" % (N, R, W))
         cla()
 

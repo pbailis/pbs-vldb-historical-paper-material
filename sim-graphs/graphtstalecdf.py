@@ -26,18 +26,19 @@ for R in [1, 2]:
                 line = line.split()
                 t.append(float(line[1]))
                 stale.append(float(line[0]))
-                print line
             results[config] = [t, stale]
 
         for config in configs:
             plot(results[config][0], results[config][1], config.markerfmt[1:], label=config.name, color=config.color)
 
         xlabel("t-visibility (ms)")
-        ylabel("1-p_stale")
+        #ylabel(r"$1-p_{stale}$")
+        ylabel("Probability of Strong Consistency")
         title("N=%d R=%d W=%d" % (N, R, W))
         #ylim(ymin=.65)
         ax = gca()
         ax.set_xscale('symlog')
+        xlim(xmax=100)
 
         legend(loc="lower right")
         savefig("tstales-%dN%dR%dW.pdf" % (N, R, W))
