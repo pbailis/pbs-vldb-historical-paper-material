@@ -638,6 +638,29 @@ public class Simulator {
 
 
           List<Double> times = new Vector<Double>(t_to_stale.keySet());
+
+          List<Double> curtimes = new Vector<Double>(t_to_current.keySet());
+          Collections.sort(curtimes);
+
+          //Le sigh; I miss list comprehensions
+
+          long toadd = 3;
+          for(double curtime : curtimes)
+          {
+              /*
+                Add the first time at which we don't have any stale readings;
+                Only add the first few given that as time goes on, we shouldn't observe
+                more staleness (except for a bit of noise due to experimental error).
+               */
+              if(!t_to_stale.containsKey(curtime))
+              {
+                  times.add(curtime);
+                  toadd--;
+                  if(toadd == 0)
+                  break;
+              }
+          }
+
           Collections.sort(times);
 
           if(times.isEmpty())
@@ -645,7 +668,7 @@ public class Simulator {
 
           for(double ts : times)
           {
-              long stales = t_to_stale.get(ts);
+              long stales = t_to_stale.containsKey(ts) ? t_to_stale.get(ts) : 0;
               long current = t_to_current.containsKey(ts) ? t_to_current.get(ts) : 0;
               System.out.println((float)(current)/(current+stales)+" "+ts);
           }
