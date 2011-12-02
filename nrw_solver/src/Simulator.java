@@ -440,6 +440,17 @@ public class Simulator {
           }
       }
 
+      boolean fine_time = false;
+
+      for(int i = 0; i < args.length; ++i)
+      {
+          if(args[i].equals("F"))
+          {
+              fine_time = true;
+              break;
+          }
+      }
+
       final String opts = optsinput;
 
       final Vector<KVServer> replicas = new Vector<KVServer>();
@@ -529,7 +540,25 @@ public class Simulator {
           HashMap<Double, Long> t_to_current = new HashMap<Double, Long>();
           HashMap<Double, Long> t_to_stale = new HashMap<Double, Long>();
           boolean last_was_one = false;
-          for(double ts = 0; ts < 300; ts++)
+
+          List<Double> wtimes = new Vector<Double>();
+
+          if(fine_time)
+          {
+              for(double t = 0; t < 4; t+=.01)
+              {
+                  wtimes.add(t);
+              }
+          }
+          else
+          {
+              for(double t = 0; t < 200; t++)
+              {
+                  wtimes.add(t);
+              }
+          }
+
+          for(double ts: wtimes)
           {
               long current = 0;
               long stale = 0;
@@ -612,7 +641,14 @@ public class Simulator {
 
                       double t = time-commits.get_commit_time(commits.last_committed_version(time));
 
-                      t = Math.round(t*10)/10.0d;
+                      if(fine_time)
+                      {
+                          t = Math.ceil(t*100)/100.0d;
+                      }
+                      else
+                      {
+                          t = Math.ceil(t*1)/1.0d;
+                      }
 
                       if(maxversion < commits.last_committed_version(time)-(K-1))
                       {
@@ -652,7 +688,7 @@ public class Simulator {
                 Only add the first few given that as time goes on, we shouldn't observe
                 more staleness (except for a bit of noise due to experimental error).
                */
-              if(!t_to_stale.containsKey(curtime))
+              if(!times.contains(curtime))
               {
                   times.add(curtime);
                   toadd--;
