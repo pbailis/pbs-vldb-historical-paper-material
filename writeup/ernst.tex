@@ -1,5 +1,5 @@
 \documentclass{vldb}
-\usepackage{graphicx}
+\usepackage{graphicx, subfigure}
 \usepackage{balance, url, amsfonts, verbatim, mathtools}  % for  \balance command ON LAST PAGE  (only there!)
 
 \title{Probabilistically Bounded Staleness and\\ Practical Non-strict Quorum Systems}
@@ -154,6 +154,8 @@ We make the following contributions in this paper:
 
 \end{itemize}
 
+
+\begin{comment}
 \section{Motivation}
 
 What kind of consistency do eventually consistent data stores provide?
@@ -197,7 +199,6 @@ stores are deficient.
 automatically configure our distributed data stores for a particular
 workload?  Current database configuration...
 
-\begin{comment}
 
 There are two main reasons to replicate data across multiple servers:
 availability and scalability.  First, in the event of network
@@ -273,19 +274,7 @@ to.
 
 \end{comment}
 
-
-\section{Probabilistically Bounded\\Staleness}
-\label{sec:theory}
-
-In this section, we introduce the theory of Probabilistically Bounded
-Staleness to describe the consistency that existing eventually
-consistent data stores provide.  PBS is an extension of prior work on
-probabilistic quorums that accounts for staleness of both versions and
-across time.  We introduce the notions of PBS $k$-quorums, which
-stochastically bounds the staleness of versions returned by read
-quorums, PBS $t$-visibility, which stochastically bounds the time
-before a committed version appears to readers, and PBS $<k,
-t>$-quorums, a combination of the two prior models.
+\section{Background}
 
 \subsection{Quorum Foundations: Theory}
 
@@ -417,18 +406,42 @@ and denial-of-service attacks, but the underlying computing hardware
 is non-adversarial. Within a controlled data center, the failure modes
 are certainly reduced from the Byzantine case, and, despite its many
 risks, the adversarial failures covered by prior theory appear
-unlikely in emerging ``cloud computing'' environments.
+unlikely in emerging ``cloud computing'' environments~\cite{needed}.
+
+\subsection{Staleness}
+
+There is a wide range of points across the consistency spectrum
+ranging from basic eventual consistency to strong consistency.  Many of these 
 
 \subsection{Assumptions}
 
-These practical concerns guide the following theoretical
-contributions.  Accordingly, we assume a quorum model where $w$ ($r$)
-of $n$ replicas are randomly selected for each write (read) operation.
-Unless otherwise noted, we consider fixed $w$ across multiple
-operations.  We begin by considering a model without entropic
-processes ($w$ is constant), then expand our model to consider
-time-varying $w$. We consider a write ``committed'' once it has
-reached $w$ replicas. We discuss further refinements to these
+
+
+\section{Probabilistically Bounded\\Staleness}
+\label{sec:theory}
+
+In this section, we introduce the theory of Probabilistically Bounded
+Staleness to describe the consistency that existing eventually
+consistent data stores provide.  PBS is an extension of prior work on
+probabilistic quorums that accounts for staleness of both versions and
+across time.  We introduce the notions of PBS $k$-quorums, which
+stochastically bounds the staleness of versions returned by read
+quorums, PBS $t$-visibility, which stochastically bounds the time
+before a committed version appears to readers, and PBS $<k,
+t>$-quorums, a combination of the two prior models.
+
+
+Practical concerns guide the following theoretical contributions.  We
+begin by considering a model without anti-entropic processes.
+Accordingly, we assume that $w$ ($r$) of $n$ replicas are randomly
+selected for each write (read) operation.  We consider a write
+``committed'' once it has reached $w$ replicas and the $w$ replicas
+respond.  Similarly, we consider fixed $w$, $r$ and $n$ across
+multiple operations. Subsequently, we expand our model to consider
+write propagation and time-varying $w$ sizes, as is typically the case
+in practice.  In this section, we discuss anti-entropy in general,
+however we model Dynamo-style quorums in Section
+\ref{sec:dynamo-prop}. We discuss further refinements to our
 assumptions in Section \ref{sec:discussion}.
 
 \subsection{PBS $k$-quorums}
@@ -628,11 +641,43 @@ write message reordering.  Figure~\ref{fig:dynamostale} shows a
 space-time diagram for messages between a sender and a single replica.
 When reads and writes are executed, they are sent to all $N$
 
+\begin{figure*}
+\centering
+\subfigure{\includegraphics[width=\columnwidth]{figs/latlegend.pdf}}\\[-1mm]
+\subfigure{\includegraphics[width=.6\columnwidth]{figs/readlats-1.pdf}}
+\subfigure{\includegraphics[width=.6\columnwidth]{figs/readlats-2.pdf}}
+\subfigure{\includegraphics[width=.6\columnwidth]{figs/readlats-3.pdf}}
+\subfigure{\includegraphics[width=.6\columnwidth]{figs/writelats-1.pdf}}
+\subfigure{\includegraphics[width=.6\columnwidth]{figs/writelats-2.pdf}}
+\subfigure{\includegraphics[width=.6\columnwidth]{figs/writelats-3.pdf}}
+\caption{FOOBAR}
+\label{fig:FOO}
+\end{figure*}
+
+\begin{figure*}
+\centering
+\subfigure{\includegraphics[width=\columnwidth]{figs/latlegend.pdf}}\\[-1mm]
+\subfigure{\includegraphics[width=.65\columnwidth]{figs/tstales-3N1R1W.pdf}}
+\subfigure{\includegraphics[width=.65\columnwidth]{figs/tstales-3N2R1W.pdf}}
+\subfigure{\includegraphics[width=.65\columnwidth]{figs/tstales-3N1R2W.pdf}}
+\caption{FOOBAR}
+\label{fig:FOO}
+\end{figure*}
+
+\begin{figure*}
+\centering
+\subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-LNKD-DISK.pdf}}
+\subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-LNKD-SSD.pdf}}
+\subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-YMMR.pdf}}
+\caption{FOOBAR}
+\label{fig:FOO}
+\end{figure*}
+
 \begin{figure}
 \centering
-\includegraphics[width=.8\columnwidth]{figs/dynamostale.pdf}
-\caption{Expected latency of write quorums of $w$ replicas in Dynamo-style operation versus quorum element correlation.}
-\label{fig:dynamostale}
+\includegraphics[width=\columnwidth]{figs/rwratio.pdf}
+\caption{FOOBAR}
+\label{fig:FOO}
 \end{figure}
 
 \subsection{Dynamo-style Operation Latency}
@@ -661,7 +706,7 @@ write latency of a set of nodes is:
 p_w(\mathcal{W}, t) = min(\{L_{ws}(S, t) \mid S \subseteq \mathcal{Q}, |S| = \mathcal{W}\})
 \end{equation}
 
-To determine the expected latency of a write to a quorum of size
+
 $\mathcal{W}$, enoted $WQ_l(\mathcal{W})$, we simply need to consider
 the conditional probability of $\mathcal{W}$ writes completing across
 all possible time values $t$.  However, this depends on the
@@ -808,33 +853,64 @@ experimentally-gathered distributions (without curve-fitting), Monte
 Carlo simulation was significantly faster.  Accordingly, our predicted
 results here are derived from repeated simulation trials.
 
-\subsection{Experimental Deployment}
+\subsection{Model Validation}
 
-We deployed Cassandra on Amazon EC2.  To provide a single point of
-order for the series of reads and writes in the system, we deployed
-$N+1$ Cassandra nodes for each experiment involving $N$ nodes.  After
-configuring the Cassandra schema, we determined the node that did not
-store the data and sent all requests through it, effectively creating
-a remote proxy.  Our model is more general than the specific proxy
-configuration, however using a centralized proxy allows us to avoid
-most issues with clock skew between replicas and rely less heavily on
-globally synchronized clocks.
+We deployed Cassandra on Amazon EC2 and compared the observed
+staleness to our predicted staleness for a number of configurations.
+To provide a single point of order for the series of reads and writes
+in the system, we deployed $N+1$ Cassandra nodes for each experiment
+involving $N$ nodes.  After configuring the Cassandra schema, we
+determined the node that did not store the data and sent all requests
+through it, effectively creating a remote proxy.  Our model is more
+general than the specific proxy configuration, however using a
+centralized proxy allows us to avoid most issues with clock skew
+between replicas and rely less heavily on globally synchronized
+clocks.
 
 We used \texttt{m1.small} instances throughout our experiments within
 the \texttt{us-east-1} availability zone.  To model network and remote
 processing delays, we injected delays into both the request and
 response sending modules in Cassandra.  We discuss our choice of
-distributions and their effects in Subsection~\ref{subsec:delay}.
+distributions and their effects in Subsection~\ref{subsec:delay}.  One
+major challenge in performing our experiments was the possibility of
+clock skew across replicas; we relied on both \texttt{ntp} and
+synchronization between the Xen hypervisors running our virtual
+machines, however this resulted in skew of several milliseconds at
+worst.  We ran a single reader and a single writer to a monotonically
+increasing key in Cassandra and compare the read and write timestamps
+to predict the staleness.  This provided a strong control group, but
+low load.  To simulate load and network delay, we injected additional
+delays into the distributions of $W$,$A$,$R$,$S$ (more in Subsection
+~\ref{sec:latencies}).
 
-\begin{comment}
+Across multiple latency profiles, we were able to predict staleness
+with extremely high accuracy.  Using the operation delays recorded in
+Cassandra across 5000 writes, we reconstructed the latency
+distributions and repeated each experiment in simulation.  On average,
+our Monte Carlo simulations predicted $<k,t>$ staleness within XX\% of
+the observed staleness.  As shown in Figure \ref{fig:fits}, our
+simulation has no greater than YY\% inaccuracy for any given $<k,t>$
+staleness prediction.  We attribute this inaccuracy to sample size.
 
-One major challenge in performing our experiments was the possibility
-of clock skew across replicas; we relied on synchronization between
-the Xen hypervisors running our virtual machines.
+Intuitively, these figures make sense.  The time-sensitive components
+of PBS are dependent on $W$,$A$,$R$, and $S$ alone.  Provided we can
+model these distributions accurately, the underlying system is
+irrelevant.  Our simulator is general; it models Dynamo-style
+operation delay, not a particular data storage system's
+internals---these are irrelevant to PBS insofar as they are not
+related to write propagation.  Accordingly, and for greater control,
+we chose to evaluate the remainder of our experiments in simulation.
+As we have show in Appendix A, PBS consistency is a mathematical
+concept, and, by construction, is isolated from non-$WARS$ system
+implementation variations---provided the system obeys the fundamental
+partial quorum semantics being modeled.
 
-\end{comment}
+\subsection{Latency Models}
+\label{sec:latencies}
 
-\subsection{Observed Staleness}
+
+
+\subsection{Microbenchmarks}
 
 We issued reads and writes to a single key distributed across a
 Cassandra cluster and measured the observed staleness.  While we ran
@@ -847,31 +923,13 @@ percentile: 30.61 ms) and writes completed in 2.34 ms (99th
 percentile: 22.36 ms).  This was too narrow a window to observe the
 message reordering required for any staleness.  However, our experiment is somewhat synthetic
 
-\begin{figure}
-\centering
-\includegraphics[width=.8\columnwidth]{figs/t-cdf.pdf}
-\caption{Expected latency of write quorums of $w$ replicas in Dynamo-style operation versus quorum element correlation.}
-\label{fig:correlation}
-\end{figure}
 
 
-\begin{figure}
-\centering
-\includegraphics[width=.8\columnwidth]{figs/t-cdf-k.pdf}
-\caption{Expected latency of write quorums of $w$ replicas in Dynamo-style operation versus quorum element correlation.}
-\label{fig:correlation}
-\end{figure}
+\subsection{Worst-case Analysis}
 
+\subsection{Latency and Staleness}
 
-\begin{figure}
-\centering
-\includegraphics[width=.8\columnwidth]{figs/write-cdf.pdf}
-\caption{Expected latency of write quorums of $w$ replicas in Dynamo-style operation versus quorum element correlation.}
-\label{fig:correlation}
-\end{figure}
-
-
-
+\subsection{Configuration Optimization}
 
 \begin{comment}
 
@@ -912,6 +970,8 @@ In an environment where half of the nodes are co-located on a rack, we can treat
 
 \subsection{Optimization and SLAs}
 \label{sec:optimization}
+
+John Wilkes--Omega and ``intentions''
 
 \begin{figure}
 \centering
@@ -1036,6 +1096,7 @@ Vadhat
 \bibliographystyle{abbrv}
 \bibliography{ernst}
 
+\begin{comment}
 \begin{appendix}
 \section{Dynamo-style Staleness}
 
@@ -1101,6 +1162,7 @@ multiple version staleness, exponentiate $p_s$ by the number of
 versions stale.
 
 \end{appendix}
+\end{comment}
 
 \end{document}
 
