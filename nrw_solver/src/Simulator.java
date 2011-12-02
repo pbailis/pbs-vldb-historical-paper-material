@@ -510,7 +510,11 @@ public class Simulator {
 
               double committime = time+wlat;
               writes.add(new WriteInstance(oneways, time, committime));
-              time += writespacing;
+
+              if(writespacing > 0)
+                  time += writespacing;
+              else
+                  time += wlat;
           }
 
           if(time > ltime)
