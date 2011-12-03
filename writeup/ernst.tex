@@ -439,17 +439,18 @@ exactly, the number of versions between client reads is
 $\frac{\gamma_{gw}}{\gamma_{cr}}$, as shown in Figure
 \ref{fig:timelines}B.  We can calculate the probability of
 probabilistic monotonic reads as follows, effectively using Equation
-\ref{eq:k-consistency} where $k=1+\frac{\gamma_{gw}}{\gamma_{cr}}$:
+\ref{eq:k-consistency} where $k=\frac{\gamma_{gw}}{\gamma_{cr}}$:
 
 \begin{equation}
 \label{eq:prob-mr}
-p_{staler} = \left(\frac{{n-w \choose r}}{{n \choose r}}\right)^{1+\gamma_{gw}/\gamma_{cr}}
+p_{staler} = \left(\frac{{n-w \choose r}}{{n \choose r}}\right)^{\gamma_{gw}/\gamma_{cr}}
 \end{equation}
-For strict monotonic reads, exponentiate where
-$k=\frac{\gamma_{gw}}{\gamma_{cr}}$.  When constructed from $k$
+For strict monotonic reads, where we cannot read the version we've
+previously read, we exponentiate where
+$k=\frac{\gamma_{gw}}{\gamma_{cr}}-1$.  When constructed from $k$
 $\varepsilon$-consistent systems (as we have here), this consistency
 model has load $\geq \frac{(1-p_{staler}^{\frac{1}{2C}})}{\sqrt{n}}$,
-where $C=1+\frac{\gamma_{gw}}{\gamma_{cr}}$.
+where $C=\frac{\gamma_{gw}}{\gamma_{cr}}$.
 
 In practice, we may not know these exact rates, but, by measuring
 their distribution, we can calculate an expected ratio that we can
@@ -558,7 +559,7 @@ probabilistic $\langle k, t \rangle$-quorum consistency. probabilistic
 $k$-quorum consistency is simply probabilistic $\langle k, 0
 \rangle$-quorum consistency, probabilistic monotonic reads consistency
 is $\langle 1+\frac{\gamma_{gw}}{\gamma_{cr}}, 0 \rangle$-quorum
-consistency, and $t$-visibility is $\langle 0, RT \rangle$-quorum
+consistency, and $t$-visibility is $\langle 0, t \rangle$-quorum
 consistency.
 
 This consistency model is conceptually difficult to reason about.
@@ -574,9 +575,8 @@ but $t$-visibility is dependent on both the distributed quorum
 execution algorithm and the anti-entropy protocols employed by a data
 storage system.  In this section, we discuss PBS $t$-visibility in the
 context of Dynamo-style data storage systems.  We describe how to
-model the probability of staleness in these systems, how to predict
-the latency of a given operation, and how to asynchronously detect
-staleness.
+model the probability of staleness in these systems and how to
+asynchronously detect staleness.
 
 \subsection{Inconsistency in Dynamo}
 
@@ -651,24 +651,75 @@ time represents an order statistic dependent on both \texttt{W} and
 \texttt{A}.  By itself, this is not problematic, but message
 reordering is dependent on the commit time.  The probability that the
 $i$th returned read message observes reordering is a both an order
-statistic dependent on $W$ and $A$, but, between $i$, the
-probabilities are depedent.  The $R$th message time can be easily
-determined (see Section~\ref{sec:dynamo-latency}), but a concise,
-closed form for the probability of inconsistency is highly complicated
-and eludes us.  Dynamo is simple to reason about and program, but
-difficult to analyze in closed form.  As we discuss in
-Section~\ref{sec:sim}, we explore $WARS$ using Monte Carlo analysis.
+statistic dependent on $W$ and $A$, and, between $i$, the
+probabilities are dependent.  The expect read and write latencies can
+be computed using simple order statistics if one makes independence
+assumptions about the distributions in $WARS$.  However, a concise,
+closed form for the probability of inconsistency eludes.  Dynamo is
+simple to reason about and program, but difficult to analyze in closed
+form.  As we discuss in Section~\ref{sec:sim}, we explore $WARS$ using
+Monte Carlo analysis, which suffices for our purposes in practice and,
+from a practical perspective, is relatively easier to implement.
 
-
-\subsection{Dynamo-style Operation Latency}
-
-\label{sec:dynamo-latency}
 
 \subsection{Asynchronous Staleness Detection}
 
+Even if a system provides an extremely high probability of
+consistency, it is may be useful if applications can be notified when
+data returned is inconsistent, or staler than promised.  Thankfully,
+the Dynamo model is naturally equipped for staleness detection.
 
+Knowing whether a response is stale at read time requires strong
+consistency.  For the purposes of an informal proof, assume staleness
+detection did not require strong consistency.  By enumerating all
+possible values in the domain and checking them against the staleness
+detector, we could determine the consistent value.  Conversely, if we
+do not have strong consistency, then we cannot determine the last
+committed version. However, we \textit{can} determine staleness
+asynchronously.  Asynchronous staleness detection allows speculative
+execution~\cite{nsdispeculation} and if a program contains appropriate
+compensation logic.
 
-\section{Experimental Evaluation}
+We first consider a staleness detector that provides false positives.
+Recall that, in a Dynamo-style system, we wait for $R$ of $N$ replies
+before returning a value.  The remaining $N-R$ replicas will still
+reply to the read coordinator.  Instead of dropping these messages,
+the coordinator can compare them to the version it returned.  If there
+is a mismatch, then either the coordinator returned stale data, there
+are in-flight writes in the system, or additional versions committed
+after the read.  The latter two cases lead to false positives.  We
+define staleness according to the last committed write when the read
+began, so versions written after the last committed version do not
+technically constitute stale reads.  Notifying clients of newer
+versions of a data item is not necessarily bad but may be unnecessary
+and violates our staleness semantics.  Note that this detector does
+not require modifications to the Dynamo protocol, yet we believe this
+is the first record of this property.
+
+To eliminate false positives, we need to determine the total,
+system-wide commit ordering of writes. Recall that replicas are
+unaware of the commit time for each version; commits occur after $W$
+replicas respond and the version stamps that replicas store are not
+updated after commit.  To establish a total ordering, a single
+designated write coordinator can serialize writes.  To guard against
+failures (and subsequent loss of the ordering), the ordering log
+should be reliably replicated using a reliable consensus algorithm
+such as Paxos.  However, if the single write coordinator is a
+bottleneck, we could use multiple write coordinators.  With the
+presence of globally synchronized local clocks, coordinators could
+gossip the mapping from versions to commit times or even write their
+own commit times back to the replicas in another round-trip of
+messages.  Without globally synchronized local clocks, the
+coordinators could obtain a logical timestamp from a centralized
+replica prior to committing (doing so after committing leads to
+races).  Eliminating false positives requires modifications to the
+Dynamo protocol but is definitely tractable.
+
+While this discussion has been couched in the terms of strong
+consistency, it is easily extended to PBS $k$-staleness and PBS
+$\langle k, t \rangle$-staleness.
+
+\section{Evaluating Dynamo $t$-visibility}
 \label{sec:dynamoeval}
 
 We evaluated Dynamo-style partial quorums through the lens of PBS.  We
