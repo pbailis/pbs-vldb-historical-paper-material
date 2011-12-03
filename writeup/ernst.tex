@@ -286,11 +286,11 @@ different replicas in response to a read request, it will attempt to
 (asynchronously) update the out-of-date replicas with the most recent
 version.  The effect of read repair on version drift between replicas
 is perhaps unsurprisingly dependent on the read rate.  The original
-Dynamo paper used Merkel trees to summarize and exchange data contents
+Dynamo paper used Merkle trees to summarize and exchange data contents
 between replicas as a means of secondary anti-entropy (after the
 initial write to $N$ replicas).  While open source Dynamo-style
-systems use Merkel trees, not all actively employ them in gossip-based
-anti-entropy.  For example, Cassandra only executes Merkel tree
+systems use Merkle trees, not all actively employ them in gossip-based
+anti-entropy.  For example, Cassandra only executes Merkle tree
 anti-entropy when it is manually requested (e.g., \texttt{nodetool
   repair}).
 
@@ -652,7 +652,7 @@ time represents an order statistic dependent on both \texttt{W} and
 reordering is dependent on the commit time.  The probability that the
 $i$th returned read message observes reordering is a both an order
 statistic dependent on $W$ and $A$, and, between $i$, the
-probabilities are dependent.  The expect read and write latencies can
+probabilities are dependent.  The expected read and write latencies can
 be computed using simple order statistics if one makes independence
 assumptions about the distributions in $WARS$.  However, a concise,
 closed form for the probability of inconsistency eludes.  Dynamo is
@@ -948,7 +948,7 @@ systems use a technique known as \textit{read repair} to reconcile
 divergent versions at query-time.  If two nodes return different
 responses to a \textit{get} request, the responses are merged and
 forwarded to the determined out-of-date node.  Dynamo performs
-additional anti-entropy using Merkel trees, however the open source
+additional anti-entropy using Merkle trees, however the open source
 databases we have examined only perform read repair (CITATION
 needed--at least Cassandra does this). We do not model read repair or
 additional anti-entropy processes here (although doing so requires
