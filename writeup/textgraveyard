@@ -191,3 +191,125 @@ John Wilkes--Omega and ``intentions''
 \end{figure}
 
 \end{comment}
+
+
+\subsection{Optimization Formulation}
+
+With these equations, we can optimize the selection of a partial
+quorum system to minimize overall operation latency subject to
+constraints on staleness. We can guarantee bounded staleness by
+ensuring that $p_{staler} = 1$, however this is only possible in
+$k$-quorum consistency as the real-time components of $RT$-quorum
+consistency and its variants are inherently probabilistic (unless we
+can prove an absolute bound on operation latency).  We can use a
+simply formulated optimization program to determine what combination
+of $r$ and $w$ minimizes latency while satisfying the system
+constraints and user requirements.
+
+Given $n$, desired $p$, $w_{min}$ (minimum durability of writes),
+consistency model (with necessary parameters--$k$, $t$, $\gamma_{cr}$,
+etc.), and the relative weighted ``importances'' of read
+and write latency, $c_r$ and $c_w$, we can determine $r$ and $w$:
+
+\begin{equation}
+ \begin{array}{rl}
+    \min        & c_r\cdot RQ_l(r) +c_w \cdot WQ_l(w) \\
+    \mbox{s.t.} & p \ge p_{staler} \\
+                & w \ge w_{min}.
+    \end{array}
+\end{equation}
+
+We implement and validate this optimization framework in
+Section~\ref{sec:optimization}.
+
+\subsection{Typical Quorum Configurations}
+
+CASSANDA: R=1, W=1 
+
+<<<<<<< HEAD
+RIAK: N=3, R,W QUORUM 
+=======
+RIAK: N=3, R,W QUORUM \url{https://github.com/basho/riak_kv/blob/1.0/src/riak_kv_app.erl}
+\url{http://wiki.basho.com/Riak-Glossary.html#Quorum}
+>>>>>>> 11fb27c39c7f11f1b544d903fd16543cac89854b
+
+Voldemort: does not provide production configs besides testing (N=2)
+
+
+
+Until now, we have assumed that the expected latency of operations
+reaching a given number of replicas by a particular time
+($p_w(\mathcal{W}, t)$ for writes) in the case of writes is known.  We
+can measure this distribution empirically (Section
+\ref{sec:real-latency}), but we can also model this latency
+analytically, given a few assumptions.
+
+To begin, we consider write latency.  With Dynamo-style queries, we
+want to determine the probability that $w$ of the replicas in the
+write quorum $\mathcal{Q}$ respond within time $t$.  We can determine
+this in at least two ways.  One way is to find use order statistic
+theory to determine the probability that the $w$th replica reasponds
+by time $t$.  However, this is equivalent to taking the minimum
+response time over the maximum of each possible set of $w$ replicas
+from $\mathcal{Q}$, which works out more cleanly in this formulation.
+Given the write latency cumulative density functions for a set of
+nodes $S$, $L_{ws}(S, t)$, the probability density function $p_w$ of
+write latency of a set of nodes is:
+\begin{equation}
+p_w(\mathcal{W}, t) = min(\{L_{ws}(S, t) \mid S \subseteq \mathcal{Q}, |S| = \mathcal{W}\})
+\end{equation}
+
+
+$\mathcal{W}$, enoted $WQ_l(\mathcal{W})$, we simply need to consider
+the conditional probability of $\mathcal{W}$ writes completing across
+all possible time values $t$.  However, this depends on the
+distribution of $L_{ws}(S, t)$, which requires some
+assumptions. Determining the ordinal probability of a set of randomly
+distributed variables (in our case, the minimum of all $L_{ws}(S,
+t)$), is possible but is also fairly complicated.  The difficult
+arises in determining the distribution of a given $L_{ws}(S)$.  If we
+assume that all nodes in $S$ obey independent latency distributions,
+this is tractible.  If we assume that they are dependent and therefore
+obey a joint distribution, then, as $w$ grows, solving for this
+probability becomes much more difficult~\cite{needed}.  Approximation
+algorithms can assist here~\cite{needed}, but we can also make
+simplifying assumptions about the distribution of these latencies.
+
+If we assume that latencies are independently, identically distributed
+(IID), that is, if each node obeys the same latency distribution and
+each nodes latency is independent of the other nodes's latency, this
+equation is greatly simplified.  Under IID assumptions, the time for a
+write to reach every node in the quorum obeys a single latency
+CDF\footnote{Note that this distribution only captures the request
+  forward, not the round-trip time before the acknowledgement.  The
+  replica can serve the data before it responds to the proxy.},
+$L_w(t)$ (PDF, resp. $l_w(t)$).  The probability that $w$ nodes all
+respond within time $t$ is simply $(L_w(t))^\mathcal{W}$, and the
+minimum over all such of these sets is the CDF $P_w$:
+\begin{equation}
+P_w(\mathcal{W}, t) = 1-(1-(L_w(t))^\mathcal{W})^{n \choose \mathcal{W}}
+\end{equation}
+This is indeed simplifying, but it makes the theory much simpler.  We
+discuss the validity of this IID assumption when we measure latencies
+experimentally in Section \ref{sec:real-latency}.
+
+Under the IID assumption, we can easily determine the expected
+Dynamo-style write quorum operation latency:
+\begin{equation}
+WQ_l(\mathcal{W}) = \int_0^{\infty} t \cdot p_w(\mathcal{W}, t) dt
+\end{equation}
+In practice, the proxy is often a replica as well, so for a write
+quorum of size $w$, we only need to consider $\mathcal{W}=w-1$ writes.
+
+Similarly, to determine how many replicas have a particular value (even if they have not acked) after a write quorum of size $w$, we evaluate:
+\begin{equation}
+P_{w:have}(\mathcal{W}, t) = 1-(1-(L_w(t))^{\mathcal{W}-w})^{n-w \choose \mathcal{W}-w}
+\end{equation}
+
+Thus far, we have only considered the write operation latencies.  The
+read quorum latency may be different from the write latency depending
+on node-level actions such as forced logging or disk-bound operations.
+However, the expected read operation latency for a quorum of size
+$\mathcal{R}$, $RQ_l(\mathcal{R})$, can be calculated similarly given a
+model for the latency of reads ($L_{rs}(S,t)$ and $L_r(t))$.
+

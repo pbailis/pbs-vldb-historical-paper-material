@@ -272,9 +272,10 @@ writes are set to two.
 \centering
 \includegraphics[width=.8\columnwidth]{figs/dynamo-quorum.pdf}
 \caption{Diagram of control flow for client write to Dynamo-style
-  quorum.  Here, $N=3$, $W=2$. Client writes are proxied and sent to
-  all replicas. The write succeeds when $W$ replicas respond.  Note
-  that the proxy is likely a replica as well, invoking a local write.}
+  quorum.  Here, $N=3$, $W=2$. The client write is handled by a
+  coordinator node and sent to all replicas. The write succeeds when
+  $W$ replicas respond.  Note that the coordinator is possibly a
+  replica as well, invoking a local write.}
 \label{fig:dynamo-quorum}
 \end{figure}
 
@@ -504,9 +505,12 @@ possible $\mathcal{W}$:
 p_{staler} = P_l(w, t)+\sum_{c\in(w, n]} \frac{{n-c \choose r}}{{n \choose r}}\cdot [P_w(c+1, t)-P_w(c,t)]
 \end{equation}
 
-However, the above equation assumes reads occur instantaneously.  In
-the real world, reads must be sent to replicas and therefore more time
-will elapse between write commit and $t$.  Accordingly,
+However, the above equation assumes reads occur instantaneously and
+writes commit immediately after $W$ replicas have the version (i.e.,
+there is no delay back to a coordinating node).  In the real world,
+writes need to be acknowledged and reads must be sent to replicas.
+Therefore more time will elapse between the time $W$ of $N$ replicas
+have a version and $t$.  Accordingly,
 Equation~\ref{eq:tv-instantreads} is a conservative upper bound on
 $t$-staleness.  Additionally, depending on the dependence assumptions
 regarding read latencies and $P_w$ latencies, one can potentially
@@ -577,10 +581,15 @@ staleness.
 \subsection{Inconsistency in Dynamo}
 
 Dynamo-style quorum systems are inconsistent as a result of read and
-write message reordering.  Figure~\ref{fig:dynamostale} shows a
-space-time diagram for messages between a sender and a single replica.
-When reads and writes are executed, they are sent to all $N$
+write message reordering.  Reads and writes are sent to all quorum
+members, so the staleness under normal operation results only when one
+of the first $R$ read responses beat the last committed write to its
+corresponding replica.  To demonstrate this phenomenon, we introduce a
+model of Dynamo operation which, for convenience, we will call $WARS$.
 
+We illustrate $WARS$ in Figure~\ref{fig:dynamo-diagram}, a space-time
+diagram for messages between a coordinator and a single replica for a
+write followed by a read $t$ seconds after the write commits.
 
 \begin{figure}
 \centering
@@ -593,132 +602,71 @@ When reads and writes are executed, they are sent to all $N$
 \label{fig:dynamo-diagram}
 \end{figure}
 
+For a write, the coordinator sends $N$ messages, one to each
+replica. The message from coordinator to replica containing the
+version to be written is delayed by a value chosen from distribution
+\texttt{W}.  The coordinator waits for $W$ responses from the replicas
+before we can consider the version committed, each of which are delayed by
+a value chosen from the distribution \texttt{A}.
 
+For a read, the coordinator sends $N$ messages, one to each replica.
+The message from coordinator to replica containing the read request is
+delayed by a value chosen from distribution \texttt{R}.  The
+coordinator waits for $R$ responses from the replicas before returning
+the most recent value it recieves.  Each read response is delayed by a value chosen
+from the distribution \texttt{S}.
+
+In the absence of additional anti-entropic processes, the coordinator
+will return stale data if all $R$ of the $N$ responses received before
+the read returns reached their respective replicas before the
+respective message delayed by \texttt{W} does.  When $R$$+$$W$$>$$N$,
+this is impossible.  However, under partial quorums (when
+$R$$+$$W$$\leq$$N$), this is potentially highly unlikely.  If we
+denote the commit time as $w_t$, to observe staleness, $r+w_t < w$ for
+$r$ chosen from \texttt{R} and $w$ chosen from \texttt{W}.  Writes
+have time to propagate additional replicas as replicas acknowledge the
+write and as reads are sent out.  Similarly, messages are further
+delayed in transit (\texttt{S}) back to the read coordinator.
+Qualitatively, longer write tails and faster reads increase the chance
+of staleness due to the possibility of reordering.
+
+As we discussed in Section~\ref{sec:practice}, read repair and Merkle
+tree anti-entropic processes decrease the probability of staleness by
+further propagating versions between members.  However, both of these
+processes are rate dependent: read repair effects depend on the rate
+of reads, and Merkle tree exchange effects depend on the rate of
+exchange.  $WARS$ is read rate independent but is affected by the
+write rate.  If multiple writes overlap, that is, have overlapping
+periods where they are in-flight but are not committed, the
+probability of inconsistency decreases.  Intuitively, this is because
+overlapping writes only leads to an increased chance that a client
+reads as-yet-uncommitted data.  Accordingly, because it does not
+capture read repair or Merkle tree exchange, $WARS$ represents a lower
+bound for Dynamo-style operation for the sake of simplicity of
+analysis.
+
+$WARS$ considers the effect of message sending, delays, and reception,
+but this represents a daunting analytical formulation.  The commit
+time represents an order statistic dependent on both \texttt{W} and
+\texttt{A}.  By itself, this is not problematic, but message
+reordering is dependent on the commit time.  The probability that the
+$i$th returned read message observes reordering is a both an order
+statistic dependent on $W$ and $A$, but, between $i$, the
+probabilities are depedent.  The $R$th message time can be easily
+determined (see Section~\ref{sec:dynamo-latency}), but a concise,
+closed form for the probability of inconsistency is highly complicated
+and eludes us.  Dynamo is simple to reason about and program, but
+difficult to analyze in closed form.  As we discuss in
+Section~\ref{sec:sim}, we explore $WARS$ using Monte Carlo analysis.
 
 
 \subsection{Dynamo-style Operation Latency}
 
-\label{sec:dynamo-prop}
+\label{sec:dynamo-latency}
+
+\subsection{Asynchronous Staleness Detection}
 
 
-
-Until now, we have assumed that the expected latency of operations
-reaching a given number of replicas by a particular time
-($p_w(\mathcal{W}, t)$ for writes) in the case of writes is known.  We
-can measure this distribution empirically (Section
-\ref{sec:real-latency}), but we can also model this latency
-analytically, given a few assumptions.
-
-To begin, we consider write latency.  With Dynamo-style queries, we
-want to determine the probability that $w$ of the replicas in the
-write quorum $\mathcal{Q}$ respond within time $t$.  We can determine
-this in at least two ways.  One way is to find use order statistic
-theory to determine the probability that the $w$th replica reasponds
-by time $t$.  However, this is equivalent to taking the minimum
-response time over the maximum of each possible set of $w$ replicas
-from $\mathcal{Q}$, which works out more cleanly in this formulation.
-Given the write latency cumulative density functions for a set of
-nodes $S$, $L_{ws}(S, t)$, the probability density function $p_w$ of
-write latency of a set of nodes is:
-\begin{equation}
-p_w(\mathcal{W}, t) = min(\{L_{ws}(S, t) \mid S \subseteq \mathcal{Q}, |S| = \mathcal{W}\})
-\end{equation}
-
-
-$\mathcal{W}$, enoted $WQ_l(\mathcal{W})$, we simply need to consider
-the conditional probability of $\mathcal{W}$ writes completing across
-all possible time values $t$.  However, this depends on the
-distribution of $L_{ws}(S, t)$, which requires some
-assumptions. Determining the ordinal probability of a set of randomly
-distributed variables (in our case, the minimum of all $L_{ws}(S,
-t)$), is possible but is also fairly complicated.  The difficult
-arises in determining the distribution of a given $L_{ws}(S)$.  If we
-assume that all nodes in $S$ obey independent latency distributions,
-this is tractible.  If we assume that they are dependent and therefore
-obey a joint distribution, then, as $w$ grows, solving for this
-probability becomes much more difficult~\cite{needed}.  Approximation
-algorithms can assist here~\cite{needed}, but we can also make
-simplifying assumptions about the distribution of these latencies.
-
-If we assume that latencies are independently, identically distributed
-(IID), that is, if each node obeys the same latency distribution and
-each nodes latency is independent of the other nodes's latency, this
-equation is greatly simplified.  Under IID assumptions, the time for a
-write to reach every node in the quorum obeys a single latency
-CDF\footnote{Note that this distribution only captures the request
-  forward, not the round-trip time before the acknowledgement.  The
-  replica can serve the data before it responds to the proxy.},
-$L_w(t)$ (PDF, resp. $l_w(t)$).  The probability that $w$ nodes all
-respond within time $t$ is simply $(L_w(t))^\mathcal{W}$, and the
-minimum over all such of these sets is the CDF $P_w$:
-\begin{equation}
-P_w(\mathcal{W}, t) = 1-(1-(L_w(t))^\mathcal{W})^{n \choose \mathcal{W}}
-\end{equation}
-This is indeed simplifying, but it makes the theory much simpler.  We
-discuss the validity of this IID assumption when we measure latencies
-experimentally in Section \ref{sec:real-latency}.
-
-Under the IID assumption, we can easily determine the expected
-Dynamo-style write quorum operation latency:
-\begin{equation}
-WQ_l(\mathcal{W}) = \int_0^{\infty} t \cdot p_w(\mathcal{W}, t) dt
-\end{equation}
-In practice, the proxy is often a replica as well, so for a write
-quorum of size $w$, we only need to consider $\mathcal{W}=w-1$ writes.
-
-Similarly, to determine how many replicas have a particular value (even if they have not acked) after a write quorum of size $w$, we evaluate:
-\begin{equation}
-P_{w:have}(\mathcal{W}, t) = 1-(1-(L_w(t))^{\mathcal{W}-w})^{n-w \choose \mathcal{W}-w}
-\end{equation}
-
-Thus far, we have only considered the write operation latencies.  The
-read quorum latency may be different from the write latency depending
-on node-level actions such as forced logging or disk-bound operations.
-However, the expected read operation latency for a quorum of size
-$\mathcal{R}$, $RQ_l(\mathcal{R})$, can be calculated similarly given a
-model for the latency of reads ($L_{rs}(S,t)$ and $L_r(t))$.
-
-\subsection{Optimization Formulation}
-
-With these equations, we can optimize the selection of a partial
-quorum system to minimize overall operation latency subject to
-constraints on staleness. We can guarantee bounded staleness by
-ensuring that $p_{staler} = 1$, however this is only possible in
-$k$-quorum consistency as the real-time components of $RT$-quorum
-consistency and its variants are inherently probabilistic (unless we
-can prove an absolute bound on operation latency).  We can use a
-simply formulated optimization program to determine what combination
-of $r$ and $w$ minimizes latency while satisfying the system
-constraints and user requirements.
-
-Given $n$, desired $p$, $w_{min}$ (minimum durability of writes),
-consistency model (with necessary parameters--$k$, $t$, $\gamma_{cr}$,
-etc.), and the relative weighted ``importances'' of read
-and write latency, $c_r$ and $c_w$, we can determine $r$ and $w$:
-
-\begin{equation}
- \begin{array}{rl}
-    \min        & c_r\cdot RQ_l(r) +c_w \cdot WQ_l(w) \\
-    \mbox{s.t.} & p \ge p_{staler} \\
-                & w \ge w_{min}.
-    \end{array}
-\end{equation}
-
-We implement and validate this optimization framework in
-Section~\ref{sec:optimization}.
-
-\subsection{Typical Quorum Configurations}
-
-CASSANDA: R=1, W=1 
-
-<<<<<<< HEAD
-RIAK: N=3, R,W QUORUM 
-=======
-RIAK: N=3, R,W QUORUM \url{https://github.com/basho/riak_kv/blob/1.0/src/riak_kv_app.erl}
-\url{http://wiki.basho.com/Riak-Glossary.html#Quorum}
->>>>>>> 11fb27c39c7f11f1b544d903fd16543cac89854b
-
-Voldemort: does not provide production configs besides testing (N=2)
 
 \section{Experimental Evaluation}
 \label{sec:dynamoeval}
