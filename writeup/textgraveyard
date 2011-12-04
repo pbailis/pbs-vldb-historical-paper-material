@@ -1,0 +1,315 @@
+
+\begin{comment}
+\section{Motivation}
+
+What kind of consistency do eventually consistent data stores provide?
+At its core, eventual consistency is quite weak, only guaranteeing
+that the latest write will not be lost and will, at some point in the
+future, reside on all replicas.  Despite the weakness of this
+guarantee, many systems opt only the most basic of eventual
+consistency guarantees, with no bounds on the staleness of versions
+observed.  To address this deficiency, a proliferation of proposed
+systems fall across on of models in the consistency spectrum, from
+session guarantees~\cite{session} to causal consistency to parallel
+snapshot isolation~\cite{psi}.  However, many of the most widely
+deployed systems do not provide these models; simple eventual
+consistency is simple to implement, if difficult to reason about.
+Rather than propose another consistency model external to existing
+systems, we should provide better insight into how simple eventually
+consistent systems operate.  We turn to the problem of diagnosing what
+consistency our existing stores provide.
+
+\textbf{Predictability.} Can we predict the staleness of
+eventually-consistent data stores? However, eventually consistent data
+stores often return fairly recent versions.  We should be able to
+predict the staleness of values returned from our data stores.  This
+ability would be invaluable for programmers, who might like to specify
+constraints on the staleness of values in terms of versions,
+wall-clock time, or both.  A streaming ``news feed''-style application
+can tolerate some staleness, but staleness past an hour is likely
+undesirable.
+
+\textbf{Analysis.} How consistent are eventually consistent data
+stores in practice?  There is a wide range of consistency models in
+the academic literature, however many commercially-deployed data
+stores have instead opted for weak eventual consistency or strong
+consistency guarantees instead.  Ostensibly, these systems are working
+well enough for their users; ``eventually'' does not mean infinite
+time in practice.  It would be helpful to characterize when these data
+stores are stale and understand under which conditions these data
+stores are deficient.
+
+\textbf{Configuration.} Using a prediction mechanism, can we
+automatically configure our distributed data stores for a particular
+workload?  Current database configuration...
+
+
+There are two main reasons to replicate data across multiple servers:
+availability and scalability.  First, in the event of network
+partitions, replicas on separate sides of the partition can continue
+to serve (possibly stale) data.  In the event of server failure
+(effectively a single-node partition), having stored the data on
+multiple replicas allows end-users to continue to access the data.
+The replication factor in this case depends largely on the relative
+``importance'', or cost of losing the data.  Second, and of central
+importance to this work, each server has a maximum capacity, or number
+of requests that it can serve within a given time period.  All else
+equal, replicating the data and performing appropriate load-balancing
+lowers the load on each individual server storing the data.  This has
+the additional benefit of lowering read and write operation latency.
+
+However, coordinating replicas has a cost; ensuring that all replicas
+are up to date is expensive.  While the distributed databases
+community developed designs and algorithms for ACID-style distributed
+databases for decades (CITE), in light of massive scale, internet
+services instead chose to move to so-called BASE semantics (CITE).  To
+achieve availability and partition tolerance, BASE systems give up
+consistency.  Indeed, BASE systems cannot have all of consistency,
+availability, and partition tolerance at once~\cite{cap-proof}, yet
+modern BASE systems (closely affiliated with the NoSQL ``movement''
+(CITE)) drop many more guarantees regarding the data they return.
+Many widely-deployed open source BASE systems drop transactional
+support (CITE), complex schema (CITE), and even multi-key operations
+(CITE).  These storage systems are often (initially, and certainly
+conceptually) simpler than traditional distributed RDBMSs and, to
+their credit, scale to hundreds or thousands of machines (CITE).
+
+In the move to BASE semantics, many data management solutions have
+thrown the baby out with the bathwater, providing the bare minimum of
+guarantees on data consistency.  At its core, a guarantee of eventual
+consistency is a guarantee that the latest write will not be lost and
+will, at some point in the future, reside on all replicas.  There is a
+wide and debatable set of points in the consistency spectrum
+between the most basic of eventual consistency guarantees and strong
+consistency, from session guarantees to parallel snapshot isolation to
+causal+ consistency and others.  While there are indeed myriad
+academic designs for less-than-strongly-consistent data stores, many
+industrial eventually consistent data stores themselves have done a
+poor job touting their own merits.  They promise either strong
+consistency or basic eventual consistency, with no guarantees
+in-between.
+
+Despite providing only the most basic of guarantees, large, web-scale,
+(often) highly profitable enterprises utilize eventually consistent
+systems for production services every day (CITE, CITE, CITE).
+Moreover, according to our interactions with system operators, many
+services deploy their data systems with eventually consistent
+guarantees.  Even with a lack of sophisticated guarantees, application
+writers and systems operators use these systems: either they do not
+understand or care about consistency or eventual consistency is good
+enough in practice.  Rather than debase the architects and adopters of
+eventually consistent data storage systems, we should instead better
+understand \textit{why} and when eventually consistent is good enough
+for them.
+
+If we look deeper into the operation of eventually consistent data
+stores, we can begin to answer this question.  While these data stores only
+explicitly provide two modes of operation, in reality, they provide
+gradations of consistency out of the box, without modification.  By
+modeling their (simple) internal protocols, we can provide predictions
+for the degree of consistency they provide.  We can use these
+predictions to inform system deployment and warn programmers about the
+likelihood of corner cases (or, depending on the configuration,
+common-case inconsistencies).  We can understand when deployment
+conditions dictate that ``eventually consistent'' means ``all bets are
+off'' and when ``eventually consistent'' means ``almost always
+strongly consistent''.  We shouldn't have to guess---and we don't need
+to.
+
+\end{comment}
+
+
+
+\begin{comment}
+
+N: 3 R: 1 W: 2 lambda 0.000000
+Avg write latency: 2.340356 (stddev: 3.320391, 99th %ile: 22.360338)
+Avg read latency: 2.588911 (stddev: 6.489868, 99th %ile: 30.617551)
+
+N: 3 R: 1 W: 3 lambda 0.000000
+Avg write latency: 4.412850 (stddev: 8.626731, 99th %ile: 50.466737)
+Avg read latency: 2.277779 (stddev: 6.003202, 99th %ile: 28.037702)
+
+N: 3 R: 2 W: 1 lambda 0.000000
+Avg write latency: 1.786696 (stddev: 2.229738, 99th %ile: 6.011726)
+Avg read latency: 2.047036 (stddev: 5.385266, 99th %ile: 23.046278)
+
+N: 3 R: 2 W: 2 lambda 0.000000
+Avg write latency: 2.314494 (stddev: 3.058672, 99th %ile: 16.398516)
+Avg read latency: 2.068930 (stddev: 5.495067, 99th %ile: 22.539867)
+
+N: 3 R: 3 W: 1 lambda 0.000000
+Avg write latency: 1.869139 (stddev: 3.258769, 99th %ile: 14.491754)
+Avg read latency: 3.309529 (stddev: 8.348639, 99th %ile: 44.156379)
+
+\subsection{Operation Latency}
+\label{sec:real-latency}
+
+In our measurements on EC2, the correllation of writes was MADE UP,
+meaning the operations were effectively IID.  However, we can
+approximate an environment with a higher correlation by modifying $w$.
+In an environment where half of the nodes are co-located on a rack, we can treat $w$ as $w/2$.  We show the tradeoffs between correlation and latency in Figure \ref{fig:correlation}.
+
+\begin{figure}
+\centering
+\includegraphics[width=.8\columnwidth]{figs/correlation.pdf}
+\caption{Expected latency of write quorums of $w$ replicas in Dynamo-style operation versus quorum element correlation.}
+\label{fig:correlation}
+\end{figure}
+
+\subsection{Optimization and SLAs}
+\label{sec:optimization}
+
+John Wilkes--Omega and ``intentions''
+
+\begin{figure}
+\centering
+\includegraphics[width=.8\columnwidth]{figs/bothdimensions.pdf}
+\caption{Time and version staleness required to ensure varying SLA constraints on the probability of returning staler-than-promised data in simple microbenchmarking.}
+\label{fig:prob-staler}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=.8\columnwidth]{figs/inaccuracy.pdf}
+\caption{Accuracy of model compared to experimental microbenchmarking.
+  The size of each point is linearly proportional to the inaccuracy of
+  the model's predictions.}
+\label{fig:prob-staler}
+\end{figure}
+
+
+
+\subsection{Twitter Clone}
+
+\begin{figure}
+\centering
+\includegraphics[width=.8\columnwidth]{figs/twissandra.pdf}
+\caption{Time and version staleness tradeoffs as measured by end users
+  of Twitter clone.}
+\label{fig:twissandra}
+\end{figure}
+
+\end{comment}
+
+
+\subsection{Optimization Formulation}
+
+With these equations, we can optimize the selection of a partial
+quorum system to minimize overall operation latency subject to
+constraints on staleness. We can guarantee bounded staleness by
+ensuring that $p_{staler} = 1$, however this is only possible in
+$k$-quorum consistency as the real-time components of $RT$-quorum
+consistency and its variants are inherently probabilistic (unless we
+can prove an absolute bound on operation latency).  We can use a
+simply formulated optimization program to determine what combination
+of $r$ and $w$ minimizes latency while satisfying the system
+constraints and user requirements.
+
+Given $n$, desired $p$, $w_{min}$ (minimum durability of writes),
+consistency model (with necessary parameters--$k$, $t$, $\gamma_{cr}$,
+etc.), and the relative weighted ``importances'' of read
+and write latency, $c_r$ and $c_w$, we can determine $r$ and $w$:
+
+\begin{equation}
+ \begin{array}{rl}
+    \min        & c_r\cdot RQ_l(r) +c_w \cdot WQ_l(w) \\
+    \mbox{s.t.} & p \ge p_{staler} \\
+                & w \ge w_{min}.
+    \end{array}
+\end{equation}
+
+We implement and validate this optimization framework in
+Section~\ref{sec:optimization}.
+
+\subsection{Typical Quorum Configurations}
+
+CASSANDA: R=1, W=1 
+
+<<<<<<< HEAD
+RIAK: N=3, R,W QUORUM 
+=======
+RIAK: N=3, R,W QUORUM \url{https://github.com/basho/riak_kv/blob/1.0/src/riak_kv_app.erl}
+\url{http://wiki.basho.com/Riak-Glossary.html#Quorum}
+>>>>>>> 11fb27c39c7f11f1b544d903fd16543cac89854b
+
+Voldemort: does not provide production configs besides testing (N=2)
+
+
+
+Until now, we have assumed that the expected latency of operations
+reaching a given number of replicas by a particular time
+($p_w(\mathcal{W}, t)$ for writes) in the case of writes is known.  We
+can measure this distribution empirically (Section
+\ref{sec:real-latency}), but we can also model this latency
+analytically, given a few assumptions.
+
+To begin, we consider write latency.  With Dynamo-style queries, we
+want to determine the probability that $w$ of the replicas in the
+write quorum $\mathcal{Q}$ respond within time $t$.  We can determine
+this in at least two ways.  One way is to find use order statistic
+theory to determine the probability that the $w$th replica reasponds
+by time $t$.  However, this is equivalent to taking the minimum
+response time over the maximum of each possible set of $w$ replicas
+from $\mathcal{Q}$, which works out more cleanly in this formulation.
+Given the write latency cumulative density functions for a set of
+nodes $S$, $L_{ws}(S, t)$, the probability density function $p_w$ of
+write latency of a set of nodes is:
+\begin{equation}
+p_w(\mathcal{W}, t) = min(\{L_{ws}(S, t) \mid S \subseteq \mathcal{Q}, |S| = \mathcal{W}\})
+\end{equation}
+
+
+$\mathcal{W}$, enoted $WQ_l(\mathcal{W})$, we simply need to consider
+the conditional probability of $\mathcal{W}$ writes completing across
+all possible time values $t$.  However, this depends on the
+distribution of $L_{ws}(S, t)$, which requires some
+assumptions. Determining the ordinal probability of a set of randomly
+distributed variables (in our case, the minimum of all $L_{ws}(S,
+t)$), is possible but is also fairly complicated.  The difficult
+arises in determining the distribution of a given $L_{ws}(S)$.  If we
+assume that all nodes in $S$ obey independent latency distributions,
+this is tractible.  If we assume that they are dependent and therefore
+obey a joint distribution, then, as $w$ grows, solving for this
+probability becomes much more difficult~\cite{needed}.  Approximation
+algorithms can assist here~\cite{needed}, but we can also make
+simplifying assumptions about the distribution of these latencies.
+
+If we assume that latencies are independently, identically distributed
+(IID), that is, if each node obeys the same latency distribution and
+each nodes latency is independent of the other nodes's latency, this
+equation is greatly simplified.  Under IID assumptions, the time for a
+write to reach every node in the quorum obeys a single latency
+CDF\footnote{Note that this distribution only captures the request
+  forward, not the round-trip time before the acknowledgement.  The
+  replica can serve the data before it responds to the proxy.},
+$L_w(t)$ (PDF, resp. $l_w(t)$).  The probability that $w$ nodes all
+respond within time $t$ is simply $(L_w(t))^\mathcal{W}$, and the
+minimum over all such of these sets is the CDF $P_w$:
+\begin{equation}
+P_w(\mathcal{W}, t) = 1-(1-(L_w(t))^\mathcal{W})^{n \choose \mathcal{W}}
+\end{equation}
+This is indeed simplifying, but it makes the theory much simpler.  We
+discuss the validity of this IID assumption when we measure latencies
+experimentally in Section \ref{sec:real-latency}.
+
+Under the IID assumption, we can easily determine the expected
+Dynamo-style write quorum operation latency:
+\begin{equation}
+WQ_l(\mathcal{W}) = \int_0^{\infty} t \cdot p_w(\mathcal{W}, t) dt
+\end{equation}
+In practice, the proxy is often a replica as well, so for a write
+quorum of size $w$, we only need to consider $\mathcal{W}=w-1$ writes.
+
+Similarly, to determine how many replicas have a particular value (even if they have not acked) after a write quorum of size $w$, we evaluate:
+\begin{equation}
+P_{w:have}(\mathcal{W}, t) = 1-(1-(L_w(t))^{\mathcal{W}-w})^{n-w \choose \mathcal{W}-w}
+\end{equation}
+
+Thus far, we have only considered the write operation latencies.  The
+read quorum latency may be different from the write latency depending
+on node-level actions such as forced logging or disk-bound operations.
+However, the expected read operation latency for a quorum of size
+$\mathcal{R}$, $RQ_l(\mathcal{R})$, can be calculated similarly given a
+model for the latency of reads ($L_{rs}(S,t)$ and $L_r(t))$.
+
