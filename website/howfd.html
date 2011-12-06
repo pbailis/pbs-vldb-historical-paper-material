@@ -1,8 +1,17 @@
 <head>
 
-		<script type="text/javascript" src="flotr-0.1.0alpha.js"></script>
-		<script type="text/javascript" src="calculation.js"></script>
-		<script type="text/javascript" src="prototype-1.6.0.2.js"></script>
+  <script language="JavaScript" type="text/javascript" src="flotr-0.1.0alpha.js"></script>
+  <script language="JavaScript" type="text/javascript" src="calculation.js"></script>
+  <link href="jquery-ui.css" rel="stylesheet" type="text/css"/>
+  <script language="JavaScript" type="text/javascript" src="jquery-1.6.2.min.js"></script>
+  <script language="JavaScript" type="text/javascript" src="jquery-ui-1.8.16.custom.min.js"></script>
+  <script language="JavaScript" type="text/javascript" src="prototype-1.6.0.2.js"></script>
+  <script language="JavaScript" type="text/javascript" src="flotr-0.1.0alpha.js"></script>
+ 
+ <script>
+     jQuery.noConflict();
+ </script>
+
 
 <title>How Fscked is My Consistency?</title>
 <link rel=StyleSheet href="consistency.css" type="text/css">
@@ -10,6 +19,7 @@
 </head>
 
 <body>
+
 <h1>How Fscked is My Consistency?</h1>
 
 <center>
@@ -19,18 +29,24 @@
 <center>
   <span class="graph-label">P(Consistency)</span>
   <div id="tcdf" style="width:700px;height:250px;"></div>
-    <span class="axis-label">Time After Commit (ms)</span><br/>
+    <span class="big-axis-label">Time After Commit (ms)</span><br/>
 </center>
 </td>
 <td>
 <div id="nrwpanel">
 <b>Replica Configuration</b><br/><br/>
-N: <input type="range"  min="1" max="9" value="3" step="1" onchange="showN(this.value)"/><span id="Nslider">3</span><br>
-R: <input id="Rinput" type="range"  min="1" max="3" value="1" step="1" onchange="showR(this.value)"/><span id="Rslider">1</span><br>
-W: <input id="Winput" type="range"  min="1" max="3" value="1" step="1" onchange="showW(this.value)"/><span id="Wslider">1</span><br>
-Read Latency: <span id="rlatency"></span><br>
-Write Latency: <span id="wlatency"></span><br><br>
-Versions <input type="range"  min="1" max="9" value="1" step="1" onchange="showK(this.value)"/><span id="kslider">1</span><br>
+<span class="slidewraplt">N:</span> <div class="jqslider" id="n-jsslider"></div><span class="slidewraprt" id="Nslider">3</span><br>
+<span class="slidewraplt">R:</span> <div class="jqslider" id="r-jsslider"></div><span class="slidewraprt" id="Rslider">1</span><br>
+<span class="slidewraplt">W:</span> <div class="jqslider" id="w-jsslider"></div><span class="slidewraprt" id="Wslider">1</span><br>
+Avg. Read Latency: <span id="rlatency"></span> ms<br>
+Avg. Write Latency: <span id="wlatency"></span> ms<br>
+<hr>
+<b>Versions</b><br>
+<span class="slidewraplt">&nbsp;</span> <div class="jqslider" id="k-jsslider"></div><span class="slidewraprt" id="kslider">1</span><br>
+<hr>
+<b>Accuracy:</b><br> <span class="slidewrap" id="itslider">2500</span> iterations/point</br>
+<span class="slidewraplt">&nbsp;</span><span class="slidewraprt" id="kslider">&nbsp;</span> <div class="jqslider" id="it-jsslider"></div><br>
+
 </div>
 </td>
 </tr>
@@ -41,9 +57,47 @@ Versions <input type="range"  min="1" max="9" value="1" step="1" onchange="showK
 </center>
 
 <script type="text/javascript">
+
+function makeReadSlider(N)
+{
+    var R = document.getElementById("Rslider").innerHTML; 
+    if(R > N)
+    {
+        R = N;
+        document.getElementById("Rslider").innerHTML = R;
+    }
+   
+    jQuery("#r-jsslider").slider({ min: 1, max: N, value: R, change: function(event, ui) { showR(ui.value); }  });
+}
+
+
+function makeWriteSlider(N)
+{
+    var W = document.getElementById("Wslider").innerHTML;
+    if(W > N)
+    {
+        W = N;
+        document.getElementById("Wslider").innerHTML = W;
+    }
+
+    jQuery("#w-jsslider").slider({ min: 1, max: N, value: W, change: function(event, ui) { showW(ui.value); }  });
+}
+
+
   var loaded = false;
 
     document.observe('dom:loaded', function(){
+
+    jQuery("#n-jsslider").slider({ min: 1, max: 9, value: 3, change: function(event, ui) { showN(ui.value); }  });
+    jQuery("#k-jsslider").slider({ min: 1, max: 9, value: 1, change: function(event, ui) { showK(ui.value); }  });
+    jQuery("#it-jsslider").slider({ min: 100, max: 15000, value: 2500, change: function(event, ui) { showIt(ui.value); }  });
+    jQuery("#wl-jsslider").slider({ min: 10, max: 1500, value: 100, change: function(event, ui) { editWLambda(ui.value); }  });
+    jQuery("#al-jsslider").slider({ min: 10, max: 1500, value: 100, change: function(event, ui) { editALambda(ui.value); }  });
+    jQuery("#rl-jsslider").slider({ min: 10, max: 1500, value: 100, change: function(event, ui) { editRLambda(ui.value); }  });
+    jQuery("#sl-jsslider").slider({ min: 10, max: 1500, value: 100, change: function(event, ui) { editSLambda(ui.value); }  });
+
+    makeReadSlider(3);
+    makeWriteSlider(3);
     editWLambda(100);
     editRLambda(100);
     editALambda(100);
@@ -97,7 +151,9 @@ function updateProbability()
 	if(st != 0)
             resultHTML+="<br>"
 
-        resultHTML+="You have at least a "+roundNumber(100*calc_prob_stale(N, R, W, Wl, Al, Rl, Sl, showtimes[st], k), 2)+" percent chance of reading";
+	var thisps = roundNumber(100*Math.min(MAX_PS,calc_prob_stale(N, R, W, Wl, Al, Rl, Sl, showtimes[st], k)), 2);
+
+        resultHTML+="You have at least a "+thisps+" percent chance of reading";
         if(k==1)
             resultHTML+=" the last written version";
 	else
@@ -122,7 +178,7 @@ function updateProbability()
     if(ps_at_five > .99)
     {
        maxt = 5;
-       step = 1;
+       step = .5;
     }
     else if(ps_at_ten > .99)
     {
@@ -141,9 +197,6 @@ function updateProbability()
 		       
     var f = Flotr.draw($('tcdf'), [ p ], 
     {
-        title : "TEST ONE TWO",
-			HtmlText: false,
-
         xaxis: { title: 'Time After Commit (ms)', tickDecimals: 0 },
         yaxis: { title: 'Pr(Consistency)'}
     });
@@ -158,18 +211,18 @@ function showR(R)
 
 function showN(N)
 {
-	document.getElementById("Nslider").innerHTML=N;
-        if(document.getElementById("Rslider").innerHTML > N)
-            showR(N);
-        if(document.getElementById("Wslider").innerHTML > N)
-            showW(N);
+    document.getElementById("Nslider").innerHTML=N;
+    if(document.getElementById("Rslider").innerHTML > N)
+      showR(N);
+    if(document.getElementById("Wslider").innerHTML > N)
+      showW(N);
 
-        document.getElementById("Rinput").setAttribute("max", N);
+    makeReadSlider(N);
     updateReadLatency();
-        document.getElementById("Winput").setAttribute("max", N);
-    updateWriteLatency();
-        updateProbability();
 
+    makeWriteSlider(N);
+    updateWriteLatency();
+    updateProbability();
 }
 
 function showW(W)
@@ -182,6 +235,13 @@ function showW(W)
 function showK(k)
 {
     document.getElementById("kslider").innerHTML=k;
+    updateProbability();
+}
+
+function showIt(its)
+{
+    document.getElementById("itslider").innerHTML=its;
+    update_max_iterations(its);
     updateProbability();
 }
 
@@ -235,14 +295,14 @@ function editSLambda(slambda)
 <div id="latencypanel">
 <b>Operation Latency</b><br/>
 Exponentially Distributed CDFs</br>
-<table cellpadding=20px align="center">
+<table cellpadding=10px  align="center">
 <tr>
 <td>
   <center>
     <span class="graph-label">Write Request to Replica</span>
     <div id="wcontainer" style="width:180px;height:100px;"></div>
     <span class="axis-label">Latency (ms)</span><br/>
-    &#x3BB; <input type="range"  min="1" max="1000" value="100" step="1" onchange="editWLambda(this.value)"/><span id="wlambda">.100</span><br>
+    <span class="lambdalabel">&#x3BB;</span> <div class="lmbda-jqslider" id="wl-jsslider"></div><span id="wlambda">.100</span><br>
   </center>
 </td>
 
@@ -251,7 +311,7 @@ Exponentially Distributed CDFs</br>
     <span class="graph-label">Replica Write Ack</span>
     <div id="acontainer" style="width:180px;height:100px;"></div>
     <span class="axis-label">Latency (ms)</span><br/>
-    &#x3BB; <input type="range"  min="1" max="1000" value="100" step="1" onchange="editALambda(this.value)"/><span id="alambda">.100</span><br>
+    <span class="lambdalabel">&#x3BB;</span> <div class="lmbda-jqslider" id="al-jsslider"></div><span id="alambda">.100</span><br>
   </center>
 </td>
 
@@ -260,7 +320,7 @@ Exponentially Distributed CDFs</br>
     <span class="graph-label">Read Request to Replica</span>
     <div id="rcontainer" style="width:180px;height:100px;"></div>
     <span class="axis-label">Latency (ms)</span><br/>
-    &#x3BB;  <input type="range"  min="1" max="1000" value="100" step="1" onchange="editRLambda(this.value)"/><span id="rlambda">.100</span><br>
+    <span class="lambdalabel">&#x3BB;</span> <div class="lmbda-jqslider" id="rl-jsslider"></div><span id="rlambda">.100</span><br>
   </center>
 </td>
 
@@ -269,7 +329,7 @@ Exponentially Distributed CDFs</br>
     <span class="graph-label">Replica Read Response</span>
     <div id="scontainer" style="width:180px;height:100px;"></div>
     <span class="axis-label">Latency (ms)</span><br/>
-    &#x3BB;  <input type="range"  min="1" max="1000" value="100" step="1" onchange="editSLambda(this.value)"/><span id="slambda">.100</span><br>
+    <span class="lambdalabel">&#x3BB;</span> <div class="lmbda-jqslider" id="sl-jsslider"></div><span id="slambda">.100</span><br>
   </center>
 </td>
 </tr>
