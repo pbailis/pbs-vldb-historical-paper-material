@@ -12,23 +12,148 @@
 <body>
 <h1>How Fscked is My Consistency?</h1>
 
-<p>You have a 97.9% chance of reading the latest version 2 seconds after it commits.</p>
+<center>
+<table cellpadding=10px align="center">
+<tr>
+<td>
+<center>
+  <span class="graph-label">P(Consistency)</span>
+  <div id="tcdf" style="width:700px;height:250px;"></div>
+    <span class="axis-label">Time After Commit (ms)</span><br/>
+</center>
+</td>
+<td>
+<div id="nrwpanel">
+<b>Replica Configuration</b><br/><br/>
+N: <input type="range"  min="1" max="9" value="3" step="1" onchange="showN(this.value)"/><span id="Nslider">3</span><br>
+R: <input id="Rinput" type="range"  min="1" max="3" value="1" step="1" onchange="showR(this.value)"/><span id="Rslider">1</span><br>
+W: <input id="Winput" type="range"  min="1" max="3" value="1" step="1" onchange="showW(this.value)"/><span id="Wslider">1</span><br>
+Read Latency: <span id="rlatency"></span><br>
+Write Latency: <span id="wlatency"></span><br><br>
+Versions <input type="range"  min="1" max="9" value="1" step="1" onchange="showK(this.value)"/><span id="kslider">1</span><br>
+</div>
+</td>
+</tr>
+</table>
 
-You have a 97.9% chance of reading one of the 5 latest versions 5 seconds after they commit.
 
+<p><span id="sweept"></span></p>
+</center>
 
 <script type="text/javascript">
+  var loaded = false;
+
     document.observe('dom:loaded', function(){
     editWLambda(100);
     editRLambda(100);
     editALambda(100);
+    editSLambda(100);
+    updateReadLatency();
+    updateWriteLatency();
+    loaded = true;
+    updateProbability();
 		       });
 
+function updateReadLatency()
+{
+    var N = document.getElementById("Nslider").innerHTML;
+    var R = document.getElementById("Rslider").innerHTML;
+    var Rl = document.getElementById("rlambda").innerHTML;
+    var Sl = document.getElementById("slambda").innerHTML;
 
+    document.getElementById("rlatency").innerHTML = calculate_operation_latency(N, R, Rl, Sl);
+}
+
+function updateWriteLatency()
+{
+    var N = document.getElementById("Nslider").innerHTML;
+    var W = document.getElementById("Wslider").innerHTML;
+    var Wl = document.getElementById("wlambda").innerHTML;
+    var Al = document.getElementById("alambda").innerHTML;
+
+    document.getElementById("wlatency").innerHTML = calculate_operation_latency(N, W, Wl, Al);
+}
+
+function updateProbability()
+{
+    if(!loaded)
+        return;
+
+    var N = document.getElementById("Nslider").innerHTML;
+    var R = document.getElementById("Rslider").innerHTML;
+    var W = document.getElementById("Wslider").innerHTML;
+    var k = document.getElementById("kslider").innerHTML;
+    var Wl = document.getElementById("wlambda").innerHTML;
+    var Al = document.getElementById("alambda").innerHTML;
+    var Rl = document.getElementById("rlambda").innerHTML;
+    var Sl = document.getElementById("slambda").innerHTML;
+
+    var showtimes = [0, 10, 100];
+    var st = 0;
+    var resultHTML=""
+
+    for(st = 0; st < showtimes.length; st++)
+    {
+	if(st != 0)
+            resultHTML+="<br>"
+
+        resultHTML+="You have at least a "+roundNumber(100*calc_prob_stale(N, R, W, Wl, Al, Rl, Sl, showtimes[st], k), 2)+" percent chance of reading";
+        if(k==1)
+            resultHTML+=" the last written version";
+	else
+            resultHTML+=" one of the last "+k+" written versions";
+
+        resultHTML+= " "+showtimes[st]+" ms after";
+
+        if(k==1)
+            resultHTML+=" it commits.";
+	else
+            resultHTML+=" they commit.";
+    }
+
+    document.getElementById("sweept").innerHTML = resultHTML;
+
+    var ps_at_five = calc_prob_stale(N, R, W, Wl, Al, Rl, Sl, 5, k);
+    var ps_at_ten = calc_prob_stale(N, R, W, Wl, Al, Rl, Sl, 10, k);
+
+    var maxt = 30;
+    var step = 2;
+
+    if(ps_at_five > .99)
+    {
+       maxt = 5;
+       step = 1;
+    }
+    else if(ps_at_ten > .99)
+    {
+       maxt = 10;
+       step = 1;
+    }
+
+    var p = [];
+    for(var ts = 0; ts < maxt; ts+=step)
+    { 
+        var ps = calc_prob_stale(N, R, W, Wl, Al, Rl, Sl, ts, k);
+        p.push([ts, ps]);
+        if(ps > .9999 && p.length>5)
+            break;
+    }
+		       
+    var f = Flotr.draw($('tcdf'), [ p ], 
+    {
+        title : "TEST ONE TWO",
+			HtmlText: false,
+
+        xaxis: { title: 'Time After Commit (ms)', tickDecimals: 0 },
+        yaxis: { title: 'Pr(Consistency)'}
+    });
+}
 
 function showR(R)
 {
-	document.getElementById("Rslider").innerHTML=R;
+    document.getElementById("Rslider").innerHTML=R;
+    updateProbability();
+    updateReadLatency();
 }
 
 function showN(N)
@@ -40,76 +165,73 @@ function showN(N)
             showW(N);
 
         document.getElementById("Rinput").setAttribute("max", N);
+    updateReadLatency();
         document.getElementById("Winput").setAttribute("max", N);
+    updateWriteLatency();
+        updateProbability();
 
 }
 
 function showW(W)
 {
-	document.getElementById("Wslider").innerHTML=W;
+    document.getElementById("Wslider").innerHTML=W;
+    updateProbability();
+    updateWriteLatency();
 }
 
-
-function editRLambda(rlambda)
+function showK(k)
 {
-		   document.getElementById("rlambda").innerHTML=(rlambda/1000).toFixed(3);
-		   var d2 = [];
-    for(var i = 0; i < Math.min(20000/rlambda, 300); i += 0.5)
-		       
-		       d2.push([i, calc_exponential_cdf(rlambda/1000, i)]);
+    document.getElementById("kslider").innerHTML=k;
+    updateProbability();
+}
+
+function showT(t)
+{
+   document.getElementById("tslider").innerHTML=t;
+   updateProbability();
+}
+
+function editLambda(lmbda, eleid, elecontainer)
+{
+	document.getElementById(eleid).innerHTML=(lmbda/1000).toFixed(3);
+        var d1 = [];
+        //for(var i = 0; i < Math.min(20000/lmbda, 300); i += 0.5)
+	for(var i = 0; i < 32; i += 0.5)
+		       d1.push([i, calc_exponential_cdf(lmbda/1000, i)]);
 		   
-		   var f = Flotr.draw($('rcontainer'), [ d2 ]);
+		   var f = Flotr.draw($(elecontainer), [ d1 ], {xaxis: { tickDecimals: 0 }});
+        updateProbability();
 }
 
 
 function editWLambda(wlambda)
 {
-	document.getElementById("wlambda").innerHTML=(wlambda/1000).toFixed(3);
-var d1 = [];
-for(var i = 0; i < Math.min(20000/wlambda, 300); i += 0.5)
-		       d1.push([i, calc_exponential_cdf(wlambda/1000, i)]);
-		   
-		   var f = Flotr.draw($('wcontainer'), [ d1 ]);
-
+        editLambda(wlambda, "wlambda", "wcontainer");
+	updateWriteLatency();
 }
-
 
 function editALambda(alambda)
 {
-	document.getElementById("alambda").innerHTML=(alambda/1000).toFixed(3);
-var d1 = [];
-for(var i = 0; i < Math.min(20000/alambda, 300); i += 0.5)
-		       d1.push([i, calc_exponential_cdf(alambda/1000, i)]);
-		   
-		   var f = Flotr.draw($('acontainer'), [ d1 ]);
+        editLambda(alambda, "alambda", "acontainer");
+	updateWriteLatency();
+}
+
+function editRLambda(rlambda)
+{
+        editLambda(rlambda, "rlambda", "rcontainer");
+	updateReadLatency();
+}
+
+function editSLambda(slambda)
+{
+        editLambda(slambda, "slambda", "scontainer");
+	updateReadLatency();
 }
 
 </script>
 
 
-
-
-
-<table cellpadding=20px align="center">
-<tr>
-<td>
-<div id="nrwpanel">
-<b>Staleness Settings</b><br/><br/>
-SOME: <input id="fakeid2" type="range"  min="1" max="9" value="3" step="1" onchange=""/><span id="foo">3</span><br>
-STUFF: <input id="fakeid" type="range"  min="1" max="3" value="1" step="1" onchange=""/><span id="bar">1</span><br>
-</div>
-</td>
-<td>
-<div id="nrwpanel">
-<b>Replica Configuration</b><br/><br/>
-N: <input type="range"  min="1" max="9" value="3" step="1" onchange="showN(this.value)"/><span id="Nslider">3</span><br>
-R: <input id="Rinput" type="range"  min="1" max="3" value="1" step="1" onchange="showR(this.value)"/><span id="Rslider">1</span><br>
-W: <input id="Winput" type="range"  min="1" max="3" value="1" step="1" onchange="showW(this.value)"/><span id="Wslider">1</span><br>
-</div>
-</td>
-</tr>
-</table>
-
+<center>
 <div id="latencypanel">
 <b>Operation Latency</b><br/>
 Exponentially Distributed CDFs</br>
@@ -117,33 +239,43 @@ Exponentially Distributed CDFs</br>
 <tr>
 <td>
   <center>
-    <span class="graph-label">Write Request to Replica </span>
+    <span class="graph-label">Write Request to Replica</span>
     <div id="wcontainer" style="width:180px;height:100px;"></div>
     <span class="axis-label">Latency (ms)</span><br/>
     &#x3BB; <input type="range"  min="1" max="1000" value="100" step="1" onchange="editWLambda(this.value)"/><span id="wlambda">.100</span><br>
   </center>
 </td>
 
+<td>
+  <center>
+    <span class="graph-label">Replica Write Ack</span>
+    <div id="acontainer" style="width:180px;height:100px;"></div>
+    <span class="axis-label">Latency (ms)</span><br/>
+    &#x3BB; <input type="range"  min="1" max="1000" value="100" step="1" onchange="editALambda(this.value)"/><span id="alambda">.100</span><br>
+  </center>
+</td>
+
 <td align="center">
   <center>
-    <span class="graph-label">Read Request to Replica </span>
+    <span class="graph-label">Read Request to Replica</span>
     <div id="rcontainer" style="width:180px;height:100px;"></div>
     <span class="axis-label">Latency (ms)</span><br/>
     &#x3BB;  <input type="range"  min="1" max="1000" value="100" step="1" onchange="editRLambda(this.value)"/><span id="rlambda">.100</span><br>
   </center>
 </td>
 
-<td>
+<td align="center">
   <center>
-    <span class="graph-label"> Response from Replica </span>
-    <div id="acontainer" style="width:180px;height:100px;"></div>
+    <span class="graph-label">Replica Read Response</span>
+    <div id="scontainer" style="width:180px;height:100px;"></div>
     <span class="axis-label">Latency (ms)</span><br/>
-    &#x3BB; <input type="range"  min="1" max="1000" value="100" step="1" onchange="editALambda(this.value)"/><span id="alambda">.100</span><br>
+    &#x3BB;  <input type="range"  min="1" max="1000" value="100" step="1" onchange="editSLambda(this.value)"/><span id="slambda">.100</span><br>
   </center>
 </td>
 </tr>
 </table>
 </div>
+</center>
 
 
 </body>
