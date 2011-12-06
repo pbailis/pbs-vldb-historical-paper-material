@@ -6,7 +6,6 @@
   <script language="JavaScript" type="text/javascript" src="jquery-1.6.2.min.js"></script>
   <script language="JavaScript" type="text/javascript" src="jquery-ui-1.8.16.custom.min.js"></script>
   <script language="JavaScript" type="text/javascript" src="prototype-1.6.0.2.js"></script>
-  <script language="JavaScript" type="text/javascript" src="flotr-0.1.0alpha.js"></script>
  
  <script>
      jQuery.noConflict();
@@ -45,7 +44,7 @@ Avg. Write Latency: <span id="wlatency"></span> ms<br>
 <span class="slidewraplt">&nbsp;</span> <div class="jqslider" id="k-jsslider"></div><span class="slidewraprt" id="kslider">1</span><br>
 <hr>
 <b>Accuracy:</b><br> <span class="slidewrap" id="itslider">2500</span> iterations/point</br>
-<span class="slidewraplt">&nbsp;</span><span class="slidewraprt" id="kslider">&nbsp;</span> <div class="jqslider" id="it-jsslider"></div><br>
+<span class="slidewraplt">&nbsp;</span><span class="slidewraprt" id="noslider">&nbsp;</span> <div class="jqslider" id="it-jsslider"></div><br>
 
 </div>
 </td>
@@ -57,6 +56,8 @@ Avg. Write Latency: <span id="wlatency"></span> ms<br>
 </center>
 
 <script type="text/javascript">
+
+var p = [];
 
 function makeReadSlider(N)
 {
@@ -133,10 +134,10 @@ function updateProbability()
     if(!loaded)
         return;
 
-    var N = document.getElementById("Nslider").innerHTML;
-    var R = document.getElementById("Rslider").innerHTML;
-    var W = document.getElementById("Wslider").innerHTML;
-    var k = document.getElementById("kslider").innerHTML;
+    var N = parseInt(document.getElementById("Nslider").innerHTML);
+    var R = parseInt(document.getElementById("Rslider").innerHTML);
+    var W = parseInt(document.getElementById("Wslider").innerHTML);
+    var k = parseInt(document.getElementById("kslider").innerHTML);
     var Wl = document.getElementById("wlambda").innerHTML;
     var Al = document.getElementById("alambda").innerHTML;
     var Rl = document.getElementById("rlambda").innerHTML;
@@ -151,9 +152,19 @@ function updateProbability()
 	if(st != 0)
             resultHTML+="<br>"
 
-	var thisps = roundNumber(100*Math.min(MAX_PS,calc_prob_stale(N, R, W, Wl, Al, Rl, Sl, showtimes[st], k)), 2);
+	var thisps;
 
-        resultHTML+="You have at least a "+thisps+" percent chance of reading";
+        if(R+W<= N)
+	{
+	    thisps = roundNumber(100*Math.min(MAX_PS,calc_prob_stale(N, R, W, Wl, Al, Rl, Sl, showtimes[st], k)), 2);
+	    resultHTML+="You have at least a "+thisps+" percent chance of reading";
+	}
+	else
+	{
+	    thisps = 100;
+	    resultHTML+="You are guaranteed to read";
+        }
+
         if(k==1)
             resultHTML+=" the last written version";
 	else
@@ -185,8 +196,7 @@ function updateProbability()
        maxt = 10;
        step = 1;
     }
-
-    var p = [];
+    p = [];
     for(var ts = 0; ts < maxt; ts+=step)
     { 
         var ps = calc_prob_stale(N, R, W, Wl, Al, Rl, Sl, ts, k);
@@ -194,12 +204,18 @@ function updateProbability()
         if(ps > .9999 && p.length>5)
             break;
     }
-		       
-    var f = Flotr.draw($('tcdf'), [ p ], 
-    {
-        xaxis: { title: 'Time After Commit (ms)', tickDecimals: 0 },
-        yaxis: { title: 'Pr(Consistency)'}
-    });
+
+    var f = Flotr.draw(
+      $('tcdf'), 
+      [ p ],
+      {mouse:{
+      track: true,
+      lineColor: 'blue',
+      sensibility: 1, // => The smaller this value, the more precise you've to point
+      trackDecimals: 3,
+      trackFormatter: function(obj){ return 't = ' + roundNumber(obj.x,2) +', Pr = ' + obj.y; }
+      }}
+      );
 }
 
 function showR(R)
@@ -336,6 +352,5 @@ Exponentially Distributed CDFs</br>
 </table>
 </div>
 </center>
-
 
 </body>

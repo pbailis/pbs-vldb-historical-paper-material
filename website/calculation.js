@@ -58,7 +58,7 @@ function calculate_operation_latency(N, waitfor,  l1, l2)
 
 function calc_prob_stale(N,R,W,Wl, Al, Rl, Sl, t, k)
 {
-    var stales = 0;
+    var currents = 0;
 
     var i = 0;
     for(i = 0; i < CALC_ITERATIONS; i++)
@@ -98,9 +98,9 @@ function calc_prob_stale(N,R,W,Wl, Al, Rl, Sl, t, k)
 	    //find the ith fastest read
 	    var repNo = readlats.indexOf(sortedreads[rep]);
 
-	    if(w_t + Rs[repNo]+t < Ws[repNo])
+	    if(w_t + Rs[repNo]+t >= Ws[repNo])
 	    {
-		stales++;
+		currents++;
 		break;
 	    }
 
@@ -109,5 +109,5 @@ function calc_prob_stale(N,R,W,Wl, Al, Rl, Sl, t, k)
 	} 
     }
 
-    return 1-Math.pow(stales/CALC_ITERATIONS, k);
+    return Math.pow(currents/CALC_ITERATIONS, k);
 }
