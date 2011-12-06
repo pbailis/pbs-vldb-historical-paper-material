@@ -109,5 +109,5 @@ function calc_prob_stale(N,R,W,Wl, Al, Rl, Sl, t, k)
 	} 
     }
 
-    return Math.pow(currents/CALC_ITERATIONS, k);
+    return 1-Math.pow((CALC_ITERATIONS-currents)/CALC_ITERATIONS, k);
 }
