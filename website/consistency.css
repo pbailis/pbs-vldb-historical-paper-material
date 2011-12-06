@@ -42,22 +42,26 @@ color: #ffffff;
 
 #nrwpanel
 {
-	width:200px;
+	width:220px;
 	margin:20px auto;
 	text-align:center;
 	padding:15px;
 	border:1px solid #333;
 }
 
+h1 {
+margin-bottom:-.5em;
+}
 
 #latencypanel
 {
-        padding:15px;
-	width:700px;
+        padding:5px;
+	width:900px;
 	margin-top:1em;
-	margin:20px auto;
+	margin:5px auto;
 	text-align:center;
 	border:1px solid #333;
+	margin-bottom:1em;
 }
 
 h3 {
@@ -70,21 +74,55 @@ font-size:smaller;
 color:#545454;
 }
 
+span.big-axis-label{
+color:#545454;
+}
+
 span.graph-label{
 text-align: center;
 float:center;
 line-height:30px;
 }
 
-body {
-margin-left: auto;
-margin-right: auto;
-width: 60%;
-max-width: 1200px;
-}
 
 li { 
 margin-top: 1.5em; 
 font-size: 1em;
 }
 
+.jqslider{
+float:left;
+width: 160px;
+}
+
+.lmbda-jqslider{
+float:left;
+width: 140px;
+margin-bottom:.25em;
+}
+
+.slidewraplt{
+float:left;
+margin-right:.8em;
+width: 12px;
+}
+
+.lambdalabel{
+float:left;
+margin-left:1em;
+margin-right:.5em;
+}
+
+.slidewraprt{
+float:right;
+margin-left:.75em;
+}
+
+.filler{
+float:center;
+}
+
+span.filler{
+display: inline;
+width:10px;
+}

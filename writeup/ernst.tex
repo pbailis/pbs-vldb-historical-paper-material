@@ -5,6 +5,8 @@
 \title{Probabilistically Bounded Staleness and\\ Practical Partial Quorum Systems}
 
 \newdef{definition}{Definition}
+\newcommand{\wars}[0]{\textit{WARS} }
+
 
 \begin{document}
 
@@ -77,7 +79,7 @@ and wall clock time, or Probabilistically Bounded Staleness (PBS). PBS
 can be used to determine the probability of reading one of the last
 $k$ versions of a data item ($k$-staleness), of reading a data item
 $t$ seconds after it is written ($t$-visibility), and of experiencing
-a combination of the two ($k$-$t$-staleness).  We also use these
+a combination of the two ($\langle k, t \rangle$-staleness).  We also use these
 consistency measures to provide probabilistic guarantees on monotonic
 reads, a form of session guarantees where reads are guaranteed to
 return data items no older than what has been previously read.
@@ -322,8 +324,8 @@ unlikely in emerging ``cloud computing'' environments~\cite{needed}.
 
 In this section, we introduce the theory of Probabilistically Bounded
 Staleness to describe the consistency that existing eventually
-consistent data stores provide.  PBS is an extension of prior work on
-probabilistic quorums that accounts for staleness of both versions and
+consistent data stores provide.  PBS extens of prior work on
+probabilistic quorums by accounting for staleness of both versions and
 across time.  We introduce the notions of PBS $k$-quorums, which
 stochastically bounds the staleness of versions returned by read
 quorums, PBS $t$-visibility, which stochastically bounds the time
@@ -459,6 +461,8 @@ admission control, operators can control these rates to achieve
 monotonic reads guarantees.
 
 \subsection{PBS $t$-visibility}
+\label{sec:tvis}
+
 
 Until now, we have considered only static write quorums.  However, as
 we discussed in Section \ref{sec:practice}, modern quorum systems in
@@ -527,7 +531,7 @@ quorums.
 
 
 \subsection{PBS $\langle k, t
-  \rangle$-quorum Consistency}
+  \rangle$-staleness Consistency}
 
 We can combine the previous models to combine both versioned and
 real-time staleness metrics to answer questions of the following form:
@@ -536,7 +540,7 @@ $k$ versions old if the last write committed no sooner than $t$ seconds
 ago?
 \begin{definition}
 A quorum system obeys \textit{probabilistic $\langle k, t
-  \rangle$-quorum consistency} if, with probability $1-p_{staler}$, at
+  \rangle$-staleness consistency} if, with probability $1-p_{staler}$, at
 least one value in any read quorum will have been committed no later
 than $k$ versions after the latest committed version when the read
 begins, provided the read begins $t$ units of time after the previous
@@ -585,16 +589,17 @@ write message reordering.  Reads and writes are sent to all quorum
 members, so the staleness under normal operation results only when one
 of the first $R$ read responses beat the last committed write to its
 corresponding replica.  To demonstrate this phenomenon, we introduce a
-model of Dynamo operation which, for convenience, we will call $WARS$.
+model of Dynamo operation which, for convenience, we will call \wars .
 
-We illustrate $WARS$ in Figure~\ref{fig:dynamo-diagram}, a space-time
+We illustrate \wars  in Figure~\ref{fig:dynamo-diagram}, a space-time
 diagram for messages between a coordinator and a single replica for a
 write followed by a read $t$ seconds after the write commits.
+This $t$ corresponds to the $t$ in $t$-visibility.
 
 \begin{figure}
 \centering
 \includegraphics[width=.8\columnwidth]{figs/dynamostale.pdf}
-\caption{The $WARS$ model for message ordering in Dynamo describes the
+\caption{The \wars  model for message ordering in Dynamo describes the
   message flow between a coordinator and a single replica for a write
   followed by a read $t$ seconds after commit.  Note that, in an $N$
   replica system, this message flow is replicated $N$ times between
@@ -613,8 +618,8 @@ For a read, the coordinator sends $N$ messages, one to each replica.
 The message from coordinator to replica containing the read request is
 delayed by a value chosen from distribution \texttt{R}.  The
 coordinator waits for $R$ responses from the replicas before returning
-the most recent value it recieves.  Each read response is delayed by a value chosen
-from the distribution \texttt{S}.
+the most recent value it recieves.  Each read response is delayed by a
+value chosen from the distribution \texttt{S}.
 
 In the absence of additional anti-entropic processes, the coordinator
 will return stale data if all $R$ of the $N$ responses received before
@@ -630,22 +635,28 @@ delayed in transit (\texttt{S}) back to the read coordinator.
 Qualitatively, longer write tails and faster reads increase the chance
 of staleness due to the possibility of reordering.
 
+Depending on which coordinator a client contacts, some reads and
+writes may be served locally.  In this case, subject to local query
+processing delays, a read or write to $R$ or $W$ nodes is behaves like
+a read or write to $R-1$ or $W-1$ nodes, respectively.  Modeling
+non-local (e.g., proxied) coordinators is a conservative analysis.
+
 As we discussed in Section~\ref{sec:practice}, read repair and Merkle
 tree anti-entropic processes decrease the probability of staleness by
 further propagating versions between members.  However, both of these
 processes are rate dependent: read repair effects depend on the rate
 of reads, and Merkle tree exchange effects depend on the rate of
-exchange.  $WARS$ is read rate independent but is affected by the
+exchange.  \wars  is read rate independent but is affected by the
 write rate.  If multiple writes overlap, that is, have overlapping
 periods where they are in-flight but are not committed, the
 probability of inconsistency decreases.  Intuitively, this is because
 overlapping writes only leads to an increased chance that a client
 reads as-yet-uncommitted data.  Accordingly, because it does not
-capture read repair or Merkle tree exchange, $WARS$ represents a lower
+capture read repair or Merkle tree exchange, \wars  represents a lower
 bound for Dynamo-style operation for the sake of simplicity of
 analysis.
 
-$WARS$ considers the effect of message sending, delays, and reception,
+\wars  considers the effect of message sending, delays, and reception,
 but this represents a daunting analytical formulation.  The commit
 time represents an order statistic dependent on both \texttt{W} and
 \texttt{A}.  By itself, this is not problematic, but message
@@ -654,10 +665,10 @@ $i$th returned read message observes reordering is a both an order
 statistic dependent on $W$ and $A$, and, between $i$, the
 probabilities are dependent.  The expected read and write latencies can
 be computed using simple order statistics if one makes independence
-assumptions about the distributions in $WARS$.  However, a concise,
+assumptions about the distributions in \wars .  However, a concise,
 closed form for the probability of inconsistency eludes.  Dynamo is
 simple to reason about and program, but difficult to analyze in closed
-form.  As we discuss in Section~\ref{sec:sim}, we explore $WARS$ using
+form.  As we discuss in Section~\ref{sec:sim}, we explore \wars  using
 Monte Carlo analysis, which suffices for our purposes in practice and,
 from a practical perspective, is relatively easier to implement.
 
@@ -722,55 +733,63 @@ $\langle k, t \rangle$-staleness.
 \section{Evaluating Dynamo $t$-visibility}
 \label{sec:dynamoeval}
 
-We evaluated Dynamo-style partial quorums through the lens of PBS.  We
-first implemented PBS policies on top of an open source Dynamo clone,
-Cassandra, and compared our theory to observed results in a cloud
-computing environment.  We subsequently predicted and measured and
-predicted the PBS $k$-quorum and $t$-visibility consisistency across
-several environmental configurations.
+As discussed in Section~\ref{sec:tvis}, PBS $t$-visibility depends on
+the propagation of reads and writes throughout a system.  We
+introduced the \wars  model as a means of reasoning about
+inconsistency in Dynamo-style quorum systems, but quantitative metrics
+such as staleness observed in practice depend on each of \wars 's
+latency distributions.  In this section, we perform an analysis of
+Dynamo-style $t$-visibility under several different assumptions.  We
+use a mix of real-world experiments on EC2 and Monte Carlo analyses
+under internet-scale company production distributions to better
+understand how frequently ``eventually consistent'' means
+``consistent'' and, more importantly, why.
 
-\subsection{Implementation}
+Recall that PBS $k$-staleness is easily captured in closed form for
+static quorums.  In practice, with static quorums and no anti-entropy,
+we observe that their equations hold true.  However, in a system
+employing anti-entropy, we cannot disentangle time and versions.  In
+this section, we focus mainly on $t$-visibility but briefly describe
+some $\langle k, t \rangle$-staleness results.
 
-We implemented PBS policies on top of Cassandra, an open source data
-management system.  Cassandra provides Dynamo-style partial quorum
-semantics, offering per-request quorum sizes and a BigTable-like
-schemas~\cite{needed}.  Our changes to Cassandra were minimal: we
-added support for partial quorums of size greater than
-three---requiring changes to the wire protocol and request handling
-code---and instrumented parts of the database to provide timing
-information about reads and writes.  By analyzing Cassandra logs, we
-were able to reconstruct the latency distributions of write requests,
-write acknowledgements, read requests, and read responses.
+In this section, we focus on worst-case bounds for staleness.  While
+we could improve the staleness results by considering additional
+anti-entropic processes, we make the bare minimum of assumptions as
+dictated by the \wars  model.  Opting for conservative analyses
+decreases the number of varibles in our experiments (each of which is
+supported by empirical observations from practicioners) and increases
+the applicability of these results.
 
-READ REPAIR: DEPENDENT ON READ AND WRITE
+\subsection{Monte Carlo Simulator}
 
-We disabled read repair in Cassandra.  When a read quorum returns
-divergent versions, we return the highest-valued version and do not
-attempt read repair, essentially writing the new value back to the
-stale replicas.  For a read request, Cassandra sends out a read
-request to one node and ``digest'' requests for hashes of data items
-to $R-1$ replicas on a read request.  If there is a mismatch between
-any digest and the value read, Cassandra begins read repair, incurring
-another set of round trips between the read coordinator and the
-replicas.  We disable this feature and send out vanilla read requests
-to all replicas instead.  Accordingly, we overestimate the staleness
-of versions returned.
-
-We implemented a staleness predictor using Monte Carlo simulation.
-The closed-form solution is tractable, but there are several reasons
-why we preferred simulation.  Simulating the message delays is simple.
-One simply has to draw from each distribution and compare latencies to
-determine the degree of staleness.  The Dynamo model is easily
-implemented in an event-based simulation.  The analytical model is
-much more complicated.  We found that implementing the analytical
-model is rather onerous, requiring a large amount of numerical
-integration and difficult code.  This is potentially a barrier for
-adoption for practitioners.  Finally, when operating over discrete,
-experimentally-gathered distributions (without curve-fitting), Monte
-Carlo simulation was significantly faster.  Accordingly, our predicted
-results here are derived from repeated simulation trials.
+We implemented \wars  in a simple event-driven simulation environment.
+Calculating $t$-visibility for a given value of $t$ is rather
+straightforward: draw $N$ samples from \texttt{W}, \texttt{A},
+\texttt{R}, and \texttt{S} at time $t$ (denote index $i$ as $[i]$), compute $w_t = \texttt{W}[W]+\texttt{A}[W]$, and check whether the
+first $R$ samples of \texttt{R}, ordered by
+$\texttt{R}[i]+\texttt{S}[i]$ obey $w_t+\texttt{R}[i] \leq
+\texttt{W}[i]$.  This requires only a few lines of code.  Implementing
+$\langle k, t \rangle$-staleness requires remembering write ordering
+and history but is not difficult.
 
 \subsection{Model Validation}
+
+To validate \wars  (and our subsequent analyses), we instrumented a
+commercially available, open source Dynamo-style key-value store to
+measure the staleness observed under partial quorum operation.
+Unsurprisingly, our observations matched \wars .
+
+We modified Cassandra, originally designed at Facebook, provides
+Dynamo-style partial quorum semantics, offering per-request quorum
+sizes and a BigTable-like data model~\cite{needed}.  Our changes to
+Cassandra were minimal: we added support for partial quorums of size
+greater than three---requiring changes to the wire protocol and
+request handling code---and instrumented parts of the database to
+provide timing information about reads and writes.  By analyzing
+Cassandra logs, we were able to reconstruct the latency distributions
+of write requests, write acknowledgements, read requests, and read
+responses.  We disabled read repair because \wars  is read-rate
+independent.
 
 We deployed Cassandra on Amazon EC2 and compared the observed
 staleness to our predicted staleness for a number of configurations.
@@ -778,30 +797,30 @@ To provide a single point of order for the series of reads and writes
 in the system, we deployed $N+1$ Cassandra nodes for each experiment
 involving $N$ nodes.  After configuring the Cassandra schema, we
 determined the node that did not store the data and sent all requests
-through it, effectively creating a remote proxy.  Our model is more
+through it, effectively creating a remote proxy.  \wars  is more
 general than the specific proxy configuration, however using a
 centralized proxy allows us to avoid most issues with clock skew
 between replicas and rely less heavily on globally synchronized
 clocks.
 
 We used \texttt{m1.small} instances throughout our experiments within
-the \texttt{us-east-1} availability zone.  To model network and remote
-processing delays, we injected delays into both the request and
-response sending modules in Cassandra.  We discuss our choice of
-distributions and their effects in Subsection~\ref{subsec:delay}.  One
-major challenge in performing our experiments was the possibility of
-clock skew across replicas; we relied on both \texttt{ntp} and
-synchronization between the Xen hypervisors running our virtual
-machines, however this resulted in skew of several milliseconds at
-worst.  We ran a single reader and a single writer to a monotonically
-increasing key in Cassandra and compare the read and write timestamps
-to predict the staleness.  This provided a strong control group, but
-low load.  To simulate load and network delay, we injected additional
-delays into the distributions of $W$,$A$,$R$,$S$ (more in Subsection
-~\ref{sec:latencies}).
+the \texttt{us-east-1} availability zone.  We ran a single reader and
+a single writer to a monotonically increasing key in Cassandra and
+compare the read and write timestamps to predict the staleness.  This
+is not necessarily representative, so to model network and remote
+processing delays, we injected various delays into both the request
+and response sending modules in Cassandra (we discuss a range of
+distributions in Section~\ref{sec:latencies}).  One major challenge in
+performing our experiments was clock skew across replicas; we relied
+on both \texttt{ntp} and userland skew measurements to bound these
+drifts.  This is a recently studied problem, particularly under VM
+migration and in the Xen hypervisor~\cite{Broomhead}. In future
+experiments, simulation avoided these complexities.
 
 Across multiple latency profiles, we were able to predict staleness
-with extremely high accuracy.  Using the operation delays recorded in
+with extremely high accuracy. Under default settings, we did not
+observe any staleness due to the limited operation latency; message
+reordering was not a problem.  Using the operation delays recorded in
 Cassandra across 5000 writes, we reconstructed the latency
 distributions and repeated each experiment in simulation.  On average,
 our Monte Carlo simulations predicted $<k,t>$ staleness within XX\% of
@@ -809,21 +828,100 @@ the observed staleness.  As shown in Figure \ref{fig:fits}, our
 simulation has no greater than YY\% inaccuracy for any given $<k,t>$
 staleness prediction.  We attribute this inaccuracy to sample size.
 
-Intuitively, these figures make sense.  The time-sensitive components
-of PBS are dependent on $W$,$A$,$R$, and $S$ alone.  Provided we can
-model these distributions accurately, the underlying system is
-irrelevant.  Our simulator is general; it models Dynamo-style
-operation delay, not a particular data storage system's
-internals---these are irrelevant to PBS insofar as they are not
-related to write propagation.  Accordingly, and for greater control,
-we chose to evaluate the remainder of our experiments in simulation.
-As we have show in Appendix A, PBS consistency is a mathematical
-concept, and, by construction, is isolated from non-$WARS$ system
-implementation variations---provided the system obeys the fundamental
-partial quorum semantics being modeled.
 
 \subsection{Latency Models}
 \label{sec:latencies}
+
+\wars depends only on latency distributions, and, rather than
+conjecture as to what represents ``reasonable'' scenarios, we analyzed
+distributions taken from two internet-scale companies, LinkedIn and Yammer.
+
+LinkedIn is an online professional social network claiming over 135
+million members as of November 2011~\cite{needed}. To handle highly
+available, low latency data storage, engineers at LinkedIn built
+Voldemort, a Dynamo-style quorum replicated key value store.  Alex
+Feinberg, a lead engineer on Voldemort, graciously provided us with
+latency distributions for a single node replaying peak load traffic
+for the ``Who Viewed My Profile?'' data set on LinkedIn, representing
+60\% read and 40\% read-modify-write traffic
+(Table~\ref{table:linkedin}).  Feinberg reports that ``with spinning
+disks, we're largely IO bound and latency is largely determined by the
+kind of disks we're using, data to memory ratio and request
+distribution.  With SSDs, we're CPU and/or network bound (depending on
+value size).''  As an interesting aside, Feinberg also notes that
+``maximum latency is generally determined by GC activity (rare, but
+happens occasionally) and is within hundreds of milliseconds.''
+
+\begin{table}[h!]
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+\%ile & Latency (ms) \\
+\hline
+\multicolumn{2}{|c|}{ 15,000 RPM SAS Disk}\\
+\hline
+Average & 4.85\\
+95 & 15\\
+99 & 25\\
+\hline
+\multicolumn{2}{|c|}{ Commodity SSD }\\
+\hline
+Average & 0.58 \\
+95 & 1\\
+99 & 2\\
+\hline
+\end{tabular}
+\caption{LinkedIn Voldemort single-node production latencies.}
+\label{table:linkedin}
+\end{center}
+\end{table}
+
+Yammer is an online social network designed to provide enterprises
+with private social networking capabilities.  As of December 2011,
+Yammer claimed over 100,000 companies as customers.  Yammer uses
+Basho's Riak, another open source Dynamo-style quorum replicated
+database for client data.  Coda Hale, infrastructure architect, and
+Ryan Kennedy, also of Yammer, presented on their use of Riak including
+surprisingly in-depth performance numbers in March 2011~\cite{needed}.
+Coda provided us with more detailed performance numbers for their
+application (Table~\ref{table:yammer}).  Coda notes that ``reads and
+writes have radically different expected latencies, especially for
+Riak. Writes don't return until the fsync returns, so while reads are
+often $<$ 1ms, writes rarely are.''  As we will see, this has important
+consequences for \wars.  Although we do not model this explicitly,
+Coda also notes that ``value size is also interesting. We saw a big
+performance improvement by adding LZF compression to values.''
+
+\begin{table}[h!]
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+\%ile & Read Latency (ms) & Write Latency (ms)\\
+\hline
+Min & 1.55 & 1.68\\
+50 & 3.75 & 5.73 \\
+75 & 4.17 & 6.50\\
+95 & 5.2 & 8.48\\
+98 & 6.045 & 10.36 \\
+99 & 6.59 & 131.73\\
+99.9 & 32.89 & 435.83\\
+Max & 2979.85 &  4465.28 \\
+\hline
+Mean & 9.23 & 8.62 \\
+Std. Dev. & 83.93 & 26.10\\
+\hline
+Mean Rate & 718.18 gets/s & 45.65 puts/s\\
+\hline
+\end{tabular}
+\caption{Yammer Riak $N$$=$$3$, $R$$=$$2$, $W$$=$$2$ production latencies.}
+\label{table:yammer}
+\end{center}
+\end{table}
+
+
+
+These production data are invaluable, yet they are underspecified for \wars.  The operation latencies represent round-trip times, while \wars requires one-way latencies.  These
+
 
 
 
@@ -963,6 +1061,9 @@ use of per-operation consistency\footnote{Voldemort specifies
   modifications to the wire protocol.}
 
 \textbf{99th Percentile Latency.}
+
+
+STRONGER THAN STALENESS?
 
 
 \section{Related Work}
