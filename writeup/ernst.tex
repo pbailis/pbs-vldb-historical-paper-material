@@ -5,8 +5,6 @@
 \title{Probabilistically Bounded Staleness and\\ Practical Partial Quorum Systems}
 
 \newdef{definition}{Definition}
-\newcommand{\wars}[0]{\textit{WARS} }
-
 
 \begin{document}
 
@@ -589,9 +587,9 @@ write message reordering.  Reads and writes are sent to all quorum
 members, so the staleness under normal operation results only when one
 of the first $R$ read responses beat the last committed write to its
 corresponding replica.  To demonstrate this phenomenon, we introduce a
-model of Dynamo operation which, for convenience, we will call \wars .
+model of Dynamo operation which, for convenience, we will call \textit{WARS} .
 
-We illustrate \wars  in Figure~\ref{fig:dynamo-diagram}, a space-time
+We illustrate \textit{WARS}  in Figure~\ref{fig:dynamo-diagram}, a space-time
 diagram for messages between a coordinator and a single replica for a
 write followed by a read $t$ seconds after the write commits.
 This $t$ corresponds to the $t$ in $t$-visibility.
@@ -599,7 +597,7 @@ This $t$ corresponds to the $t$ in $t$-visibility.
 \begin{figure}
 \centering
 \includegraphics[width=.8\columnwidth]{figs/dynamostale.pdf}
-\caption{The \wars  model for message ordering in Dynamo describes the
+\caption{The \textit{WARS}  model for message ordering in Dynamo describes the
   message flow between a coordinator and a single replica for a write
   followed by a read $t$ seconds after commit.  Note that, in an $N$
   replica system, this message flow is replicated $N$ times between
@@ -646,17 +644,19 @@ tree anti-entropic processes decrease the probability of staleness by
 further propagating versions between members.  However, both of these
 processes are rate dependent: read repair effects depend on the rate
 of reads, and Merkle tree exchange effects depend on the rate of
-exchange.  \wars  is read rate independent but is affected by the
+exchange.  \textit{WARS}  is read rate independent but is affected by the
 write rate.  If multiple writes overlap, that is, have overlapping
 periods where they are in-flight but are not committed, the
 probability of inconsistency decreases.  Intuitively, this is because
 overlapping writes only leads to an increased chance that a client
 reads as-yet-uncommitted data.  Accordingly, because it does not
-capture read repair or Merkle tree exchange, \wars  represents a lower
+capture read repair or Merkle tree exchange, \textit{WARS}  represents a lower
 bound for Dynamo-style operation for the sake of simplicity of
 analysis.
 
-\wars  considers the effect of message sending, delays, and reception,
+K-STALENESS AND WRITE INDEPENDENCE
+
+\textit{WARS}  considers the effect of message sending, delays, and reception,
 but this represents a daunting analytical formulation.  The commit
 time represents an order statistic dependent on both \texttt{W} and
 \texttt{A}.  By itself, this is not problematic, but message
@@ -665,10 +665,10 @@ $i$th returned read message observes reordering is a both an order
 statistic dependent on $W$ and $A$, and, between $i$, the
 probabilities are dependent.  The expected read and write latencies can
 be computed using simple order statistics if one makes independence
-assumptions about the distributions in \wars .  However, a concise,
+assumptions about the distributions in \textit{WARS} .  However, a concise,
 closed form for the probability of inconsistency eludes.  Dynamo is
 simple to reason about and program, but difficult to analyze in closed
-form.  As we discuss in Section~\ref{sec:sim}, we explore \wars  using
+form.  As we discuss in Section~\ref{sec:sim}, we explore \textit{WARS}  using
 Monte Carlo analysis, which suffices for our purposes in practice and,
 from a practical perspective, is relatively easier to implement.
 
@@ -735,9 +735,9 @@ $\langle k, t \rangle$-staleness.
 
 As discussed in Section~\ref{sec:tvis}, PBS $t$-visibility depends on
 the propagation of reads and writes throughout a system.  We
-introduced the \wars  model as a means of reasoning about
+introduced the \textit{WARS}  model as a means of reasoning about
 inconsistency in Dynamo-style quorum systems, but quantitative metrics
-such as staleness observed in practice depend on each of \wars 's
+such as staleness observed in practice depend on each of \textit{WARS} 's
 latency distributions.  In this section, we perform an analysis of
 Dynamo-style $t$-visibility under several different assumptions.  We
 use a mix of real-world experiments on EC2 and Monte Carlo analyses
@@ -755,14 +755,14 @@ some $\langle k, t \rangle$-staleness results.
 In this section, we focus on worst-case bounds for staleness.  While
 we could improve the staleness results by considering additional
 anti-entropic processes, we make the bare minimum of assumptions as
-dictated by the \wars  model.  Opting for conservative analyses
+dictated by the \textit{WARS}  model.  Opting for conservative analyses
 decreases the number of varibles in our experiments (each of which is
 supported by empirical observations from practicioners) and increases
 the applicability of these results.
 
 \subsection{Monte Carlo Simulator}
 
-We implemented \wars  in a simple event-driven simulation environment.
+We implemented \textit{WARS}  in a simple event-driven simulation environment.
 Calculating $t$-visibility for a given value of $t$ is rather
 straightforward: draw $N$ samples from \texttt{W}, \texttt{A},
 \texttt{R}, and \texttt{S} at time $t$ (denote index $i$ as $[i]$), compute $w_t = \texttt{W}[W]+\texttt{A}[W]$, and check whether the
@@ -774,22 +774,22 @@ and history but is not difficult.
 
 \subsection{Model Validation}
 
-To validate \wars  (and our subsequent analyses), we instrumented a
+To validate \textit{WARS}  (and our subsequent analyses), we instrumented a
 commercially available, open source Dynamo-style key-value store to
 measure the staleness observed under partial quorum operation.
-Unsurprisingly, our observations matched \wars .
+Unsurprisingly, our observations matched \textit{WARS}.
 
-We modified Cassandra, originally designed at Facebook, provides
-Dynamo-style partial quorum semantics, offering per-request quorum
-sizes and a BigTable-like data model~\cite{needed}.  Our changes to
-Cassandra were minimal: we added support for partial quorums of size
-greater than three---requiring changes to the wire protocol and
-request handling code---and instrumented parts of the database to
-provide timing information about reads and writes.  By analyzing
-Cassandra logs, we were able to reconstruct the latency distributions
-of write requests, write acknowledgements, read requests, and read
-responses.  We disabled read repair because \wars  is read-rate
-independent.
+We modified Cassandra, a data store originally designed at Facebook,
+which provides Dynamo-style partial quorum semantics, offering
+per-request quorum sizes and a BigTable-like data
+model~\cite{cassandra, cassandra-sigmod}.  Our changes to Cassandra were minimal:
+we added support for partial quorums of size greater than
+three---requiring changes to the wire protocol and request handling
+code---and instrumented parts of the database to provide timing
+information about reads and writes.  By analyzing Cassandra logs, we
+were able to reconstruct the latency distributions of write requests,
+write acknowledgements, read requests, and read responses.  We
+disabled read repair because \textit{WARS} is read-rate independent.
 
 We deployed Cassandra on Amazon EC2 and compared the observed
 staleness to our predicted staleness for a number of configurations.
@@ -797,7 +797,7 @@ To provide a single point of order for the series of reads and writes
 in the system, we deployed $N+1$ Cassandra nodes for each experiment
 involving $N$ nodes.  After configuring the Cassandra schema, we
 determined the node that did not store the data and sent all requests
-through it, effectively creating a remote proxy.  \wars  is more
+through it, effectively creating a remote proxy.  \textit{WARS}  is more
 general than the specific proxy configuration, however using a
 centralized proxy allows us to avoid most issues with clock skew
 between replicas and rely less heavily on globally synchronized
@@ -814,7 +814,7 @@ distributions in Section~\ref{sec:latencies}).  One major challenge in
 performing our experiments was clock skew across replicas; we relied
 on both \texttt{ntp} and userland skew measurements to bound these
 drifts.  This is a recently studied problem, particularly under VM
-migration and in the Xen hypervisor~\cite{Broomhead}. In future
+migration and in the Xen hypervisor~\cite{time-virt}. In future
 experiments, simulation avoided these complexities.
 
 Across multiple latency profiles, we were able to predict staleness
@@ -832,25 +832,27 @@ staleness prediction.  We attribute this inaccuracy to sample size.
 \subsection{Latency Models}
 \label{sec:latencies}
 
-\wars depends only on latency distributions, and, rather than
+\textit{WARS} depends only on latency distributions, and, rather than
 conjecture as to what represents ``reasonable'' scenarios, we analyzed
-distributions taken from two internet-scale companies, LinkedIn and Yammer.
+production distributions from two internet-scale companies, LinkedIn
+and Yammer.
 
-LinkedIn is an online professional social network claiming over 135
-million members as of November 2011~\cite{needed}. To handle highly
+LinkedIn~\cite{linkedin} is an online professional social network claiming over 135
+million members as of November 2011~\cite{linkedinmembers}. To handle highly
 available, low latency data storage, engineers at LinkedIn built
 Voldemort, a Dynamo-style quorum replicated key value store.  Alex
 Feinberg, a lead engineer on Voldemort, graciously provided us with
 latency distributions for a single node replaying peak load traffic
 for the ``Who Viewed My Profile?'' data set on LinkedIn, representing
 60\% read and 40\% read-modify-write traffic
-(Table~\ref{table:linkedin}).  Feinberg reports that ``with spinning
+(Table~\ref{table:linkedin})~\cite{feinbergpc}.  Feinberg reports that ``with spinning
 disks, we're largely IO bound and latency is largely determined by the
 kind of disks we're using, data to memory ratio and request
-distribution.  With SSDs, we're CPU and/or network bound (depending on
-value size).''  As an interesting aside, Feinberg also notes that
-``maximum latency is generally determined by GC activity (rare, but
-happens occasionally) and is within hundreds of milliseconds.''
+distribution.  With [solid state drives (SSDs)], we're CPU and/or network
+bound (depending on value size).''  As an interesting aside, Feinberg
+also notes that ``maximum latency is generally determined by GC
+activity (rare, but happens occasionally) and is within hundreds of
+milliseconds.''
 
 \begin{table}[h!]
 \begin{center}
@@ -878,19 +880,20 @@ Average & 0.58 \\
 
 Yammer is an online social network designed to provide enterprises
 with private social networking capabilities.  As of December 2011,
-Yammer claimed over 100,000 companies as customers.  Yammer uses
-Basho's Riak, another open source Dynamo-style quorum replicated
-database for client data.  Coda Hale, infrastructure architect, and
-Ryan Kennedy, also of Yammer, presented on their use of Riak including
-surprisingly in-depth performance numbers in March 2011~\cite{needed}.
-Coda provided us with more detailed performance numbers for their
-application (Table~\ref{table:yammer}).  Coda notes that ``reads and
-writes have radically different expected latencies, especially for
-Riak. Writes don't return until the fsync returns, so while reads are
-often $<$ 1ms, writes rarely are.''  As we will see, this has important
-consequences for \wars.  Although we do not model this explicitly,
-Coda also notes that ``value size is also interesting. We saw a big
-performance improvement by adding LZF compression to values.''
+Yammer claimed over 100,000 companies as customers~\cite{yammer}.
+Yammer uses Basho's Riak, another open source Dynamo-style quorum
+replicated database for client data.  Coda Hale, infrastructure
+architect, and Ryan Kennedy, also of Yammer, presented on their use of
+Riak including surprisingly in-depth performance numbers in March
+2011~\cite{riakyammer}.  Yammer provided us with more detailed
+performance numbers for their application (Table~\ref{table:yammer})~\cite{codapc}.
+Coda noted that ``reads and writes have radically different expected
+latencies, especially for Riak. Writes don't return until the fsync
+returns, so while reads are often $<$ 1ms, writes rarely are.''  As we
+will see, this has important consequences for \textit{WARS}.  Although
+we do not model this explicitly, Coda also notes that ``value size is
+also interesting. We saw a big performance improvement by adding LZF
+compression to values.''
 
 \begin{table}[h!]
 \begin{center}
@@ -918,12 +921,66 @@ Mean Rate & 718.18 gets/s & 45.65 puts/s\\
 \end{center}
 \end{table}
 
+These production data are invaluable, yet they are underspecified for
+\textit{WARS}.  First, they are summary statistics, so we need to
+calculate the underlying distribution.  More importantly, the
+operation latencies represent round-trip times, while \textit{WARS}
+requires the constituent one-way latencies for reads and writes.
+Accordingly, to derive \texttt{W},\texttt{A},\texttt{R},\texttt{S} for
+each configuration, we made a series of assumptions.  These
+assumptions are imperfect, and do not perfectly mirror the real world.
+As we demonstrated in our Cassandra experiments, these latency
+distributions are easily collected.  However, because they are not
+currently collected in practice, we must do our best to fill in the
+gaps.  When possible, we are conservative in our fits by understating
+write latencies and overstating other latencies.  We believe that
+these assumptions are justified given the advantage of production data
+over synthetic distributions and, when relevant, we supplement our
+experimental setup with synthetic distributions.  Without additional
+data on the latency required to read multiple replicas, we assume that
+each latency distribution is independently, identically distributed.
 
+LinkedIn provided two latency distributions, which we denote
+\texttt{LNKD-SSD} and \texttt{LNKD-DISK} for the SSD and spinning
+disks, respectively.  As previously discussed, when running on SSDs,
+Voldemort is largely network and CPU bound.  Accordingly, we assumed
+that read and write operations took equivalent amounts of time and, to
+split the remaining time, we focused on the network-bound case and
+assumed that one-way trips were symmetric
+(\texttt{W}=\texttt{A}=\texttt{R}=\texttt{S}).  This allowed us to
+derive \texttt{LNKD-SSD}.  For \texttt{LNKD-DISK}, Feinberg mentioned
+that Voldemort performs at least one read before every write (average
+of 1 seek, between 1-3 seeks), and writes to the BerkeleyDB Java
+Edition backend are flushed every 30 seconds or 20
+megabytes---whichever comes first.  Accordingly, we kept the same
+\texttt{A}=\texttt{R}=\texttt{S} as in \texttt{LNKD-SSD} but
+calculated \texttt{W} separately.  We discussed our methodology with
+Feinberg, who approved of these assumptions.  Both of the
+distributions were exponentially distributed:\vspace{-2mm}
 
-These production data are invaluable, yet they are underspecified for \wars.  The operation latencies represent round-trip times, while \wars requires one-way latencies.  These
+\begin{equation*}
+ \begin{array}{rll}
+\texttt{LNKD-SSD} \rightarrow & \texttt{W} = \texttt{A}= \texttt{R} = \texttt{S}: & \lambda = 3.28\\
+\texttt{LNKD-DISK} \rightarrow & \texttt{W}: & \lambda = .1861\\
+&  \texttt{A} = \texttt{R} = \texttt{S}: & \lambda = 3.28$$\\
+\end{array}
+\end{equation*}
 
+Yammer provided distributions for a single configuration but separated
+read from write latencies, which we denote \texttt{YMMR}.  Using our
+IID assumptions, we fit single-node latency distributions to the
+provided distributions, again assuming symmetric \texttt{A},
+\texttt{R}, and \texttt{S}.  The data fit a Pareto distribution,
+although we opted to fit the body latencies ($p<.99)$ over the tail
+latencies.  A mixed Gaussian distribution would help solve this
+problem.\vspace{-2mm}
 
-
+\begin{equation*}
+ \begin{array}{rll}
+   \texttt{YMMR} \rightarrow  & \texttt{W}: & x_m = 2.7, \alpha=2.34\\
+     & \texttt{A}= \texttt{R} = \texttt{S}: & x_m=1.385, \alpha=2.866\\
+    \end{array}
+\end{equation*}
 
 
 \begin{figure*}
@@ -935,9 +992,50 @@ These production data are invaluable, yet they are underspecified for \wars.  Th
 \subfigure{\includegraphics[width=.6\columnwidth]{figs/writelats-1.pdf}}
 \subfigure{\includegraphics[width=.6\columnwidth]{figs/writelats-2.pdf}}
 \subfigure{\includegraphics[width=.6\columnwidth]{figs/writelats-3.pdf}}
-\caption{FOOBAR}
-\label{fig:FOO}
+\caption{Read and write operation latency for \textit{WARS} latencies fitted
+  to production datasets for $N$$=$$3$.}
+\label{fig:latencies}
 \end{figure*}
+
+Finally, we simulated a normal-case WAN replication scenario,
+\texttt{WAN}.  Reads and writes are routed to random data centers,
+and, accordingly, one replica operation commits quickly while the
+others are routed remotely.  We delay remote operations by 75ms and
+apply \texttt{YMMR} delays once the operation reaches its target data center.
+
+We plot each fitted distribution in Figure~\ref{fig:latencies}.  Note
+that for $R$, $W$ of one, \texttt{YMMR} is not equivalent to
+\texttt{WAN}.  This is because, in \texttt{YMMR}, we only have to wait
+for the first of $N$ local reads (writes) to return, whereas there is
+only one local read (write) in \texttt{WAN}, and all other read
+(write) requests will be delayed at least 150ms.
+
+\subsection{Observed $t$-visibility}
+
+We measured the $t$-visibility for each distribution
+(Figure~\ref{fig:tvis}).  By issuing simulating a series of reads
+after each of 1000 non-overlapping writes staggered by time (as
+plotted 10 reads each), we calculated the probability of consistency,
+or $t$-visibility across time.
+
+The high probability of consistency was largely dependent on the write
+tail size.  Immediately after writing, \texttt{YMMR} had a $88\%$
+chance of consistency, \texttt{LNKD-SSD} had a $75\%$ chance, and
+\texttt{LNKD-DISK} had a $39\%$ chance.  However, one millisecond
+after writing, \texttt{YMMR} had a $91.5\%$ chance of consistency,
+\texttt{LNKD-SSD} had a $99\%$ chance, and \texttt{LNKD-DISK} had a
+$48\%$ chance.  \texttt{YMMR}'s tall body but long tail limited its
+probability increase, and only reached $99.9\%$ consistency 44ms after
+writing.  \texttt{LNKD-SSD}'s reads raced its writes immediately after
+commit, but, one millisecond after the write, the chance of a read
+round-trip time plus one millisecond beating its write was almost
+eliminated.  \texttt{LNKD-DISK} had the longest body of these three
+distributions and only reached $99.9\%$ confidence after 39ms (having
+a shorter tail than \texttt{YMMR}).  As expected, \texttt{WAN}
+observed poor chances of consistency until after the 75 milliseconds
+passed; unless a reader read from the same datacenter in which the
+last write committed, it had to wait for the long propagation to
+observe the most recent value.
 
 \begin{figure*}
 \centering
@@ -945,46 +1043,72 @@ These production data are invaluable, yet they are underspecified for \wars.  Th
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/tstales-3N1R1W.pdf}}
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/tstales-3N2R1W.pdf}}
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/tstales-3N1R2W.pdf}}
-\caption{FOOBAR}
-\label{fig:FOO}
+\caption{$t$-visibility for production operation latencies.}
+\label{fig:tvis}
 \end{figure*}
+
+As \textit{WARS} predicted, the ratio of \texttt{W} to
+\texttt{A}=\texttt{R}=\texttt{S} largely influenced the probability of
+consistency.  As shown in Figure~\ref{fig:varydelay}, we swept a range
+of exponential distributions, fixing \texttt{A}=\texttt{R}=\texttt{S}
+and varying \texttt{W}.  When the mean of \texttt{W} ($.25$ms) is
+one-fourth the mean of \texttt{A}=\textit{R}\textit{S}, we observe a
+$94\%$ chance of consistency immediately after the write and $99.9\%$
+chance after 1ms.  However, when the mean of \texttt{W} ($10$ms) is
+ten times the mean of \texttt{A}=\texttt{R}=\texttt{S}, we observe a
+$41\%$ chance of consistency immediately after write and a $99.9\%$
+chance of consistency after $65$ms.
+
+\begin{figure}
+\centering
+\includegraphics[width=.85\columnwidth]{figs/rwratio.pdf}
+\caption{$t$-staleness for $N$$=$$3$, $R$$=$$W$$=$$1$ varying \texttt{W} and \texttt{A}=\texttt{R}=\texttt{S} exponentially distributed delays.  Mean latency is $1/\lambda$.}
+\label{fig:varydelay}
+\end{figure}
+
+These data strongly suggest that operators should strive to lower
+(relative) \texttt{W} latencies.  While databases could artificially
+delay read latencies, this is problematic for read-heavy workloads and
+potentially introduces queuing effects for reads and writes.
+
+For $N$ greater than three, $R$$=$$W$$=$$1$ leads to increased
+staleness (Figure~\ref{fig:varyn}).  
+
+
 
 \begin{figure*}
 \centering
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-LNKD-DISK.pdf}}
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-LNKD-SSD.pdf}}
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-YMMR.pdf}}
-\caption{FOOBAR}
-\label{fig:FOO}
+\caption{$t$-visibility for production operating latencies for variable $N$ and $R$$=$$W$$=$$1$.}
+\label{fig:varyn}
 \end{figure*}
 
-\begin{figure}
-\centering
-\includegraphics[width=\columnwidth]{figs/rwratio.pdf}
-\caption{FOOBAR}
-\label{fig:FOO}
-\end{figure}
 
-\subsection{Microbenchmarks}
+Table~\ref{table:lat-stale} shows latencies and $t$-visibility for a $99.9\%$ probability of strong consistency.
 
-We issued reads and writes to a single key distributed across a
-Cassandra cluster and measured the observed staleness.  While we ran
-multiple configurations, to begin, we will discuss the configuration
-where $N=3$, $R=1$, and $W=1$, Cassandra's default settings.
+\begin{table*}
+\begin{center}
+\begin{tabular}{c|c|c|c|c|c|c|c|c|c|c|c|c|}
+\cline{2-13}
+& \multicolumn{2}{|c|}{$R$$=$$1$, $W$$=$$1$} & \multicolumn{2}{|c|}{$R$$=$$1$, $W$$=$$2$} & \multicolumn{2}{|c|}{$R$$=$$1$, $W$$=$$3$} & \multicolumn{2}{|c|}{$R$$=$$2$, $W$$=$$1$} & \multicolumn{2}{|c|}{$R$$=$$2$, $W$$=$$2$} & \multicolumn{2}{|c|}{$R$$=$$3$, $W$$=$$1$}  \\
+&\multicolumn{1}{|c}{latency} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{latency} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{latency} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{latency} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{latency} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{latency} & \multicolumn{1}{c|}{$t$}   \\ \hline
+\multicolumn{1}{|c|}{\texttt{YMMR}} & 
+16.19 & 44.0 & 23.43 & 33.0 & 83.41 & 0 & 17.57 & 3.0 & 39.39 & 0 & 55.56 & 0  \\
+\multicolumn{1}{|c|}{\texttt{WAN}} & 
+120.04 & 103.0 & 183.61 & 0 & 288.49 & 0 & 202.75 & 23.0 & 326.0 & 0 & 217.57 & 0 \\
+\multicolumn{1}{|c|}{\texttt{LNKD-SSD}} & 
+2.42 & 2.0 & 2.79 & 2.0 & 5.01 & 0 & 2.67 & 1.0 & 4.02 & 0 & 3.97 & 0  \\
+\multicolumn{1}{|c|}{\texttt{LNKD-DISK}} & 
+17.75 & 35.0 & 23.4 & 30.0 & 43.11 & 0 & 11.6 & 14.0 & 22.61 & 0 & 17.79 & 0  \\
+\hline
+\end{tabular}
+\caption{$t$-visibility for $p_{staler} = .001$ ($99.9\%$ probability of consistency) and $99.9\%$ read plus write latency (equal weighting) across $R$ and $W$, $N$$=$$3$.}
+\label{table:lat-stale}
+\end{center}
+\end{table*}
 
-With a single reader and a single writer, under normal operation, we
-observed little to no staleness.  Reads completed in 2.59 ms (99th
-percentile: 30.61 ms) and writes completed in 2.34 ms (99th
-percentile: 22.36 ms).  This was too narrow a window to observe the
-message reordering required for any staleness.  However, our experiment is somewhat synthetic
-
-
-
-\subsection{Worst-case Analysis}
-
-\subsection{Latency and Staleness}
-
-\subsection{Configuration Optimization}
 
 \section{Discussion}
 \label{sec:discussion}
@@ -1063,7 +1187,7 @@ use of per-operation consistency\footnote{Voldemort specifies
 \textbf{99th Percentile Latency.}
 
 
-STRONGER THAN STALENESS?
+STRONGER THAN STALENESS?  Cite Ayer as pathological case ``this is reflected in xx work on k-staleness because of etc. etc. etc.''
 
 
 \section{Related Work}
