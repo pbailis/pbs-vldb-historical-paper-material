@@ -10,13 +10,44 @@ pages = {184-206}}
 @inproceedings{chain-replication,
  author = {van Renesse, Robbert and Schneider, Fred B.},
  title = {Chain replication for supporting high throughput and availability},
- booktitle = {Proceedings of the 6th conference on Symposium on Opearting Systems Design \& Implementation (OSDI 2004)},
+ booktitle = {OSDI 2004}
 } 
-@inproceedings{vahdat-bounded,
+@article{vahdat-bounded,
  author = {Yu, Haifeng and Vahdat, Amin},
- title = {Design and evaluation of a continuous consistency model for replicated services},
- booktitle = {Proceedings of the 4th conference on Symposium on Operating System Design \& Implementation (OSDI 2000)},
+ title = {The Costs and Limits of Availability for
+Replicated Services},
+journal = {ACM Transactions on Computer Systems},
+volume = {24(1)},
+month = {February},
+year = {2006},
+pages = {70–-113}}
 } 
+
+@article{consistency-partitioned,
+author = {Susan B. Davidson},
+title = {Optimism  and Consistency  In Partitioned 
+Distributed  Database Systems},
+journal = {ACM  Transactions  on Database Systems},
+volume = {9(3)},
+month = {September},
+year = {1984},
+pages={456--481}}
+
+@article{vahdat-article,
+ author = {Yu, Haifeng and Vahdat, Amin},
+title = {Design and Evaluation of a Conit-Based Continuous Consistency Model for Replicated Services},
+journal = {ACM Transactions on Computer Systems},
+volume = {20(3)},
+month = {August},
+year = {2002},
+pages = {239-–282}}
+
+@inproceedings{fluidreplication,
+title = {A Case for Fluid Replication},
+author = {Brian Noble and Ben Fleis and Minkyong Kim},
+booktitle = {Proceedings of the 1999 Network
+Storage Symposium (Netstore)}}
+
 
 @inproceedings{non-strict,
 title = {On the Availability of Non-strict Quorum Systems},
@@ -37,30 +68,72 @@ booktitle = {DISC 2006}}
     pages = {214--225}
 }
 
-@INPROCEEDINGS{bayou-session,
-    author = {Douglas B. Terry and Alan J. Demers and Karin Petersen and Mike J. Spreitzer and Marvin M. Theimer and Brent B. Welch},
-    title = {Session Guarantees for Weakly Consistent Replicated Data},
-    booktitle = {PDIS '94},
-    year = {1994},
-    pages = {140--149}
-}
+@article{birman-byzantine,
+ author = {Birman, Ken and Chockler, Gregory and van Renesse, Robbert},
+ title = {Toward a cloud computing research agenda},
+ journal = {SIGACT News},
+ volume = {40(2)},
+ month = {June},
+ year = {2009},
+ pages = {68--80},
+} 
+
+@article{berkeleyview,
+ author = {Armbrust, Michael and Fox, Armando and Griffith, Rean and Joseph, Anthony D. and Katz, Randy and Konwinski, Andy and Lee, Gunho and Patterson, David and Rabkin, Ariel and Stoica, Ion and Zaharia, Matei},
+ title = {A view of cloud computing},
+ journal = {Commun. ACM},
+ issue_date = {April 2010},
+ volume = {53},
+ issue = {4},
+ year = {2010},
+ pages = {50--58}
+} 
+
+@online{amazon-latency,
+author = {Greg Linden},
+title = {Make Data Useful},
+note = {29 November 2006},
+howpublished="\url{https://sites.google.com/site/glinden/Home/StanfordDataMining.2006-11-29.ppt}"}
+
+@online{google-talk,
+author = {Greg Linden},
+title = {{Marissa Mayer at Web 2.0}},
+note = {9 November 2006},
+howpublished = "\url{http://glinden.blogspot.com/2006/11/marissa-mayer-at-web-20.html}"}
 
 @inproceedings{dynamo,
  author = {DeCandia, Giuseppe and Hastorun, Deniz and Jampani, Madan and Kakulapati, Gunavardhan and Lakshman, Avinash and Pilchin, Alex and Sivasubramanian, Swaminathan and Vosshall, Peter and Vogels, Werner},
  title = {Dynamo: {Amazon's} highly available key-value store},
- booktitle = {Proceedings of 21st ACM SIGOPS symposium on Operating systems principles},
- series = {SOSP '07},
- year = {2007},
- isbn = {978-1-59593-591-5},
- location = {Stevenson, Washington, USA},
- pages = {205--220},
- numpages = {16},
-
- acmid = {1294281},
- publisher = {ACM},
- address = {New York, NY, USA},
- keywords = {performance, reliability, scalability},
+ booktitle = {SOSP 2007},
 } 
+
+@inproceedings{trapp,
+title = {Offering a Precision-Performance Tradeoff for Aggregation Queries over Replicated Data},
+author = {Chris Olston and Jennifer Widom},
+booktitle = {VLDB 2000}}
+
+@misc{dean-keynote,
+author = {Jeff Dean},
+title={Designs, Lessons, and Advice from Building Large Distributed Systems},
+note={{Keynote from LADIS 2009}}}
+
+@article{aqua,
+author = {S. Krishnamurthy and W. H. Sanders and M.  Cukier},
+title = {An Adaptive Quality of Service Aware Middleware for Replicated Services},
+journal = {IEEE Transactions on Parallel and Distributed Systems},
+volume = {14(11)},
+month = {November},
+year={2003}}
+
+@inproceedings{nsdispeculation,
+author = {B. Wester and J. Cowling and E. B. Nightingale and P. M. Chen and J. Flinn and B. Liskov},
+title = {Tolerating latency in replicated state machines through client speculation},
+booktitle = {NSDI 2009}}
+
+@inproceedings{frac,
+author = {Chi Zhang and Zheng Zhang},
+title = {Trading Replication Consistency for Performance and Availability: an Adaptive Approach},
+booktitle = {ICDCS 2003}}
 
 @article{cap-proof,
  author = {Gilbert, Seth and Lynch, Nancy},
@@ -138,6 +211,37 @@ howpublished="\url{http://hbase.apache.org}"}
 title = {{Apache Cassandra}},
 howpublished="\url{http://cassandra.apache.org/}"}
 
+@online{linkedinmembers,
+title = {{LinkedIn} annnounces third quarter 2011 financial results},
+howpublished="\url{http://press.linkedin.com/node/989}",
+note={3 November 2011}}
+
+@misc{riakyammer,
+title={{Using Riak at Yammer}},
+author = {Coda Hale and Ryan Kennedy},
+howpublished = "\url{http://dl.dropbox.com/u/2744222/2011-03-22_Riak-At-Yammer.pdf}",
+note={23 March 2011}}
+
+@misc{codapc,
+title={Personal Communication},
+author = {Coda Hale},
+note={16 November 2011}}
+
+@misc{feinbergpc,
+title={Personal Communication},
+author={Alex Feinberg},
+note={23, 24 October, 14, 19, 21, 30 November, 1 December 2011}}
+
+
+@online{linkedin,
+title = {{LinkedIn}},
+howpublished="\url{http://www.linkedin.com}"}
+
+@online{yammer,
+title = {Yammer},
+howpublished="\url{http://www.yammer.com}"}
+
+
 @online{riak,
 title = {{Basho Riak}},
 howpublished="\url{http://basho.com/products/riak-overview/}"}
@@ -146,28 +250,21 @@ howpublished="\url{http://basho.com/products/riak-overview/}"}
 title = {{Project Voldemort}},
 howpublished="\url{http://project-voldemort.com/}"}
 
+@inproceedings {voldemortpub,
+title = {Project Voldemort: Reliable Distributed Storage},
+author = {Alex Feinberg},
+booktitle = {ICDE 2011}}
+
 @inproceedings {nonstrict-availability,
    author = {Aiyer, Amitanand and Alvisi, Lorenzo and Bazzi, Rida},
    title = {On the Availability of Non-strict Quorum Systems},
-   booktitle={DISC '05: Proceedings of the 19th International Symposium on Distributed Computing},
-
-   year = {2005}
-}
-
-@inproceedings {k-quorum-lb,
-   author = {Aiyer, Amitanand and Alvisi, Lorenzo and Bazzi, Rida},
-   title = { Byzantine and multi-writer K-quorums},
-   booktitle={DISC '06: Proceedings of the 20th International Symposium on Distributed Computing},
-
-   year = {2006}
+   booktitle={DISC 2005}
 }
 
 @INPROCEEDINGS{sessionguarantees,
     author = {Douglas B. Terry and Alan J. Demers and Karin Petersen and Mike J. Spreitzer and Marvin M. Theimer and Brent B. Welch},
     title = {Session Guarantees for Weakly Consistent Replicated Data},
-    booktitle = {PDIS '94: Proceedings of the Third International Conference on Parallel and Distributed Information Systems},
-    year = {1994},
-    pages = {140--149}
+    booktitle = {PDIS 1994}
 }
 
 @inproceedings{cops,
@@ -175,9 +272,50 @@ howpublished="\url{http://project-voldemort.com/}"}
 	David G. Andersen},
    title = {Don't settle for Eventual: Scalable Causal Consistency for
 	Wide-Area Storage with {COPS}},
-   booktitle = {{Proceedings of the 23rd ACM Symposium on Operating Systems Principles
-	(SOSP)}},
-   address = {Cascais, Portugal},
-   month = oct,
-   year = {2011}
+   booktitle = {SOSP 2011},
 }
+
+@inproceedings{cassandra-sigmod,
+author = {A. Lakshman and  P. Malik and K. Ranganathan},
+title = {Cassandra: A structured storage system on a P2P network},
+booktitle = {SIGMOD 2008}}
+
+@inproceedings{time-virt,
+author = {Timothy Broomhead and Laurence Cremean and Julien Ridoux and Darryl Veitch},
+title = {Virtualize Everything but Time},
+booktitle = {OSDI 2010}}
+
+@inproceedings{danger-rep,
+author =  {J. Gray and P. Helland and P. O’Neil and D. Shasha},
+title = {The dangers of replication and a solution},
+booktitle = {SIGMOD 1996}}
+
+@article{linearizability,
+author={M. Herlihy and J. M. Wing},
+title={Linearizability: a correctness condition for concurrent objects},
+journal ={ACM Transactions on Programming Languages and Systems},
+volume = {12(3)},
+pages = {463--492},
+month={June},
+year={1990}}
+
+@article{consistency-partitioning,
+author = {S. Davidson and H. Garcia-Moina and D. Skeen},
+title = {Consistency in Partitioned Networks},
+journal = {ACM Computing Surveys},
+volume = {17(3)},
+pages = {314--370},
+year = {1985}}
+
+@inproceedings{walter,
+author = {Y. Sovran and R. Power and M. K. Aguilera and J. Li.},
+title = {Transactional storage for geo-replicated systems},
+booktitle={SOSP 2011}}
+
+@techreport{rtc-proof,
+title={Conisstency, Availability, Convergence},
+author = {P. Mahajan and L. Alvisi and M. Dahlin},
+institution = {Computer Science Department, University of Texas at Austin},
+number={TR-11-22},
+month={May},
+year = {2011}}
