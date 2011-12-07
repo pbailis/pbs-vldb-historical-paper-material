@@ -2,9 +2,12 @@
 \usepackage{graphicx, subfigure}
 \usepackage{balance, url, amsfonts, verbatim, mathtools, draftwatermarktop, draftwatermarkbottom}  % for  \balance command ON LAST PAGE  (only there!)
 
+
 \title{Probabilistically Bounded Staleness and\\ Practical Partial Quorum Systems}
 
+
 \newdef{definition}{Definition}
+
 
 \begin{document}
 
@@ -499,7 +502,7 @@ practice are frequently dynamic, and writes propagate to quorum system
 members over time.  This process is commonly known as anti-entropy.
 For generality, in this section, we will discuss general anti-entropy
 models. However, we explicitly model the Dynamo-style anti-entropy
-mechanism in Section \ref{sec:dynamo-prop}.
+mechanism in Section \ref{sec:dynamo}.
 
 PBS $t$-visibility models the probability of (strong) inconsistency,
 accounting for the propagation of writes across wall-clock or
@@ -904,7 +907,7 @@ determined by GC activity (rare, but happens occasionally) and is
 within hundreds of milliseconds.''
 
 \begin{table}
-\begin{center}
+\centering
 \begin{tabular}{|c|c|}
 \hline
 \%ile & Latency (ms) \\
@@ -924,7 +927,6 @@ Average & 0.58 \\
 \end{tabular}
 \caption{LinkedIn Voldemort single-node production latencies.}
 \label{table:linkedin}
-\end{center}
 \end{table}
 
 Yammer is an online social network designed to provide enterprises
@@ -946,7 +948,7 @@ interesting. We saw a big performance improvement by adding LZF
 compression to values.''
 
 \begin{table}
-\begin{center}
+\centering
 \begin{tabular}{|c|c|c|}
 \hline
 \%ile & Read Latency (ms) & Write Latency (ms)\\
@@ -968,7 +970,6 @@ Mean Rate & 718.18 gets/s & 45.65 puts/s\\
 \end{tabular}
 \caption{Yammer Riak $N$$=$$3$, $R$$=$$2$, $W$$=$$2$ production latencies.}
 \label{table:yammer}
-\end{center}
 \end{table}
 
 \subsection{Production Latency Model Fitting}
@@ -1143,7 +1144,7 @@ staleness (Figure~\ref{fig:varyn}).
 Table~\ref{table:lat-stale} shows latencies and $t$-visibility for a $99.9\%$ probability of strong consistency.
 
 \begin{table*}
-\begin{center}
+\centering
 \begin{tabular}{c|c|c|c|c|c|c|c|c|c|c|c|c|}
 \cline{2-13}
 & \multicolumn{2}{|c|}{$R$$=$$1$, $W$$=$$1$} & \multicolumn{2}{|c|}{$R$$=$$1$, $W$$=$$2$} & \multicolumn{2}{|c|}{$R$$=$$1$, $W$$=$$3$} & \multicolumn{2}{|c|}{$R$$=$$2$, $W$$=$$1$} & \multicolumn{2}{|c|}{$R$$=$$2$, $W$$=$$2$} & \multicolumn{2}{|c|}{$R$$=$$3$, $W$$=$$1$}  \\
@@ -1160,7 +1161,6 @@ Table~\ref{table:lat-stale} shows latencies and $t$-visibility for a $99.9\%$ pr
 \end{tabular}
 \caption{$t$-visibility for $p_{staler} = .001$ ($99.9\%$ probability of consistency) and $99.9\%$ read plus write latency (equal weighting) across $R$ and $W$, $N$$=$$3$.}
 \label{table:lat-stale}
-\end{center}
 \end{table*}
 
 
@@ -1268,19 +1268,24 @@ failure rates and additional care in gathering latency distributions.
 \section{Additional Related Work}
 \label{sec:relatedwork}
 
+We surveyed quorum replication techniques in
+Section~\ref{sec:background}.  In this work, we drew inspiration from
+deterministic $k$-quorums~\cite{multi-k-quorum, non-strict} and
+probabilistic quorums~\cite{prob-quorum} in analyzing dynamic quorum
+systems and their staleness.  We believe that revisiting probabilistic
+quorum systems---including non-majority quorum systems such as tree
+quorums---in the context of write propagation, dynamism, and Dynamo is
+a promising area for future theoretical work.
+
 Data consistency is a long-studied problem in distributed
 systems~\cite{consistency-partitioned, danger-rep} and concurrent
-programming~\cite{linearizability}.  Although we surveyed partial
-quorum literature in Section~\ref{sec:background}, we provide a brief
-overview of additional related work here.
-
-Given the CAP Theorem and the inability to maintain all three of
-consistency, availability, and partition tolerance~\cite{cap-proof},
-data systems have turned to ``eventually consistent'' semantics to
-provide availability in the face of
-partitions~\cite{consistency-partitioning, vogels-defs}.  Real-time
-consistency (RTC) is the strongest consistency model available in an
-available, one-way converent (eventually consistent)
+programming~\cite{linearizability}.  Given the CAP Theorem and the
+inability to maintain all three of consistency, availability, and
+partition tolerance~\cite{cap-proof}, data systems have turned to
+``eventually consistent'' semantics to provide availability in the
+face of partitions~\cite{consistency-partitioning, vogels-defs}.
+Real-time consistency (RTC) is the strongest consistency model
+available in an available, one-way converent (eventually consistent)
 system~\cite{rtc-proof}, however there is a plethora of alternative
 consistency models offering various performance tradeoffs, from
 session guarantess~\cite{sessionguarantees} to causal+
@@ -1303,17 +1308,36 @@ performance for continuously evolving numerical data.  In
 TACT~\cite{vahdat-article, vahdat-bounded} consistency is modeled
 according to numerical error, order error, and staleness.  TACT bounds
 staleness by ensuring that each replica makes (transitive) contact
-with all other replicas in the system within a given time window.  In
-this work, we analyze quorum replication systems and study the
+with all other replicas in the system within a given time window.
+
+In this work, we analyze quorum replication systems and study the
 properties real-world Dynamo-style quorum systems in depth.  Many of
-these deterministic methods represent the deterministic dual of PBS,
-and their bounding algorithms could likely be employed in a write-all
-quorum system like Dynamo, particularly under asymmetric network
-topologies.
+these deterministic bounded staleness systems represent the
+deterministic dual of PBS, and their bounding algorithms could likely
+be employed in a write-all quorum system like Dynamo, particularly
+under asymmetric network topologies.
 
 
 \section{Conclusion}
 \label{sec:conclusion}
+
+In this paper, we developed models for the staleness of values
+returned from eventually consistent quorum-replicated data stores.  By
+extending prior theory on probabilistic quorum systems, we derived an
+analytical solution for the $k$-staleness of a partial quorum system,
+representing the expected staleness of a read operation in terms of
+versions.  We analyzed the $t$-visibility, or expected staleness of a
+read in terms of real time, under Dynamo-style quorum replication.  To
+do so, we developed the the \textit{WARS} latency model to explain how
+message reordering leads to staleness under Dynamo.  To examine the
+effect of latency on $t$-staleness in practice, we used real-world
+traces from internet companies to drive a Monte Carlo analysis.  We
+find that eventually consistent quorum-replicated data stores are
+frequently consistent after only a few milliseconds, explaining the
+prevalence of partial-quorum operation configurations in practice.  We
+conclude that ``eventually consistent'' partial quorum replication
+schemes are frequently consitent in practice due largely to the
+resilience of Dynamo-style messaging.
 
 \section*{Interactive Demonstration}
 
@@ -1331,7 +1355,7 @@ discussions and feedback improved this work: Marcos Aguilera, Peter
 Alvaro, Eric Brewer, Neil Conway, Greg Durrett, Hariyadi Gunawi, Bryan
 Kate, Sam Madden, Bill Marczak, Kay Ousterhout, Christopher R\'e,
 Scott Shenker, Doug Terry, Greg Valiant, and Patrick Wendell,
-\textbf{YOUR NAME HERE, BOLD READER}!  We would especially like Ali
+\textbf{YOUR NAME HERE, BOLD READER}!  We would especially like to thank Ali
 Ghodsi, who, in addition to providing feedback, originally piqued our
 interest in theoretical quorum systems.
 
