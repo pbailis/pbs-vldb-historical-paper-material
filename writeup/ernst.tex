@@ -326,7 +326,7 @@ and Byzantine failure modes failures covered by prior theory will be
 relevant in emerging ``cloud computing''
 environments~\cite{berkeleyview}. At the least, the literature on
 Dynamo-style quorum systems and current practice do not consider
-Byzantine failure and, accordingly, we do not as well.
+Byzantine failure and, accordingly, we do not do so either.
 
 
 \section{Probabilistically Bounded\\Staleness}
@@ -1034,8 +1034,10 @@ problem.\vspace{-2mm}
 Finally, we simulated a normal-case WAN replication scenario,
 \texttt{WAN}.  Reads and writes are routed to random data centers,
 and, accordingly, one replica operation commits quickly while the
-others are routed remotely.  We delay remote operations by 75ms and
-apply \texttt{YMMR} delays once the operation reaches its target data center.
+others are routed remotely.  We delay remote operations and responses
+by 75ms and apply \texttt{YMMR} delays once the operation reaches its
+target data center, in accordance with a near-worst-case
+multi-continent WAN network~\cite{dean-keynote}.
 
 We plot each fitted distribution in Figure~\ref{fig:latencies}.  Note
 that for $R$, $W$ of one, \texttt{YMMR} is not equivalent to
@@ -1176,11 +1178,12 @@ with unexpectedly heavy load, one might consider increasing the number
 of replicas and scaling $R$ and $W$ accordingly, requiring additional
 refinements to our model, essentially revisiting prior work on fluid
 replication~\cite{fluidreplication}.  In the theory community, we
-suspect that this because prior work has not considered operation
-latency as a major factor in quorum operation.  We believe that there
-is especially promising work to be done investigating the connections
-between probabilistic query optimization and varying quorum
-configuration, particularly for complex, multi-key operations.
+suspect that this lack of attention is partly because prior work has
+not considered operation latency as a major factor in quorum
+operation.  We believe that there is especially promising work to be
+done investigating the connections between probabilistic query
+optimization and varying quorum configuration, particularly for
+complex, multi-key operations.
 
 \textbf{Stronger guarantees.} In this paper, we have limited our
 discussions to probabilistic bounded staleness.  One might consider
@@ -1259,8 +1262,8 @@ implementing new semantics, we have examined what consistency is
 provided by existing, widely deployed quorum-replicated systems both
 in theory and in practice.
 
-Most similar to PBS are \textit{conits}, developed by Yu and
-Vahdat~\cite{vahdat-bounded, vahdat-article}.  In the conit (or
+Most semantically similar to PBS are \textit{conits}, developed by Yu
+and Vahdat~\cite{vahdat-bounded, vahdat-article}.  In the conit (or
 continuous consistency) model, consistency is modeled along three
 axes: \textit{numerical order}, \textit{order error}, and
 \textit{staleness}.  Staleness is the most relevant metric to our work
@@ -1280,6 +1283,8 @@ PBS, and its bounding algorithm could likely be employed in a
 write-all system like Dynamo, particularly in asymmetrically delayed
 network topologies.
 
+Similar systems to TACT include FRACS, 
+
 \section{Conclusion}
 \label{sec:conclusion}
 
@@ -1296,9 +1301,12 @@ and assistance.
 
 The authors would also like to thank the following individuals whose
 discussions and feedback improved this work: Marcos Aguilera, Peter
-Alvaro, Eric Brewer, Neil Conway, Greg Durrett, Hariyadi Gunawi, Ali
-Ghodsi, Bryan Kate, Sam Madden, Bill Marczak Kay Ousterhout,
-Christopher R\'e, Doug Terry, Greg Valiant, and Patrick Wendell.
+Alvaro, Eric Brewer, Neil Conway, Greg Durrett, Hariyadi Gunawi, Bryan
+Kate, Sam Madden, Bill Marczak, Kay Ousterhout, Christopher R\'e, Doug
+Terry, Greg Valiant, and Patrick Wendell, \textbf{YOUR NAME HERE, BOLD
+  READER}!  We would especially like Ali Ghodsi, who, in addition to
+providing feedback, originally piqued our interest in theoretical
+quorum systems.
 
 This work was supported in part by AMPLab funding from XXX.  This
 material is based upon work supported by the National Science
