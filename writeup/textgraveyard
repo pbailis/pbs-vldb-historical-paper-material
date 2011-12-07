@@ -313,3 +313,72 @@ However, the expected read operation latency for a quorum of size
 $\mathcal{R}$, $RQ_l(\mathcal{R})$, can be calculated similarly given a
 model for the latency of reads ($L_{rs}(S,t)$ and $L_r(t))$.
 
+
+
+\begin{comment}
+\begin{appendix}
+\section{Dynamo-style Staleness}
+
+We present an analytical closed-form solution to $p_{staler}$ for
+$t$-visible partial quorums unde Dynamo-style.  What is the
+probability that a read result is not strongly consistent (that is,
+does not return the most recent value when the read began)? In this
+section, when we refer to the ``last committed version'', we are
+referring to the last committed version before the read began. We
+consider the pathological case where a read occurs immediately after a
+write occurs.
+
+We assume that each writes to a replica is independently delayed by a
+randomly distributed variate $W$, each write acknowledgement from a
+replica to a writer is independently delayed by a randomly distributed
+variate $A$, each read request to a replica is independently delayed
+by a randomly distributed variate $R$, and each read response from a
+replica to a reader is delayed according to a randomly distributed
+variate $S$.  We make no assumptions as to the distribution of $W,$
+$A,$ $R,$ and $S$, except that their domain is strictly positive (no
+negative delay) and that values drawn from each are independently,
+identically distributed (IID).
+
+The probability that a read quorum does not contain the last committed
+version is equivalent to the probability that each of the first $R$
+read responses are all stale.  Denote the probability that the $i$th
+response is stale as $stale_i$:
+\begin{equation*}
+p_{staler} = \prod_{i=0}^{R} \Pr(stale_i)
+\end{equation*}
+
+Denote the return time of the $i$th read response as $S_i$.  The probability that the $i$th response is stale is given by:
+\begin{equation*}
+\Pr(stale_i) = \int_{0}^{\infty} \Pr(S_i = t) \cdot \Pr(stale_i \mid S_i = t) dt
+\end{equation*}
+
+We can use simple order statistics to calculate the return time of the $i$th read response:
+\begin{multline*}
+\Pr(S_i = t) = \frac{N!}{(i-1)!(N-i)!}\cdot[\Pr(R+S< t)]^{i-1}\\\cdot\Pr(R+S = t)\cdot[\Pr(R+S > t)]^{N-i}
+\end{multline*}
+
+ Recall that under Dynamo-style messaging, read response from a
+ replica is stale if the read request arrived at the replica before
+ the write command for the last committed version reached the replica.
+ Denote the time required to commit the last version (alternatively, the time required for $W$ of $N$ replicas to acknowledge the last write) as $w_t$.
+\begin{multline*}
+\Pr(stale_i \mid S_i = t) = \int_{0}^{t} \Pr(R=\tau)\cdot\Pr(S=t-\tau)\\\cdot\Pr(R+w_t < W \mid R = \tau) d\tau
+\end{multline*}
+\begin{multline*}
+  \Pr(R+w_t < W \mid R = \tau) = \int_{\tau}^{\infty} \Pr(W-w_t = x) dx
+\end{multline*}
+\begin{multline*}
+  \Pr(W-w_t = z) = \int_{0}^{\infty} \Pr(W = y) \cdot \Pr(-w_t = z-y) dy
+\end{multline*}
+Finally, to calculate $w_t$, we calculate the probabilty that
+$\mathcal{W}$ of $N$ acknowledgements come in at time $t$:
+\begin{multline*}
+\Pr(w_t = t) = \frac{N!}{(\mathcal{W}-1)!(N-\mathcal{W})!}\cdot[\Pr(W+A< t)]^{\mathcal{W}-1}\\\cdot\Pr(W+A = t)\cdot[\Pr(W+A > t)]^{N-\mathcal{W}}
+\end{multline*}
+Combining these equations, we have a closed-form solution for the
+staleness dependent on $W,$ $A,$ $R,$ and $S$, as desired.  To consider
+multiple version staleness, exponentiate $p_s$ by the number of
+versions stale.
+
+\end{appendix}
+\end{comment}
