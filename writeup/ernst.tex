@@ -60,11 +60,9 @@ operation: overlapping quorums and strong consistency or
 variable-sized partial quorums with no guarantees on the staleness or
 consistency returned, other than that the system will ``eventually''
 provide the most recent version in the absence of new writes.  Despite
-these weak guarantees, operators frequently employ partial
-quorums--they are often ``good enough'' for applications, especially
-given their latency benefits.  There are doubts regarding regarding
-the prudence of employing these eventually consistent configurations
-given their weak semantics~\cite{hamilton-cap, cops, walter}.
+these weak guarantees~\cite{hamilton-cap, cops, walter},
+operators frequently employ partial quorums--they are often ``good
+enough'' for applications, especially given their latency benefits.
 
 Prior work evalued the probability of strong consistency for static
 partial quorum systems, where, in the absence of failures, the read
@@ -1269,17 +1267,17 @@ However, modeling the probability of treating a replicas as inactive
 handoff would be fruitful.  This requires additional information about
 failure rates and additional care in gathering latency distributions.
 
-\section{Additional Related Work}
+\section{Related Work}
 \label{sec:relatedwork}
 
 We surveyed quorum replication techniques in
-Section~\ref{sec:background}.  In this work, we drew inspiration from
-deterministic $k$-quorums~\cite{multi-k-quorum, non-strict} and
-probabilistic quorums~\cite{prob-quorum} in analyzing dynamic quorum
-systems and their staleness.  We believe that revisiting probabilistic
-quorum systems---including non-majority quorum systems such as tree
-quorums---in the context of write propagation, dynamism, and Dynamo is
-a promising area for future theoretical work.
+Section~\ref{sec:background}.  In this work, we draw inspiration from
+probabilistic quorums~\cite{prob-quorum} and deterministic
+$k$-quorums~\cite{multi-k-quorum, non-strict} in analyzing dynamic
+quorum systems and their staleness.  We believe that revisiting
+probabilistic quorum systems---including non-majority quorum systems
+such as tree quorums---in the context of write propagation, dynamism,
+and Dynamo is a promising area for future theoretical work.
 
 Data consistency is a long-studied problem in distributed
 systems~\cite{consistency-partitioned, danger-rep} and concurrent
