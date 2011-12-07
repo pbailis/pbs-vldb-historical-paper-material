@@ -1262,28 +1262,27 @@ implementing new semantics, we have examined what consistency is
 provided by existing, widely deployed quorum-replicated systems both
 in theory and in practice.
 
-Most semantically similar to PBS are \textit{conits}, developed by Yu
-and Vahdat~\cite{vahdat-bounded, vahdat-article}.  In the conit (or
-continuous consistency) model, consistency is modeled along three
-axes: \textit{numerical order}, \textit{order error}, and
-\textit{staleness}.  Staleness is the most relevant metric to our work
-as it bounds the time until a write is resident on all replicas.  The
-authors present a system called TACT that enforces arbitrary bounds on
-these consistency metrics and allows users to trade-off performance
-for consistency, although they do not consider automatic tuning.  TACT
-bounds staleness by maintaining a \textit{real time vector} on each
-replica containing the time since the server contacted each other
-replica.  To bound the staleness to a time $t$, a replica on TACT must
-contact another replica (or a replica that has more recently contacted
-the other replica, as in a logical time vector) before $t$ seconds
-elapse.  This represents an active anti-entropy protocol.  Moreover,
-the system is unavailable in the presence of indefinite network
-delays.  TACT's bounded staleness represents the deterministic dual of
-PBS, and its bounding algorithm could likely be employed in a
-write-all system like Dynamo, particularly in asymmetrically delayed
-network topologies.
+There are several systems that provide tunable staleness bounds.
+FRACS~\cite{frac} allows replicas to buffer updates up to a given
+staleness threshold under several replication schemes, including
+master-drive and group gossip.  AQuA~\cite{aqua} asynchronously
+propagates updates from a designated master to replicas that in turn
+serve reads depending on probabilistic models regarding their
+staleness.  AQuA actively selects which replica to contact depending
+on the staleness bound and replica staleness predictions.
+TRAPP~\cite{trapp} provides tradeoffs between precision and
+performance for continuously evolving numerical data.  In
+TACT~\cite{vahdat-article, vahdat-bounded} consistency is modeled
+according to numerical error, order error, and staleness.  TACT bounds
+staleness by ensuring that each replica makes (transitive) contact
+with all other replicas in the system within a given time window.  In
+this work, we analyze quorum replication systems and study the
+properties real-world Dynamo-style quorum systems in depth.  Many of
+these deterministic methods represent the deterministic dual of PBS,
+and their bounding algorithms could likely be employed in a write-all
+quorum system like Dynamo, particularly under asymmetric network
+topologies.
 
-Similar systems to TACT include FRACS, 
 
 \section{Conclusion}
 \label{sec:conclusion}
