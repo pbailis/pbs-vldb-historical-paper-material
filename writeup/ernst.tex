@@ -42,11 +42,12 @@ traffic~\cite{google-talk}.  At scale, these decreases correspond to
 billions of dollars of lost revenue.
 
 One technique for lowering operation latency is employing
-\textit{partial or partial quorums}, in which read and write sets
-are not guaranteed to overlap (given $N$ replicas and read and write
-quorum sizes $R$ and $W$, $R+W \leq N$).  Modern quorum-based scalable
-data systems such as Dynamo~\cite{dynamo} (and its open source
-descendants Cassandra~\cite{cassandra}, Riak~\cite{riak}, and
+\textit{partial} or non-stict quorums, in which the sets of nodes
+written to and read from (for a particular value) are not guaranteed
+to overlap (given $N$ replicas and read and write quorum sizes $R$ and
+$W$, $R+W \leq N$).  Modern quorum-based scalable data systems such as
+Dynamo~\cite{dynamo} (and its open source descendants
+Cassandra~\cite{cassandra}, Riak~\cite{riak}, and
 Voldemort~\cite{voldemort}) provide two categories of quorum
 operation: overlapping quorums and strong consistency or
 variable-sized partial quorums with no guarantees on the staleness or
@@ -54,7 +55,9 @@ consistency returned, other than that the system will ``eventually''
 provide the most recent version in the absence of new writes.  Despite
 these weak guarantees, operators frequently employ partial
 quorums--they are often ``good enough'' for applications, especially
-given their latency benefits.
+given their latency benefits.  There are doubts regarding regarding
+the prudence of employing these eventually consistent configurations
+given their weak semantics~\cite{hamilton-cap, cops, walter}.
 
 Prior work evalued the probability of strong consistency for static
 partial quorum systems, where, in the absence of failures, the read
@@ -73,14 +76,19 @@ applications can tolerate varying degrees of staleness.
 
 In this paper, we present algorithms and models for accurately
 predicting the staleness of partial quorums across multiple versions
-and wall clock time, or Probabilistically Bounded Staleness (PBS). PBS
-can be used to determine the probability of reading one of the last
-$k$ versions of a data item ($k$-staleness), of reading a data item
-$t$ seconds after it is written ($t$-visibility), and of experiencing
-a combination of the two ($\langle k, t \rangle$-staleness).  We also use these
-consistency measures to provide probabilistic guarantees on monotonic
-reads, a form of session guarantees where reads are guaranteed to
-return data items no older than what has been previously read.
+and wall clock time, or Probabilistically Bounded Staleness (PBS) for
+partial quorums. PBS can be used to determine the probability of
+reading one of the last $k$ versions of a data item ($k$-staleness),
+of reading a data item $t$ seconds after it is written
+($t$-visibility), and of experiencing a combination of the two
+($\langle k, t \rangle$-staleness).  We also use these consistency
+measures to provide probabilistic guarantees on monotonic reads, a
+form of session guarantees where reads are guaranteed to return data
+items no older than what has been previously read.  PBS does not
+enforce deterministic staleness bounds~\cite{ aqua,
+  trapp,vahdat-article, vahdat-bounded, frac} but is instead intended
+a lens for analyzing and potentially improving \textit{existing}
+systems.
 
 Observing multi-version staleness is highly unlikely.  Under static
 quorum systems, the probability of returning a version $k$ versions
@@ -89,11 +97,12 @@ $k$.  In the presence of multiple concurrent writes in a non-static
 system, there is a similar effect, determined in large part by the
 staggering of the writes.  With a modest global write rate to a key, a
 client making read requests no greater than the write rate has a high
-probability of observing monotonic reads consistency.  Many
-applications can tolerate stale versions, particularly programs
-exposing append-only data structures such as logs and streaming
-timelines and, more generally, commutative updates.
-
+probability of observing monotonic reads consistency. Programs and
+data structures such as streaming timelines and distributed logs that
+adhere to Helland and Finkelstein's ``ACID 2.0'' semantics---employing a combination of associativity, commutativity, and idempotency and
+are distributed---are well-suited to handling staleness~\cite{calm,
+  helland}.
+  
 Observing staleness across time depends on the write propagation rate
 and the latency between coordinators and replicas.  In this paper, we
 examine Dynamo-style partial quorums, which are currently the most
@@ -106,9 +115,10 @@ easily implementable within Dynamo but may provide false positives and
 a more complex, precise detector.  Using data collected in experiments
 on Amazon's EC2 and using production distributions provided by two
 internet-scale companies, we analyze the likelihood of $t$-staleness
-across time and replica configurations.
-
-
+across time and replica configurations.  We find that, after a few
+millseconds (and typically sooner), reads observe consistency with
+high probability and, tens of millseconds after commit, reads are
+almost guaranteed to return consistent values.
 
 We make the following contributions in this paper:
 
@@ -140,7 +150,11 @@ Probabilistically Bounded Staleness and provide a closed-form solution
 to $k$-staleness under traditional static quorums.  In
 Section~\ref{sec:dynamo}, we model Dynamo-style quorum systems and
 discuss when staleness occurs.  In Section~\ref{sec:dynamoeval}, we
-use real-world workloads and Monte Carlo analysis to determine how often Dynamo-style quorums return stale values in practice.  In Section~\ref{sec:discussion}, we describe further improvements to dynamic partial quorums, in Section~\ref{sec:relatedwork}, we discuss related work, and, in Section~\ref{sec:conclusion}, we conclude.
+use real-world workloads and Monte Carlo analysis to determine how
+often Dynamo-style quorums return stale values in practice.  In
+Section~\ref{sec:discussion}, we describe further improvements to
+dynamic partial quorums, in Section~\ref{sec:relatedwork}, we discuss
+related work, and, in Section~\ref{sec:conclusion}, we conclude.
 
 
 \section{Background}
@@ -156,18 +170,21 @@ quorum-replicated data storage systems.
 \subsection{Quorum Foundations: Theory}
 
 Quorum systems have long been proposed as a replication strategy for
-distributed data storage.  Informally, a strict quorum system defines
-a set of sets of nodes in a distributed system with the property that
-any two sets in the quorum system overlap (have non-empty
-intersection).  When considering distributed get/put operations,
-reading and writing to sets of nodes in a strict quorum system ensures
-strong consistency in the absence of failures; the minimum sized
-quorum defines its fault tolerance.  A simple example of a strict
-quorum system is the majority quorum system, in which each quorum is
-of size $\frac{N}{2}+1$.  However, the theory literature contains
-numerous alternative quorum systems providing varying asymptotic
-properties of capacity, scalability, and fault-tolerance, from
-tree-quorums to grid-quorums.  Jim\'{e}nex-Peris et. al provide a
+distributed data storage.  In a distributed data system, a given
+quorum system is used in replicating a single data item; in the
+presence of multiple data items, multiple quorum systems (possibly the
+same quorum system) are used.  Informally, a strict quorum system
+defines a set of sets of nodes in a distributed system with the
+property that any two sets in the quorum system overlap (have
+non-empty intersection). When considering distributed get/put
+operations, reading and writing to sets of nodes in a strict quorum
+system ensures strong consistency in the absence of failures; the
+minimum sized quorum defines its fault tolerance.  A simple example of
+a strict quorum system is the majority quorum system, in which each
+quorum is of size $\frac{N}{2}+1$.  However, the theory literature
+contains numerous alternative quorum systems providing varying
+asymptotic properties of capacity, scalability, and fault-tolerance,
+from tree-quorums to grid-quorums.  Jim\'{e}nex-Peris et. al provide a
 useful overview of these traditional, strict quorum
 systems~\cite{quorums-alternative}.
 
@@ -233,17 +250,18 @@ In practice, many distributed data management systems use quorums as a
 replication strategy. Amazon's Dynamo~\cite{dynamo} is the progenitor
 of a class of eventually-consistent key-value stores using a
 particular variant of quorum-style replication that includes Apache
-Cassandra~\cite{cassandra, cassandra-sigmod}, Basho's Riak~\cite{riak}, and LinkedIn's Voldemort~\cite{voldemort, voldemortpub}\footnote{Other
-  so-called NoSQL style systems also employ master-slave replication, as in Apache
-  HBase~\cite{hbase}.}.  In this paper, we discuss Dynamo-style quorum
-systems largely because we are not aware of any significally
-different, widely adopted data systems using quorum replication.
-However, with some work, we believe that other systems can adopt our
-methodology.  Similarly, we focus on key-value stores as the
-aforementioned systems provide some variant of key-value architecture
-and do not provide full relational semantics.  Quorum systems may be
-employed in RDBMS replication, but, for simplicity, we describe
-key-value stores here.
+Cassandra~\cite{cassandra, cassandra-sigmod}, Basho's
+Riak~\cite{riak}, and LinkedIn's Voldemort~\cite{voldemort,
+  voldemortpub}\footnote{Other so-called NoSQL style systems also
+  employ master-slave replication, as in Apache HBase~\cite{hbase}.}.
+In this paper, we discuss Dynamo-style quorum systems largely because
+we are not aware of any significally different, widely adopted data
+systems using quorum replication.  However, with some work, we believe
+that other systems can adopt our methodology.  Similarly, we focus on
+key-value stores as the aforementioned systems provide some variant of
+key-value architecture and do not provide full relational semantics.
+Quorum systems may be employed in RDBMS replication, but, for
+simplicity, we describe key-value stores here.
 
 Dynamo-style quorum systems employ one quorum system per key,
 typically maintaining the mapping of values to a set of nodes using a
@@ -1228,14 +1246,24 @@ as two-phase commit.  Again, transactions are feasible but require
 considerable care in implementation, complicated what is otherwise a
 simple replication scheme.
 
-\textbf{Failure modes.} We have asserted that non fail-stop failures
-or latency spikes can be accommodated in \textit{WARS} by adjusting
-latency distributions to match failure probabilities.  For events such
-as transient garbage collection, modeling the probability of treating
-a replicas as inactive (while it is just hung) and modeling recovery
-semantics such as hinted handoff would be fruitful.  This requires
-additional information about failure rates and additional care in
-gathering latency distributions.
+\textbf{Failure modes.} In our evaluation of $t$-visibility, we
+focused on normal operating conditions. Unless failures are
+common-case, they affect $p_{stale}$ at the tail.  If, as Jeff Dean of
+Google suggests, servers crash at least twice per year, assuming a
+worst-case ten hour downtime for machines, this roughly represents
+.23\% downtime per machine.  If machines failures are completely
+dependent, this small percentage may be a problem.  If they are
+independent, a replica set of $N$ failed nodes with $F$ failed nodes
+behaves like an $N-F$ replica set, and the probability of all $N$
+nodes failing is $(.23)^N$\% (``five nines'' reliability for
+$N$$=$$3$).  However, it would be beneficial to quantify this impact
+more precisely given actual failure distributions.  We have asserted
+that failures or latency spikes can be accommodated in \textit{WARS}
+by adjusting latency distributions to match failure probabilities.
+However, modeling the probability of treating a replicas as inactive
+(while it is just hung) and modeling recovery semantics such as hinted
+handoff would be fruitful.  This requires additional information about
+failure rates and additional care in gathering latency distributions.
 
 \section{Additional Related Work}
 \label{sec:relatedwork}
