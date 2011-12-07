@@ -837,22 +837,23 @@ conjecture as to what represents ``reasonable'' scenarios, we analyzed
 production distributions from two internet-scale companies, LinkedIn
 and Yammer.
 
-LinkedIn~\cite{linkedin} is an online professional social network claiming over 135
-million members as of November 2011~\cite{linkedinmembers}. To handle highly
-available, low latency data storage, engineers at LinkedIn built
-Voldemort, a Dynamo-style quorum replicated key value store.  Alex
-Feinberg, a lead engineer on Voldemort, graciously provided us with
-latency distributions for a single node replaying peak load traffic
-for the ``Who Viewed My Profile?'' data set on LinkedIn, representing
-60\% read and 40\% read-modify-write traffic
-(Table~\ref{table:linkedin})~\cite{feinbergpc}.  Feinberg reports that ``with spinning
-disks, we're largely IO bound and latency is largely determined by the
-kind of disks we're using, data to memory ratio and request
-distribution.  With [solid state drives (SSDs)], we're CPU and/or network
-bound (depending on value size).''  As an interesting aside, Feinberg
-also notes that ``maximum latency is generally determined by GC
-activity (rare, but happens occasionally) and is within hundreds of
-milliseconds.''
+LinkedIn~\cite{linkedin} is an online professional social network
+claiming over 135 million members as of November
+2011~\cite{linkedinmembers}. To handle highly available, low latency
+data storage, engineers at LinkedIn built Voldemort, a Dynamo-style
+quorum replicated key value store~\cite{voldemort, voldemortpub}.
+Alex Feinberg, a lead engineer on Voldemort, graciously provided us
+with latency distributions for a single node replaying peak load
+traffic for the ``Who Viewed My Profile?'' data set on LinkedIn,
+representing 60\% read and 40\% read-modify-write traffic
+(Table~\ref{table:linkedin})~\cite{feinbergpc}.  Feinberg reports that
+``with spinning disks, we're largely IO bound and latency is largely
+determined by the kind of disks we're using, data to memory ratio and
+request distribution.  With [solid state drives (SSDs)], we're CPU
+and/or network bound (depending on value size).''  As an interesting
+aside, Feinberg also notes that ``maximum latency is generally
+determined by GC activity (rare, but happens occasionally) and is
+within hundreds of milliseconds.''
 
 \begin{table}[h!]
 \begin{center}
@@ -882,17 +883,18 @@ Yammer is an online social network designed to provide enterprises
 with private social networking capabilities.  As of December 2011,
 Yammer claimed over 100,000 companies as customers~\cite{yammer}.
 Yammer uses Basho's Riak, another open source Dynamo-style quorum
-replicated database for client data.  Coda Hale, infrastructure
-architect, and Ryan Kennedy, also of Yammer, presented on their use of
-Riak including surprisingly in-depth performance numbers in March
-2011~\cite{riakyammer}.  Yammer provided us with more detailed
-performance numbers for their application (Table~\ref{table:yammer})~\cite{codapc}.
-Coda noted that ``reads and writes have radically different expected
-latencies, especially for Riak. Writes don't return until the fsync
-returns, so while reads are often $<$ 1ms, writes rarely are.''  As we
-will see, this has important consequences for \textit{WARS}.  Although
-we do not model this explicitly, Coda also notes that ``value size is
-also interesting. We saw a big performance improvement by adding LZF
+replicated database for client data~\cite{riak}.  Coda Hale,
+infrastructure architect, and Ryan Kennedy, also of Yammer, presented
+on their use of Riak including surprisingly in-depth performance
+numbers in March 2011~\cite{riakyammer}.  Yammer provided us with more
+detailed performance numbers for their application
+(Table~\ref{table:yammer})~\cite{codapc}.  Coda noted that ``reads and
+writes have radically different expected latencies, especially for
+Riak. Writes don't return until the fsync returns, so while reads are
+often $<$ 1ms, writes rarely are.''  As we will see, this has
+important consequences for \textit{WARS}.  Although we do not model
+this explicitly, Coda also notes that ``value size is also
+interesting. We saw a big performance improvement by adding LZF
 compression to values.''
 
 \begin{table}[h!]

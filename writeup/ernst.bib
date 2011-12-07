@@ -10,12 +10,12 @@ pages = {184-206}}
 @inproceedings{chain-replication,
  author = {van Renesse, Robbert and Schneider, Fred B.},
  title = {Chain replication for supporting high throughput and availability},
- booktitle = {Proceedings of the 6th conference on Symposium on Opearting Systems Design \& Implementation (OSDI 2004)},
+ booktitle = {OSDI 2004}
 } 
 @inproceedings{vahdat-bounded,
  author = {Yu, Haifeng and Vahdat, Amin},
  title = {Design and evaluation of a continuous consistency model for replicated services},
- booktitle = {Proceedings of the 4th conference on Symposium on Operating System Design \& Implementation (OSDI 2000)},
+ booktitle = {OSDI 2000}
 } 
 
 @inproceedings{non-strict,
@@ -40,26 +40,13 @@ booktitle = {DISC 2006}}
 @INPROCEEDINGS{bayou-session,
     author = {Douglas B. Terry and Alan J. Demers and Karin Petersen and Mike J. Spreitzer and Marvin M. Theimer and Brent B. Welch},
     title = {Session Guarantees for Weakly Consistent Replicated Data},
-    booktitle = {PDIS '94},
-    year = {1994},
-    pages = {140--149}
+    booktitle = {PDIS 1994},
 }
 
 @inproceedings{dynamo,
  author = {DeCandia, Giuseppe and Hastorun, Deniz and Jampani, Madan and Kakulapati, Gunavardhan and Lakshman, Avinash and Pilchin, Alex and Sivasubramanian, Swaminathan and Vosshall, Peter and Vogels, Werner},
  title = {Dynamo: {Amazon's} highly available key-value store},
- booktitle = {Proceedings of 21st ACM SIGOPS symposium on Operating systems principles},
- series = {SOSP '07},
- year = {2007},
- isbn = {978-1-59593-591-5},
- location = {Stevenson, Washington, USA},
- pages = {205--220},
- numpages = {16},
-
- acmid = {1294281},
- publisher = {ACM},
- address = {New York, NY, USA},
- keywords = {performance, reliability, scalability},
+ booktitle = {SOSP 2007},
 } 
 
 @article{cap-proof,
@@ -138,6 +125,37 @@ howpublished="\url{http://hbase.apache.org}"}
 title = {{Apache Cassandra}},
 howpublished="\url{http://cassandra.apache.org/}"}
 
+@online{linkedinmembers,
+title = {{LinkedIn} annnounces third quarter 2011 financial results},
+howpublished="\url{http://press.linkedin.com/node/989}",
+note={3 November 2011}}
+
+@misc{riakyammer,
+title={{Using Riak at Yammer}},
+author = {Coda Hale and Ryan Kennedy},
+howpublished = "\url{http://dl.dropbox.com/u/2744222/2011-03-22_Riak-At-Yammer.pdf}",
+note={23 March 2011}}
+
+@misc{codapc,
+title={Personal Communication},
+author = {Coda Hale},
+note={16 November 2011}}
+
+@misc{feinbergpc,
+title={Personal Communication},
+author={Alex Feinberg},
+note={23, 24 October, 14, 19, 21, 30 November, 1 December 2011}}
+
+
+@online{linkedin-members,
+title = {{LinkedIn}},
+howpublished="\url{http://www.linkedin.com}"}
+
+@online{yammer,
+title = {Yammer},
+howpublished="\url{http://www.yammer.com}"}
+
+
 @online{riak,
 title = {{Basho Riak}},
 howpublished="\url{http://basho.com/products/riak-overview/}"}
@@ -146,28 +164,27 @@ howpublished="\url{http://basho.com/products/riak-overview/}"}
 title = {{Project Voldemort}},
 howpublished="\url{http://project-voldemort.com/}"}
 
+@inproceedings {voldemortpub,
+title = {Project Voldemort: Reliable Distributed Storage},
+author = {Alex Feinberg},
+booktitle = {ICDE 2011}}
+
 @inproceedings {nonstrict-availability,
    author = {Aiyer, Amitanand and Alvisi, Lorenzo and Bazzi, Rida},
    title = {On the Availability of Non-strict Quorum Systems},
-   booktitle={DISC '05: Proceedings of the 19th International Symposium on Distributed Computing},
-
-   year = {2005}
+   booktitle={DISC 2005}
 }
 
 @inproceedings {k-quorum-lb,
    author = {Aiyer, Amitanand and Alvisi, Lorenzo and Bazzi, Rida},
    title = { Byzantine and multi-writer K-quorums},
-   booktitle={DISC '06: Proceedings of the 20th International Symposium on Distributed Computing},
-
-   year = {2006}
+   booktitle={DISC 2006}
 }
 
 @INPROCEEDINGS{sessionguarantees,
     author = {Douglas B. Terry and Alan J. Demers and Karin Petersen and Mike J. Spreitzer and Marvin M. Theimer and Brent B. Welch},
     title = {Session Guarantees for Weakly Consistent Replicated Data},
-    booktitle = {PDIS '94: Proceedings of the Third International Conference on Parallel and Distributed Information Systems},
-    year = {1994},
-    pages = {140--149}
+    booktitle = {PDIS 1994}
 }
 
 @inproceedings{cops,
@@ -175,9 +192,15 @@ howpublished="\url{http://project-voldemort.com/}"}
 	David G. Andersen},
    title = {Don't settle for Eventual: Scalable Causal Consistency for
 	Wide-Area Storage with {COPS}},
-   booktitle = {{Proceedings of the 23rd ACM Symposium on Operating Systems Principles
-	(SOSP)}},
-   address = {Cascais, Portugal},
-   month = oct,
-   year = {2011}
+   booktitle = {SOSP 2011},
 }
+
+@inproceedings{cassandra-sigmod,
+author = {A. Lakshman and  P. Malik and K. Ranganathan},
+title = {Cassandra: A structured storage system on a P2P network},
+booktitle = {SIGMOD 2008}}
+
+@inproceedings{time-virt,
+author = {Timothy Broomhead and Laurence Cremean and Julien Ridoux and Darryl Veitch},
+title = {Virtualize Everything but Time},
+booktitle = {OSDI 2010}}
