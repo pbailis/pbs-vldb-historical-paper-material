@@ -1175,9 +1175,10 @@ $t$-visibility. However by setting $R$$=$$2$ and $W$$=$$1$, the
 $t$-visibility reduces to $3ms$ and the latency reduces by $55.4\%$ 
 when with a compared to an overlapping quorum with $W$$=$$R$$=$$2$. 
 Similarly, in the case of 
-\texttt{LNKD-SSD} and \texttt{LNKD-DISK} we see by adjusting the value
+\texttt{LNKD-SSD} and \texttt{LNKD-DISK} we see that by adjusting the value
 of $R$ and $W$, latencies can reduce by up to $39\%$ and $48.7\%$ 
 with $t$-visiblity of $2.42ms$ and $11.6ms$ respectively. 
+\textbf{Need to check the WAN numbers. t-visibilty is zero ?}
 These numbers indicate that there are significant latency gains when 
 we use lower values of $R$, $W$ and that $t$-visiblity is
 low even when we require a high percentage ($99.9\%$) of reads to be consistent.
