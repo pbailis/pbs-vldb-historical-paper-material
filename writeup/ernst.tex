@@ -49,7 +49,7 @@ traffic~\cite{google-talk}.  At scale, these decreases correspond to
 large amounts of lost revenue.
 
 One technique for lowering operation latency is employing
-\textit{partial} or non-stict quorums, in which the sets of nodes
+\textit{partial} or non-strict quorums, in which the sets of nodes
 written to and read from (for a particular value) are not guaranteed
 to overlap (given $N$ replicas and read and write quorum sizes $R$ and
 $W$, $R+W \leq N$).  Modern quorum-based scalable data systems such as
@@ -59,12 +59,20 @@ Voldemort~\cite{voldemort}) provide two categories of quorum
 operation: overlapping quorums and strong consistency or
 variable-sized partial quorums with no guarantees on the staleness or
 consistency returned, other than that the system will ``eventually''
-provide the most recent version in the absence of new writes.  Despite
-these weak guarantees~\cite{hamilton-cap, cops, walter},
-operators frequently employ partial quorums--they are often ``good
-enough'' for applications, especially given their latency benefits.
+provide the most recent version in the absence of new writes.
 
-Prior work evalued the probability of strong consistency for static
+Despite these weak guarantees~\cite{hamilton-cap, cops, walter},
+operators frequently employ partial quorums~\cite{cassandra,
+  feinbergpc}--they are often ``good enough'' for applications,
+especially given their latency benefits.  In general, programs and
+data structures such as streaming timelines and distributed logs that
+adhere to Helland and Finkelstein's ``ACID 2.0'' semantics---employing
+a combination of associativity, commutativity, and idempotency and are
+distributed---are well-suited to handling staleness~\cite{calm,
+  helland}.  However, basic eventually consistent semantics do not
+specify the degree of staleness that is observed.
+
+Prior work evaluated the probability of strong consistency for static
 partial quorum systems, where, in the absence of failures, the read
 and write sets do not change over time.  Theoretical research on
 \textit{probabilistic quorums} demonstrated how partial quorums can be
@@ -74,10 +82,10 @@ excellent asymptotic behavior but are limited in practical
 applicability due to their reliance on high replication factors.  More
 problematic, however, is that this work predicts \textit{how often} a
 response will be stale but not \textit{how stale} a stale response
-will be. In the real world, quorum systems are not static: writes
-propagate asynchronously across time. Similarly, as evidenced by the
-widespread deployment of eventually consistent data systems,
-applications can tolerate varying degrees of staleness.
+will be. Prior work has modeled node churn across
+time~\cite{probabilistic-dynamic}, however, in the real world, modern
+quorum systems are not static: writes propagate asynchronously across
+time.
 
 In this paper, we present algorithms and models for accurately
 predicting the staleness of partial quorums across multiple versions
@@ -89,24 +97,20 @@ of reading a data item $t$ seconds after it is written
 ($\langle k, t \rangle$-staleness).  We also use these consistency
 measures to provide probabilistic guarantees on monotonic reads, a
 form of session guarantees where reads are guaranteed to return data
-items no older than what has been previously read.  PBS does not
-enforce deterministic staleness bounds~\cite{ aqua,
-  trapp,vahdat-article, vahdat-bounded, frac} but is instead intended
-a lens for analyzing and potentially improving \textit{existing}
-systems.
+items no older than what has been previously read by the same
+process~\cite{sessionguarantees, vogels-defs}.  PBS does not enforce
+deterministic staleness bounds~\cite{ aqua, trapp,vahdat-article,
+  vahdat-bounded, frac} but is instead intended as a lens for
+analyzing and potentially improving \textit{existing} systems.
 
-Observing multi-version staleness is highly unlikely.  Under static
-quorum systems, the probability of returning a version $k$ versions
-older than the most current is exponentially reduced by a factor of
-$k$.  In the presence of multiple concurrent writes in a non-static
-system, there is a similar effect, determined in large part by the
-staggering of the writes.  With a modest global write rate to a key, a
-client making read requests no greater than the write rate has a high
-probability of observing monotonic reads consistency. Programs and
-data structures such as streaming timelines and distributed logs that
-adhere to Helland and Finkelstein's ``ACID 2.0'' semantics---employing a combination of associativity, commutativity, and idempotency and
-are distributed---are well-suited to handling staleness~\cite{calm,
-  helland}.
+Reading data that are multiple versions stale is highly unlikely.
+Under static quorum systems, the probability of returning a version
+$k$ versions older than the most current is exponentially reduced by a
+factor of $k$.  In the presence of multiple concurrent writes in a
+non-static system, there is a similar effect, determined in large part
+by the staggering of the writes.  With a modest global write rate to a
+key, a client making read requests no greater than the write rate has
+a high probability of observing monotonic reads consistency.
   
 Observing staleness across time depends on the write propagation rate
 and the latency between coordinators and replicas.  In this paper, we
@@ -121,8 +125,8 @@ a more complex, precise detector.  Using data collected in experiments
 on Amazon's EC2 and using production distributions provided by two
 internet-scale companies, we analyze the likelihood of $t$-staleness
 across time and replica configurations.  We find that, after a few
-millseconds (and typically sooner), reads observe consistency with
-high probability and, tens of millseconds after commit, reads are
+milliseconds (and typically sooner), reads observe consistency with
+high probability and, tens of milliseconds after commit, reads are
 almost guaranteed to return consistent values.
 
 We make the following contributions in this paper:
@@ -143,7 +147,7 @@ We make the following contributions in this paper:
 \item We provide a model for $t$-visibility in
   Dynamo-style partial quorum systems, \textit{WARS},  showing how
   staleness is dependent on message reordering in the system.  We
-  evalute the $t$-visibility of Dynamo-style systems using a
+  evaluate the $t$-visibility of Dynamo-style systems using a
   combination of experimentally-gathered data and production traces.
 
 \end{itemize}
@@ -199,15 +203,19 @@ overlap.  There are two relevant variants of partial quorum systems in
 the literature: probabilistic quorum systems and k-quorums.
 
 \textit{Probabilistic quorum systems} provide probabilistic guarantees
-on the consistency of data returned by partial quorums.
-Probabilistic quorums provide optimal (expected) load and fault
-tolerance with an arbitrarily small probability of
-inconsistency~\cite{prob-quorum}.  Intuitively, this is a consequence
-of the Birthday Paradox: as the number of replicas increases, the
-probability of non-overlap between any two subsets is quite low.  To
-the best of our knowledge, probabilistic quorums have only been used
-to study the probability of strong consistency and have not been
-employed in an eventually consistent context.
+on the consistency of data returned by partial quorums.  Probabilistic
+quorums provide optimal (expected) load and fault tolerance with an
+arbitrarily small probability of inconsistency~\cite{prob-quorum}.
+Intuitively, this is a consequence of the Birthday Paradox: as the
+number of replicas increases, the probability of non-overlap between
+any two subsets is quite low.  Prior work has examined the effect of
+``dynamic systems'' in terms of quorum member churn (e.g., joining and
+leaving a distributed hash table)~\cite{prob-quorum-dynamic} as well
+as network-aware quorum placement~\cite{quorum-placement,
+  delay-quorum} but did not model write propagation. Additionally, and
+most importantly, to the best of our knowledge, probabilistic quorums
+have only been used to study the probability of strong consistency and
+have not been employed in an eventually consistent context.
 
 Given $N$ replicas and randomly chosen read and write quorums of sizes
 $R$ and $W$, we can calculate the probability of the read quorum not
@@ -234,7 +242,8 @@ is sent to $\frac{N}{K}$ replicas such that each replica is no more
 than $K$ versions out-of-date.  However, with multiple writers, one
 loses the ordering properties that the single-writer was able to
 control, and the best known algorithm for the pathological case
-results in a lower bound of $(2N-1)(k-1)+N$ versions staleness~\cite{multi-k-quorum}.
+results in a lower bound of $(2N-1)(k-1)+N$ versions
+staleness~\cite{multi-k-quorum}.
 
 This prior work has two properties with important implications for
 practitioners.  First, existing theory treats quorums as static; a
@@ -260,7 +269,7 @@ Riak~\cite{riak}, and LinkedIn's Voldemort~\cite{voldemort,
   voldemortpub}\footnote{Other so-called NoSQL style systems also
   employ master-slave replication, as in Apache HBase~\cite{hbase}.}.
 In this paper, we discuss Dynamo-style quorum systems largely because
-we are not aware of any significally different, widely adopted data
+we are not aware of any significantly different, widely adopted data
 systems using quorum replication.  However, with some work, we believe
 that other systems can adopt our methodology.  Similarly, we focus on
 key-value stores as the aforementioned systems provide some variant of
@@ -337,7 +346,7 @@ discussed replication up to a factor of 10~\cite{chain-replication}.
 Second, (in the absence of failure), in Dynamo-style partial quorums,
 the number of replicas that receive a write increases even after the
 operation returns.  This is a simple version of anti-entropy.
-Morever, read requests are sent to all replicas, however only the
+Moreover, read requests are sent to all replicas, however only the
 first $R$ responses are considered.  Third, these systems are often
 deployed in a trusted or semi-trusted computing environment; there may
 be adversarial threats against data integrity and denial-of-service
@@ -357,7 +366,7 @@ Byzantine failure and, accordingly, we do not do so either.
 
 In this section, we introduce the theory of Probabilistically Bounded
 Staleness to describe the consistency that existing eventually
-consistent data stores provide.  PBS extens of prior work on
+consistent data stores provide.  PBS extends prior work on
 probabilistic quorums by accounting for staleness of both versions and
 across time.  We introduce the notions of PBS $k$-quorums, which
 stochastically bounds the staleness of versions returned by read
@@ -441,8 +450,8 @@ lower bound than a strict probabilistic quorum.  This follows
 immediately from~\cite[Corollary 3.12]{prob-quorum}.
 
 This analytical closed form solution holds for static quorums.  For
-dynamic quorums, this solution is an upper bound on the probability of
-staleness.
+quorums with asynchronously propagating writes, this solution is an
+upper bound on the probability of staleness.
 
 \subsection{PBS Monotonic Reads}
 
@@ -464,7 +473,7 @@ To guarantee that a client sees monotonically increasing versions, it
 can continue to contact the same replica~\cite{vogels-defs}.  However,
 this is insufficient to guarantee strict monotonic reads (where the
 client reads strictly newer data if it exists in the system).
-Definition~\ref{def:prob-mr} can be adapted to acommodate strict
+Definition~\ref{def:prob-mr} can be adapted to accommodate strict
 monotonic reads (omitted for brevity).
 
 We observe that monotonic reads is a special case of PBS
@@ -500,9 +509,9 @@ monotonic reads guarantees.
 
 Until now, we have considered only static write quorums.  However, as
 we discussed in Section \ref{sec:practice}, modern quorum systems in
-practice are frequently dynamic, and writes propagate to quorum system
-members over time.  This process is commonly known as anti-entropy.
-For generality, in this section, we will discuss general anti-entropy
+practice asynchronously propagate writes to quorum system members over
+time.  This process is commonly known as anti-entropy.  For
+generality, in this section, we will discuss general anti-entropy
 models. However, we explicitly model the Dynamo-style anti-entropy
 mechanism in Section \ref{sec:dynamo}.
 
@@ -584,7 +593,7 @@ The definition of $p_{staler}$ follows from the prior definitions:
 \begin{equation}
 p_{staler} = (P_l(W, t)+\sum_{c\in[W, N)} \frac{{N-c \choose R}}{{N \choose R}} \cdot [P_w(c+1, t)-P_w(c,t)])^k
 \end{equation}
-In this equation, in addition to (again) assuming instanteous reads,
+In this equation, in addition to (again) assuming instantaneous reads,
 we also assume the pathological case where the last $k$ writes all
 occurred at the same time.  This is not likely in practice, so if we
 can determine the time since commit for the last $k$ writes, we can
@@ -769,7 +778,7 @@ updated after commit.  To establish a total ordering, a single
 designated write coordinator can serialize writes.  To guard against
 failures (and subsequent loss of the ordering), the ordering log
 should be reliably replicated using a reliable consensus algorithm
-such as Paxos.  However, if the single write coordinator is a
+such as Paxos~\cite{paxos}.  However, if the single write coordinator is a
 bottleneck, we could use multiple write coordinators.  With the
 presence of globally synchronized local clocks, coordinators could
 gossip the mapping from versions to commit times or even write their
@@ -811,7 +820,7 @@ we could improve the staleness results by considering additional
 anti-entropic processes, we make the bare minimum of assumptions as
 dictated by the \textit{WARS}  model.  Opting for conservative analyses
 decreases the number of varibles in our experiments (each of which is
-supported by empirical observations from practicioners) and increases
+supported by empirical observations from practitioners) and increases
 the applicability of these results.
 
 \subsection{Monte Carlo Simulator}
@@ -1177,13 +1186,13 @@ the $t$-visibility reduces to $3ms$ and the latency decreases by
 $55.4\%$ when with a compared to an overlapping quorum with
 $W$$=$$R$$=$$2$.  Similarly, in the case of \texttt{LNKD-SSD} and
 \texttt{LNKD-DISK} we see that by adjusting the value of $R$ and $W$,
-latencies can reduce by up to $39\%$ and $48.7\%$ with $t$-visiblity
+latencies can reduce by up to $39\%$ and $48.7\%$ with $t$-visibility
 of $2.42ms$ and $11.6ms$ respectively.  Under \texttt{WAN}, $R$ or $W$
 greater than one results in waiting for non-local operations to
 complete and therefore large propagation time.  This unsurprisingly
 results in staleness only when $R$$=$$W$$=$$1$.  These results
 indicate that there are significant latency gains when to employing
-lower values of $R$, $W$ and that $t$-visiblity is can be low even
+lower values of $R$, $W$ and that $t$-visibility is can be low even
 when we require a high percentage ($99.9\%$) of reads to be
 consistent.
 
@@ -1315,11 +1324,12 @@ failure rates and additional care in gathering latency distributions.
 We surveyed quorum replication techniques in
 Section~\ref{sec:background}.  In this work, we draw inspiration from
 probabilistic quorums~\cite{prob-quorum} and deterministic
-$k$-quorums~\cite{multi-k-quorum, non-strict} in analyzing dynamic
-quorum systems and their staleness.  We believe that revisiting
-probabilistic quorum systems---including non-majority quorum systems
-such as tree quorums---in the context of write propagation, dynamism,
-and Dynamo is a promising area for future theoretical work.
+$k$-quorums~\cite{multi-k-quorum, non-strict} in analyzing
+write-propagating quorum systems and their staleness.  We believe that
+revisiting probabilistic quorum systems---including non-majority
+quorum systems such as tree quorums---in the context of write
+propagation, dynamism, and Dynamo is a promising area for future
+theoretical work.
 
 Data consistency is a long-studied problem in distributed
 systems~\cite{consistency-partitioned, danger-rep} and concurrent
@@ -1329,10 +1339,10 @@ partition tolerance~\cite{cap-proof}, data systems have turned to
 ``eventually consistent'' semantics to provide availability in the
 face of partitions~\cite{consistency-partitioning, vogels-defs}.
 Real-time consistency (RTC) is the strongest consistency model
-available in an available, one-way converent (eventually consistent)
+available in an available, one-way convergent (eventually consistent)
 system~\cite{rtc-proof}, however there is a plethora of alternative
 consistency models offering various performance tradeoffs, from
-session guarantess~\cite{sessionguarantees} to causal+
+session guarantees~\cite{sessionguarantees} to causal+
 consistency~\cite{cops} and parallel snapshot isolation~\cite{walter}.
 Instead of proposing a new consistency model and building a system
 implementing new semantics, we have examined what consistency is
@@ -1380,7 +1390,7 @@ find that eventually consistent quorum-replicated data stores are
 frequently consistent after only a few milliseconds, explaining the
 prevalence of partial-quorum operation configurations in practice.  We
 conclude that ``eventually consistent'' partial quorum replication
-schemes are frequently consitent in practice due largely to the
+schemes frequently deliver consistent semantics in practice due largely to the
 resilience of Dynamo-style messaging.
 
 \section*{Interactive Demonstration}
