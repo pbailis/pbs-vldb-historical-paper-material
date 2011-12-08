@@ -683,21 +683,22 @@ between requests.  We consider global read and write traffic in our
 analysis and do not consider this delay here, but this delay is useful
 to consider in practical scenarios.
 
-\textit{WARS}  considers the effect of message sending, delays, and reception,
-but this represents a daunting analytical formulation.  The commit
-time represents an order statistic dependent on both \texttt{W} and
-\texttt{A}.  By itself, this is not problematic, but message
+\textit{WARS} considers the effect of message sending, delays, and
+reception, but this represents a daunting analytical formulation.  The
+commit time represents an order statistic dependent on both \texttt{W}
+and \texttt{A}.  By itself, this is not problematic, but message
 reordering is dependent on the commit time.  The probability that the
 $i$th returned read message observes reordering is a both an order
 statistic dependent on $W$ and $A$, and, between $i$, the
-probabilities are dependent.  The expected read and write latencies can
-be computed using simple order statistics if one makes independence
-assumptions about the distributions in \textit{WARS} .  However, a concise,
-closed form for the probability of inconsistency eludes.  Dynamo is
-simple to reason about and program, but difficult to analyze in closed
-form.  As we discuss in Section~\ref{sec:dynamoeval}, we explore \textit{WARS}  using
-Monte Carlo analysis, which suffices for our purposes in practice and,
-from a practical perspective, is relatively easier to implement.
+probabilities are dependent.  The expected read and write latencies
+can be computed using simple order statistics if one makes
+independence assumptions about the distributions in \textit{WARS} .
+However, a concise, closed form for the probability of inconsistency
+eludes.  Dynamo is simple to reason about and program, but difficult
+to analyze in closed form.  As we discuss in
+Section~\ref{sec:dynamoeval}, we explore \textit{WARS} using Monte
+Carlo analysis, which suffices for our purposes in practice and, from
+a practical perspective, is relatively easier to implement.
 
 \subsection{Additional Anti-entropy}
 
@@ -1140,14 +1141,14 @@ lower t-visibility when compared to using disks.
 We consider how changing the number of replicas (N) affects
 $t$-visibility while maintaining $R$$=$$W$$=$$1$. The results, in
 Figure~\ref{fig:varyn}, show that the probability of consistency
-decreases with larger $N$ for reads happening immediately after writes. 
-However the $t$-visibility for $99.9\%$ consistency converges to the
-same value as we increase $N$ for \texttt{LNKD-SSD} and
-\texttt{LNKD-DISK}. This shows even if we choose to maintain a 
-large number of replicas for availability or better performance, the
-$t$-visibility staleness will not be worse at higher consistency
-probabilities. For the \texttt{YMMR} workload, the $t$-visibility at 
-$99.9\%$ consistency ranges from $29ms$ for 2 replicas to $40ms$ for 10
+decreases with larger $N$ for reads happening immediately after
+writes.  However the $t$-visibility for $99.9\%$ consistency converges
+to the same value as we increase $N$ for \texttt{LNKD-SSD} and
+\texttt{LNKD-DISK}.  Even if we choose to maintain a large number of
+replicas for availability or better performance, the $t$-visibility
+staleness will still converge relatively quickly as $t$ grows. For the
+\texttt{YMMR} workload, the $t$-visibility at $99.9\%$ probability of
+consistency ranges from $29$ms for 2 replicas to $40$ms for 10
 replicas. We believe the difference is larger due to the longer tail
 in the write latency distribution.
 
@@ -1162,26 +1163,29 @@ in the write latency distribution.
 
 \subsection{Latency vs. $t$-visibility}
 
-In choosing a value for $R$ and $W$, we are making a trade-off
-between latency and the $t$-visibility observed by reads. To study 
-the latency gains that can be obtained, we studied this trade-off in the context 
-of a configuration where the probability of consistent reads was set 
-to $99.9\%$. We measured the $99.9$ percentile read, write latencies.
-The results for various latency distributions and 
-$R$, $W$ values is shown in Table~\ref{table:lat-stale}. 
-For \texttt{YMMR} we find that though the best setting in terms of
-latency is $W$$=$$R$$=$$2$, this configuration has a high value for
-$t$-visibility. However by setting $R$$=$$2$ and $W$$=$$1$, the 
-$t$-visibility reduces to $3ms$ and the latency reduces by $55.4\%$ 
-when with a compared to an overlapping quorum with $W$$=$$R$$=$$2$. 
-Similarly, in the case of 
-\texttt{LNKD-SSD} and \texttt{LNKD-DISK} we see that by adjusting the value
-of $R$ and $W$, latencies can reduce by up to $39\%$ and $48.7\%$ 
-with $t$-visiblity of $2.42ms$ and $11.6ms$ respectively. 
-\textbf{Need to check the WAN numbers. t-visibilty is zero ?}
-These numbers indicate that there are significant latency gains when 
-we use lower values of $R$, $W$ and that $t$-visiblity is
-low even when we require a high percentage ($99.9\%$) of reads to be consistent.
+Choosing a value for $R$ and $W$ results in a trade-off between
+operation latency and the $t$-visibility observed by reads. To study
+the obtainable latency gains, we studied $t$-visibility when the
+probability of consistent reads was $99.9\%$, capturing the long tail
+of this probability.  We also measured the $99.9$ percentile read,
+write latencies.  Table~\ref{table:lat-stale} shows the results for
+our latency distributions and $R$, $W$ configurations.  For
+\texttt{YMMR}, we find that though the best setting in terms of
+latency is $W$$=$$R$$=$$1$, this configuration results in a high value
+for $t$-visibility: 44ms. However, by setting $R$$=$$2$ and $W$$=$$1$,
+the $t$-visibility reduces to $3ms$ and the latency decreases by
+$55.4\%$ when with a compared to an overlapping quorum with
+$W$$=$$R$$=$$2$.  Similarly, in the case of \texttt{LNKD-SSD} and
+\texttt{LNKD-DISK} we see that by adjusting the value of $R$ and $W$,
+latencies can reduce by up to $39\%$ and $48.7\%$ with $t$-visiblity
+of $2.42ms$ and $11.6ms$ respectively.  Under \texttt{WAN}, $R$ or $W$
+greater than one results in waiting for non-local operations to
+complete and therefore large propagation time.  This unsurprisingly
+results in staleness only when $R$$=$$W$$=$$1$.  These results
+indicate that there are significant latency gains when to employing
+lower values of $R$, $W$ and that $t$-visiblity is can be low even
+when we require a high percentage ($99.9\%$) of reads to be
+consistent.
 
 \begin{table*}
 \centering
