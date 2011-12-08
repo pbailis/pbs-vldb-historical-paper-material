@@ -195,14 +195,14 @@ class EmpiricalDelayModel implements DelayModel
     }
 
     public double getWriteSendDelay() {
-      return ((FileLatencyModel)sendLatencyModel).getInverseCDF(1,
+      return sendLatencyModel.getInverseCDF(1,
               rand.nextDouble());
     }
 
     public double getReadSendDelay() { return getWriteAckDelay(); };
 
     public double getWriteAckDelay() {
-      return ((FileLatencyModel)ackLatencyModel).getInverseCDF(1,
+      return ackLatencyModel.getInverseCDF(1,
               rand.nextDouble());
     }
 
