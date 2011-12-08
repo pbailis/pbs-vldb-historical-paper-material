@@ -83,7 +83,7 @@ applicability due to their reliance on high replication factors.  More
 problematic, however, is that this work predicts \textit{how often} a
 response will be stale but not \textit{how stale} a stale response
 will be. Prior work has modeled node churn across
-time~\cite{probabilistic-dynamic}, however, in the real world, modern
+time~\cite{prob-quorum-dynamic}, however, in the real world, modern
 quorum systems are not static: writes propagate asynchronously across
 time.
 
@@ -211,11 +211,12 @@ number of replicas increases, the probability of non-overlap between
 any two subsets is quite low.  Prior work has examined the effect of
 ``dynamic systems'' in terms of quorum member churn (e.g., joining and
 leaving a distributed hash table)~\cite{prob-quorum-dynamic} as well
-as network-aware quorum placement~\cite{quorum-placement,
-  delay-quorum} but did not model write propagation. Additionally, and
-most importantly, to the best of our knowledge, probabilistic quorums
-have only been used to study the probability of strong consistency and
-have not been employed in an eventually consistent context.
+as network-aware quorum placement~\cite{delay-quorum,
+  quorum-placement} but did not model write propagation. Additionally,
+and most importantly, to the best of our knowledge, probabilistic
+quorums have only been used to study the probability of strong
+consistency and have not been employed in an eventually consistent
+context.
 
 Given $N$ replicas and randomly chosen read and write quorums of sizes
 $R$ and $W$, we can calculate the probability of the read quorum not
@@ -1047,7 +1048,7 @@ problem.\vspace{-2mm}
 \end{equation*}
 
 
-\begin{figure*}
+\begin{figure*}[t!]
 \centering
 \subfigure{\includegraphics[width=\columnwidth]{figs/latlegend.pdf}}\\[-1mm]
 \subfigure{\includegraphics[width=.6\columnwidth]{figs/readlats-1.pdf}}
