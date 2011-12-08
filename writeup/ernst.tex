@@ -5,7 +5,6 @@
 
 \title{Probabilistically Bounded Staleness and\\ Practical Partial Quorum Systems}
 
-
 \newdef{definition}{Definition}
 
 \input{vc.tex}
@@ -63,26 +62,27 @@ provide the most recent version in the absence of new writes.
 
 Despite these weak guarantees~\cite{hamilton-cap, cops, walter},
 operators frequently employ partial quorums~\cite{cassandra,
-  feinbergpc}--they are often ``good enough'' for applications,
-especially given their latency benefits.  In general, programs and
-data structures such as streaming timelines and distributed logs that
-adhere to Helland and Finkelstein's ``ACID 2.0'' semantics---employing
-a combination of associativity, commutativity, and idempotency and are
-distributed---are well-suited to handling staleness~\cite{calm,
-  helland}.  However, basic eventually consistent semantics do not
-specify the degree of staleness that is observed.
+  feinbergpc}--they are often ``good enough'' for applications, given
+their latency benefits, which are especially important as latencies
+grow (e.g. a wide-area network scenario)~\cite{abadilatconsist}.  In
+general, programs and data structures such as streaming timelines and
+distributed logs that adhere to Helland and Finkelstein's ``ACID 2.0''
+semantics---employing a combination of associativity, commutativity,
+and idempotency and are distributed---are well-suited to handling
+staleness~\cite{calm, helland}.  However, basic eventually consistent
+semantics do not specify the degree of staleness that is observed.
 
 Prior work evaluated the probability of strong consistency for static
 partial quorum systems, where, in the absence of failures, the read
 and write sets do not change over time.  Theoretical research on
 \textit{probabilistic quorums} demonstrated how partial quorums can be
 employed to provide arbitrarily high probability of strong
-consistency~\cite{prob-quorum}. In theory, these systems provide
-excellent asymptotic behavior but are limited in practical
-applicability due to their reliance on high replication factors.  More
-problematic, however, is that this work predicts \textit{how often} a
-response will be stale but not \textit{how stale} a stale response
-will be. Prior work has modeled node churn across
+consistency~\cite{prob-quorum, quorum-overview}. In theory, these
+systems provide excellent asymptotic behavior but are limited in
+practical applicability due to their reliance on high replication
+factors.  More problematic, however, is that this work predicts
+\textit{how often} a response will be stale but not \textit{how stale}
+a stale response will be. Prior work has modeled node churn across
 time~\cite{prob-quorum-dynamic}, however, in the real world, modern
 quorum systems are not static: writes propagate asynchronously across
 time.
@@ -162,7 +162,7 @@ discuss when staleness occurs.  In Section~\ref{sec:dynamoeval}, we
 use real-world workloads and Monte Carlo analysis to determine how
 often Dynamo-style quorums return stale values in practice.  In
 Section~\ref{sec:discussion}, we describe further improvements to
-dynamic partial quorums, in Section~\ref{sec:relatedwork}, we discuss
+PBS partial quorums, in Section~\ref{sec:relatedwork}, we discuss
 related work, and, in Section~\ref{sec:conclusion}, we conclude.
 
 
@@ -216,7 +216,8 @@ as network-aware quorum placement~\cite{delay-quorum,
 and most importantly, to the best of our knowledge, probabilistic
 quorums have only been used to study the probability of strong
 consistency and have not been employed in an eventually consistent
-context.
+context.  Merideth and Reiter provide a useful overview of recent
+advances in quorum systems~\cite{quorum-overview}.
 
 Given $N$ replicas and randomly chosen read and write quorums of sizes
 $R$ and $W$, we can calculate the probability of the read quorum not
@@ -1201,19 +1202,24 @@ consistent.
 \centering
 \begin{tabular}{c|c|c|c|c|c|c|c|c|c|c|c|c|}
 \cline{2-13}
-& \multicolumn{2}{|c|}{$R$$=$$1$, $W$$=$$1$} & \multicolumn{2}{|c|}{$R$$=$$1$, $W$$=$$2$} & \multicolumn{2}{|c|}{$R$$=$$1$, $W$$=$$3$} & \multicolumn{2}{|c|}{$R$$=$$2$, $W$$=$$1$} & \multicolumn{2}{|c|}{$R$$=$$2$, $W$$=$$2$} & \multicolumn{2}{|c|}{$R$$=$$3$, $W$$=$$1$}  \\
-&\multicolumn{1}{|c}{latency} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{latency} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{latency} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{latency} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{latency} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{latency} & \multicolumn{1}{c|}{$t$}   \\ \hline
-\multicolumn{1}{|c|}{\texttt{YMMR}} & 
-16.19 & 44.0 & 23.43 & 33.0 & 83.41 & 0 & 17.57 & 3.0 & 39.39 & 0 & 55.56 & 0  \\
-\multicolumn{1}{|c|}{\texttt{WAN}} & 
-120.04 & 103.0 & 183.61 & 0 & 288.49 & 0 & 202.75 & 23.0 & 326.0 & 0 & 217.57 & 0 \\
-\multicolumn{1}{|c|}{\texttt{LNKD-SSD}} & 
-2.42 & 2.0 & 2.79 & 2.0 & 5.01 & 0 & 2.67 & 1.0 & 4.02 & 0 & 3.97 & 0  \\
-\multicolumn{1}{|c|}{\texttt{LNKD-DISK}} & 
-17.75 & 35.0 & 23.4 & 30.0 & 43.11 & 0 & 11.6 & 14.0 & 22.61 & 0 & 17.79 & 0  \\
+& \multicolumn{3}{|c|}{\texttt{YMMR}} & \multicolumn{3}{|c|}{\texttt{WAN}} & \multicolumn{3}{|c|}{\texttt{LNKD-SSD}} & \multicolumn{3}{|c|}{\texttt{LNKD-DISK}}\\
+&\multicolumn{1}{|c}{$L_r$}  & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{$L_r$} & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{$L_r$} & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{$L_r$} & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} \\\hline
+
+\multicolumn{1}{|c|}{$R$$=$$1$, $W$$=$$1$}
+& 5.82 & 9.71 & 41.0 & 21.82 & 52.92 & 108.0 & 1.19 & 1.2 & 2.0 & 1.18 & 13.07 & 34.0 \\
+\multicolumn{1}{|c|}{$R$$=$$1$, $W$$=$$2$}
+& 5.9 & 17.75 & 38.0 & 22.07 & 164.76 & 0 & 1.19 & 1.84 & 2.0 & 1.19 & 22.03 & 30.0 \\
+\multicolumn{1}{|c|}{$R$$=$$2$, $W$$=$$1$}
+& 9.16 & 9.96 & 4.0 & 158.19 & 54.1 & 24.0 & 1.79 & 1.19 & 1.0 & 1.82 & 13.04 & 16.0 \\
+\multicolumn{1}{|c|}{$R$$=$$2$, $W$$=$$2$}
+& 9.46 & 17.49 & 0 & 157.96 & 164.78 & 0 & 1.82 & 1.8 & 0 & 1.85 & 22.03 & 0 \\
+\multicolumn{1}{|c|}{$R$$=$$3$, $W$$=$$1$}
+& 28.81 & 9.91 & 0 & 179.17 & 55.92 & 0 & 3.19 & 1.18 & 0 & 3.21 & 12.74 & 0 \\
+\multicolumn{1}{|c|}{$R$$=$$1$, $W$$=$$3$}
+& 5.75 & 85.61 & 0 & 23.27 & 230.1 & 0 & 1.18 & 3.21 & 0 & 1.17 & 43.93 & 0 \\
 \hline
 \end{tabular}
-\caption{$t$-visibility for $p_{staler} = .001$ ($99.9\%$ probability of consistency) and $99.9\%$ read plus write latency (equal weighting) across $R$ and $W$, $N$$=$$3$.}
+\caption{$t$-visibility for $p_{staler} = .001$ ($99.9\%$ probability of consistency) and $99.9\%$ read ($L_r$) and write latency ($L_w$ across $R$ and $W$, $N$$=$$3$. (Note: table under construction).}
 \label{table:lat-stale}
 \end{table*}
 
