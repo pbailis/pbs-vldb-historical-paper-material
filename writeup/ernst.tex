@@ -955,8 +955,8 @@ Mean Rate & 718.18 gets/s & 45.65 puts/s\\
 
 \subsection{Production Latency Model Fitting}
 
-These production data are invaluable, yet they are underspecified for
-\textit{WARS}.  First, they are summary statistics, so we need to
+While such insights from production data are invaluable, they are underspecified 
+for \textit{WARS}.  First, they are summary statistics, so we need to
 calculate the underlying distribution.  More importantly, the
 operation latencies represent round-trip times, while \textit{WARS}
 requires the constituent one-way latencies for reads and writes.
@@ -988,8 +988,7 @@ of 1 seek, between 1-3 seeks), and writes to the BerkeleyDB Java
 Edition backend are flushed every 30 seconds or 20
 megabytes---whichever comes first.  Accordingly, we kept the same
 \texttt{A}=\texttt{R}=\texttt{S} as in \texttt{LNKD-SSD} but
-calculated \texttt{W} separately.  We discussed our methodology with
-Feinberg, who approved of these assumptions.  Both of the
+calculated \texttt{W} separately.  Both of the
 distributions were exponentially distributed:\vspace{-2mm}
 
 \begin{equation*}
@@ -1049,10 +1048,10 @@ only one local read (write) in \texttt{WAN}, and all other read
 \subsection{Observed $t$-visibility}
 
 We measured the $t$-visibility for each distribution
-(Figure~\ref{fig:tvis}).  By issuing simulating a series of reads
-after each of 1000 non-overlapping writes staggered by time (as
-plotted 10 reads each), we calculated the probability of consistency,
-or $t$-visibility across time.
+(Figure~\ref{fig:tvis}).  We simulated 10 reads
+after each of 1000 non-overlapping writes staggered by time
+and calculated the probability of consistency, or 
+$t$-visibility across time.
 
 The high probability of consistency was largely dependent on the write
 tail size.  Immediately after writing, \texttt{YMMR} had a $88\%$
@@ -1083,17 +1082,30 @@ observe the most recent value.
 \label{fig:tvis}
 \end{figure*}
 
-As \textit{WARS} predicted, the ratio of \texttt{W} to
-\texttt{A}=\texttt{R}=\texttt{S} largely influenced the probability of
-consistency.  As shown in Figure~\ref{fig:varydelay}, we swept a range
+\subsection{Effect of varying read, write latency}
+
+%the ratio of \texttt{W} to \texttt{A}=\texttt{R}=\texttt{S} and swept
+%a range of exp 
+To observe the effects of varying read/write latencies, we swept a range
 of exponential distributions, fixing \texttt{A}=\texttt{R}=\texttt{S}
-and varying \texttt{W}.  When the mean of \texttt{W} ($.25$ms) is
-one-fourth the mean of \texttt{A}=\textit{R}\textit{S}, we observe a
-$94\%$ chance of consistency immediately after the write and $99.9\%$
-chance after 1ms.  However, when the mean of \texttt{W} ($10$ms) is
+and varying \texttt{W}.  The results, shown in
+Figure~\ref{fig:varydelay}, indicate that probability of consistency is
+largely influenced by the write latency. When the mean of \texttt{W} 
+($.25$ms) is one-fourth the mean of \texttt{A}=\textit{R}\textit{S}, we 
+observe a $94\%$ chance of consistency immediately after the write and 
+$99.9\%$ chance after 1ms.  However, when the mean of \texttt{W} ($10$ms) is
 ten times the mean of \texttt{A}=\texttt{R}=\texttt{S}, we observe a
 $41\%$ chance of consistency immediately after write and a $99.9\%$
-chance of consistency after $65$ms.
+chance of consistency after $65$ms. This result corroborates our earlier 
+observation where using SSDs lowers the write latency and results in
+lower t-visibility when compared to using disks.  
+
+%These data strongly suggest that operators should strive to lower
+%(relative) \texttt{W} latencies.  While databases could artificially
+%delay read latencies, this is problematic for read-heavy workloads and
+%potentially introduces queuing effects for reads and writes.
+
+%As \textit{WARS} predicted, 
 
 \begin{figure}
 \centering
@@ -1102,27 +1114,52 @@ chance of consistency after $65$ms.
 \label{fig:varydelay}
 \end{figure}
 
-These data strongly suggest that operators should strive to lower
-(relative) \texttt{W} latencies.  While databases could artificially
-delay read latencies, this is problematic for read-heavy workloads and
-potentially introduces queuing effects for reads and writes.
+\subsection{Changing the number of replicas}
 
-For $N$ greater than three, $R$$=$$W$$=$$1$ leads to increased
-staleness (Figure~\ref{fig:varyn}).  
-
-
+We consider how changing the number of replicas (N) affects
+$t$-visibility while maintaining $R$$=$$W$$=$$1$. The results, in
+Figure~\ref{fig:varyn}, show that the probability of consistency
+decreases with larger $N$ for reads happening immediately after writes. 
+However the $t$-visibility for $99.9\%$ consistency converges to the
+same value as we increase $N$ for \texttt{LNKD-SSD} and
+\texttt{LNKD-DISK}. This shows even if we choose to maintain a 
+large number of replicas for availability or better performance, the
+$t$-visibility staleness will not be worse at higher consistency
+probabilities. For the \texttt{YMMR} workload, the $t$-visibility at 
+$99.9\%$ consistency ranges from $29ms$ for 2 replicas to $40ms$ for 10
+replicas. We believe the difference is larger due to the longer tail
+in the write latency distribution.
 
 \begin{figure*}
 \centering
-\subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-LNKD-DISK.pdf}}
+\subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-lnkd-disk.pdf}}
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-LNKD-SSD.pdf}}
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-YMMR.pdf}}
 \caption{$t$-visibility for production operating latencies for variable $N$ and $R$$=$$W$$=$$1$.}
 \label{fig:varyn}
 \end{figure*}
 
+\subsection{Latency vs. $t$-visibility}
 
-Table~\ref{table:lat-stale} shows latencies and $t$-visibility for a $99.9\%$ probability of strong consistency.
+In choosing a value for $R$ and $W$, we are making a trade-off
+between latency and the $t$-visibility observed by reads. To study 
+the latency gains that can be obtained, we studied this trade-off in the context 
+of a configuration where the probability of consistent reads was set 
+to $99.9\%$. We measured the $99.9$ percentile read, write latencies.
+The results for various latency distributions and 
+$R$, $W$ values is shown in Table~\ref{table:lat-stale}. 
+For \texttt{YMMR} we find that though the best setting in terms of
+latency is $W$$=$$R$$=$$2$, this configuration has a high value for
+$t$-visibility. However by setting $R$$=$$2$ and $W$$=$$1$, the 
+$t$-visibility reduces to $3ms$ and the latency reduces by $55.4\%$ 
+when with a compared to an overlapping quorum with $W$$=$$R$$=$$2$. 
+Similarly, in the case of 
+\texttt{LNKD-SSD} and \texttt{LNKD-DISK} we see by adjusting the value
+of $R$ and $W$, latencies can reduce by up to $39\%$ and $48.7\%$ 
+with $t$-visiblity of $2.42ms$ and $11.6ms$ respectively. 
+These numbers indicate that there are significant latency gains when 
+we use lower values of $R$, $W$ and that $t$-visiblity is
+low even when we require a high percentage ($99.9\%$) of reads to be consistent.
 
 \begin{table*}
 \begin{center}
