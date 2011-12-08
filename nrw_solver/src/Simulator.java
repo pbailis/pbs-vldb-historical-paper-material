@@ -230,7 +230,7 @@ class StaleCalc
             readlats.set(repNo, -1.0);
         }
 
-        return new ReadResult(w_t, sortedreads.get(R-1), !current);
+        return new ReadResult(sortedreads.get(R-1), w_t, !current);
     }
 }
 
