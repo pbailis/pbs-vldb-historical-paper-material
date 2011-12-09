@@ -1,5 +1,5 @@
 \documentclass{vldb}
-\usepackage{graphicx, subfigure}
+\usepackage{graphicx, subfigure, multirow}
 \usepackage{balance, url, amsfonts, verbatim, mathtools, draftwatermarktop, draftwatermarkbottom}  % for  \balance command ON LAST PAGE  (only there!)
 
 
@@ -890,8 +890,8 @@ Cassandra across 5000 writes, we reconstructed the latency
 distributions and repeated each experiment in simulation.  On average,
 our Monte Carlo simulations predicted $<k,t>$ staleness within XX\% of
 the observed staleness.  As shown in Figure \ref{fig:fits}, our
-simulation has no greater than YY\% inaccuracy for any given $<k,t>$
-staleness prediction.  We attribute this inaccuracy to sample size.
+simulation is accurate for $t$-visibility for $t\in\{1,\cdots,199\}$ with
+RMSE=0.0023.  We attribute this inaccuracy to sample size.
 
 
 \subsection{Production Latency Distributions}
@@ -1021,16 +1021,34 @@ of 1 seek, between 1-3 seeks), and writes to the BerkeleyDB Java
 Edition backend are flushed every 30 seconds or 20
 megabytes---whichever comes first.  Accordingly, we kept the same
 \texttt{A}=\texttt{R}=\texttt{S} as in \texttt{LNKD-SSD} but
-calculated \texttt{W} separately.  Both of the
-distributions were exponentially distributed:\vspace{-2mm}
+calculated \texttt{W} separately.  
 
-\begin{equation*}
- \begin{array}{rll}
-\texttt{LNKD-SSD} \rightarrow & \texttt{W} = \texttt{A}= \texttt{R} = \texttt{S}: & \lambda = 3.28\\
-\texttt{LNKD-DISK} \rightarrow & \texttt{W}: & \lambda = .1861\\
-&  \texttt{A} = \texttt{R} = \texttt{S}: & \lambda = 3.28$$\\
-\end{array}
-\end{equation*}
+\begin{table}
+\centering
+\begin{tabular}{|c|r|}
+\hline
+\multirow{4}{*}{\texttt{LNKD-SSD}} & \multicolumn{1}{|l|}{$\texttt{W} = \texttt{A}= \texttt{R} = \texttt{S}:$} \\
+& 8.78\%: Exponential, $\lambda = 1.66$ \\
+& 91.22\%: Pareto, $x_m=.235, \alpha=10$\\
+& N-RMSE: .55\%\\\hline
+\multirow{4}{*}{\texttt{LNKD-DISK}} & \multicolumn{1}{|l|}{$\texttt{A}= \texttt{R} = \texttt{S}: \texttt{LNKD-SSD}$}\\\cline{2-2}
+& \multicolumn{1}{|l|}{\texttt{W}:}\\
+& \hfill 62\%: Exponential, $\lambda = .183$ \\
+& 38\%: Pareto, $x_m=1.05, \alpha=1.51$\\
+& N-RMSE: .26\%\\
+\hline
+\multirow{8}{*}{\texttt{YMMR}} & \multicolumn{1}{|l|}{\texttt{W}:} \\
+& 6.1\%: Exponential, $\lambda = .0028$ \\
+& 93.9\%: Pareto, $x_m=3, \alpha=3.35$\\
+& N-RMSE: 1.84\%\\\cline{2-2}
+& \multicolumn{1}{|l|}{$\texttt{A}= \texttt{R} = \texttt{S}:$}\\
+& 1.8\%: Exponential, $\lambda=.0217$\\
+& 98.2\%: Pareto, $x_m=1.5, \alpha=3.8$\\
+& N-RMSE: .06\%\\
+\hline
+\end{tabular}
+\end{table}
+
 
 Yammer provided distributions for a single configuration but separated
 read from write latencies, which we denote \texttt{YMMR}.  Using our
@@ -1038,15 +1056,7 @@ IID assumptions, we fit single-node latency distributions to the
 provided distributions, again assuming symmetric \texttt{A},
 \texttt{R}, and \texttt{S}.  The data fit a Pareto distribution,
 although we opted to fit the body latencies ($p<.99)$ over the tail
-latencies.  A mixed Gaussian distribution would help solve this
-problem.\vspace{-2mm}
-
-\begin{equation*}
- \begin{array}{rll}
-   \texttt{YMMR} \rightarrow  & \texttt{W}: & x_m = 2.7, \alpha=2.34\\
-     & \texttt{A}= \texttt{R} = \texttt{S}: & x_m=1.385, \alpha=2.866\\
-    \end{array}
-\end{equation*}
+latencies.
 
 
 \begin{figure*}[t!]
@@ -1206,17 +1216,17 @@ consistent.
 &\multicolumn{1}{|c}{$L_r$}  & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{$L_r$} & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{$L_r$} & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{$L_r$} & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} \\\hline
 
 \multicolumn{1}{|c|}{$R$$=$$1$, $W$$=$$1$}
-& 5.82 & 9.71 & 41.0 & 21.82 & 52.92 & 108.0 & 1.19 & 1.2 & 2.0 & 1.18 & 13.07 & 34.0 \\
+& 5.61 & 10.86 & 1377.0 & 3.42 & 57.34 & 114.0 & 0.65 & 0.65 & 2.0 & 0.66 & 10.98 & 47.0 \\
 \multicolumn{1}{|c|}{$R$$=$$1$, $W$$=$$2$}
-& 5.9 & 17.75 & 38.0 & 22.07 & 164.76 & 0 & 1.19 & 1.84 & 2.0 & 1.19 & 22.03 & 30.0 \\
+& 5.58 & 435.68 & 1362.0 & 3.41 & 167.68 & 0 & 0.66 & 1.63 & 2.0 & 0.66 & 20.89 & 45.0 \\
 \multicolumn{1}{|c|}{$R$$=$$2$, $W$$=$$1$}
-& 9.16 & 9.96 & 4.0 & 158.19 & 54.1 & 24.0 & 1.79 & 1.19 & 1.0 & 1.82 & 13.04 & 16.0 \\
+& 32.95 & 10.74 & 168.0 & 76.29 & 54.2 & 31.0 & 1.61 & 0.66 & 0 & 1.62 & 10.98 & 15.0 \\
 \multicolumn{1}{|c|}{$R$$=$$2$, $W$$=$$2$}
-& 9.46 & 17.49 & 0 & 157.96 & 164.78 & 0 & 1.82 & 1.8 & 0 & 1.85 & 22.03 & 0 \\
+& 32.18 & 428.81 & 0 & 76.28 & 167.68 & 0 & 1.64 & 1.63 & 0 & 1.64 & 20.97 & 0 \\
 \multicolumn{1}{|c|}{$R$$=$$3$, $W$$=$$1$}
-& 28.81 & 9.91 & 0 & 179.17 & 55.92 & 0 & 3.19 & 1.18 & 0 & 3.21 & 12.74 & 0 \\
+& 218.24 & 10.77 & 0 & 78.85 & 54.5 & 0 & 4.11 & 0.66 & 0 & 4.13 & 10.92 & 0 \\
 \multicolumn{1}{|c|}{$R$$=$$1$, $W$$=$$3$}
-& 5.75 & 85.61 & 0 & 23.27 & 230.1 & 0 & 1.18 & 3.21 & 0 & 1.17 & 43.93 & 0 \\
+& 5.62 & 1848.9 & 0 & 3.45 & 242.39 & 0 & 0.66 & 4.11 & 0 & 0.66 & 111.93 & 0 \\
 \hline
 \end{tabular}
 \caption{$t$-visibility for $p_{staler} = .001$ ($99.9\%$ probability of consistency) and $99.9\%$ read ($L_r$) and write latency ($L_w$ across $R$ and $W$, $N$$=$$3$. (Note: table under construction).}
