@@ -503,6 +503,17 @@ public class Simulator {
           }
       }
 
+      boolean medium_time = false;
+
+      for(int i = 0; i < args.length; ++i)
+      {
+          if(args[i].equals("M"))
+          {
+              medium_time = true;
+              break;
+          }
+      }
+
       if(optsinput.equals("LATS"))
       {
           Vector<Double> reads = new Vector<Double>();
@@ -516,7 +527,7 @@ public class Simulator {
 
           System.out.println("WRITE");
           Collections.sort(writes);
-          for(double p = 0; p < 1; p += 1)
+          for(double p = 0; p < 1; p += .01)
           {
               int index = (int)Math.round(p*writes.size());
               if(index >= writes.size())
@@ -573,9 +584,16 @@ public class Simulator {
                   times.add(t);
               }
           }
-          else
+          else if(medium_time)
           {
               for(double t = 0; t < 150; t+=.1)
+              {
+                  times.add(t);
+              }
+          }
+          else
+          {
+              for(double t = 0; t < 200; t+=1)
               {
                   times.add(t);
               }
