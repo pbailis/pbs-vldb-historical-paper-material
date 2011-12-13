@@ -321,7 +321,7 @@ class ReadResult
 
 class StaleCalc
 {
-    public static ReadResult calc_stale(int N, int R, int W, DelayModel delay, double t, boolean multidc, double dcdelay)
+    public static ReadResult calc_stale(int N, int R, int W, DelayModel delay, double t, boolean multidc, double dcdelay, Random rand)
     {
         Vector<Double> Ws = new Vector<Double>();
         Vector<Double> writelats = new Vector<Double>();
@@ -331,8 +331,8 @@ class StaleCalc
         int chosenRDC = -1, chosenWDC = -1;
         if(multidc)
         {
-            chosenRDC = (new Random()).nextInt(N);
-            chosenWDC = (new Random()).nextInt(N);
+            chosenRDC = rand.nextInt(N);
+            chosenWDC = rand.nextInt(N);
         }
 
         for(int rep = 0; rep < N; ++rep)
@@ -363,9 +363,8 @@ class StaleCalc
             readlats.add(thisR+thisS);
         }
 
-        Vector<Double> sortedwrites = (Vector<Double>)writelats.clone();
-        Collections.sort(sortedwrites);
-        double w_t = sortedwrites.get(W-1);
+        Collections.sort(writelats);
+        double w_t = writelats.get(W-1);
 
         Vector<Double> sortedreads = (Vector<Double>)readlats.clone();
         Collections.sort(sortedreads);
@@ -515,13 +514,15 @@ public class Simulator {
           }
       }
 
+      Random rand = new Random();
+
       if(optsinput.equals("LATS"))
       {
           Vector<Double> reads = new Vector<Double>();
           Vector<Double> writes = new Vector<Double>();
           for(int i = 0; i < ITERATIONS; ++i)
           {
-              ReadResult r = StaleCalc.calc_stale(N, R, W, delaymodel,  0, multidc, dcdelay);
+              ReadResult r = StaleCalc.calc_stale(N, R, W, delaymodel,  0, multidc, dcdelay, rand);
               reads.add(r.getRlat());
               writes.add(r.getWlat());
           }
@@ -605,7 +606,7 @@ public class Simulator {
               int stales = 0;
               for(int i = 0; i < ITERATIONS; ++i)
               {
-                  ReadResult r = StaleCalc.calc_stale(N, R, W, delaymodel, ts, multidc, dcdelay);
+                  ReadResult r = StaleCalc.calc_stale(N, R, W, delaymodel, ts, multidc, dcdelay, rand);
 
                   if(r.stale)
                       stales++;
