@@ -2,22 +2,22 @@
 \begin{abstract}
 
 Modern storage systems employing quorum replication are often
-configured to use partial, or non-strict quorums.  These systems wait
+configured to use partial, non-strict quorums.  These systems wait
 only for a subset of their replicas to respond to a request before
-returning an answer without guaranteeing that read and write sets
-overlap.  While these real-world partial quorum mechanisms provide
-only basic eventual consistency guarantees, these configurations are
-frequently ``good enough'' for practitioners given their latency
-benefits. In this work, we discuss why partial quorums are often
-acceptable in practice by analyzing the staleness of data they return.
-Extending prior work on strongly consistent probabilistic quorums and
-using the models of anti-entropic Dynamo-style processes, we introduce
-Probabilistically Bounded Staleness (PBS) consistency, which provides
-expectations of bounds on staleness across both versions and wall
-clock time.  We derive a closed-form solution for versioned staleness
-and model real-time staleness for representative Dynamo-style systems
-under internet-scale production workloads.  We quantitatively
-demonstrate why, in practice, systems employing non-strict quorums
-rarely serve inconsistent data.
+returning an answer, without guaranteeing that read and write replica
+sets overlap.  While these partial quorum mechanisms provide only
+basic eventual consistency guarantees, with no limit to the recency of
+data returned, these configurations are frequently ``good enough'' for
+practitioners given their latency benefits. In this work, we discuss
+why partial quorums are often acceptable in practice by analyzing the
+staleness of data they return.  Extending prior work on strongly
+consistent probabilistic quorums and using models of Dynamo-style
+anti-entropy processes, we introduce Probabilistically Bounded
+Staleness (PBS) consistency, which provides expectations of bounds on
+staleness across both versions and wall clock time.  We derive a
+closed-form solution for versioned staleness and model real-time
+staleness for representative Dynamo-style systems under internet-scale
+production workloads.  We quantitatively demonstrate why, in practice,
+systems employing partial quorums often serve consistent data.
 
 \end{abstract}
