@@ -382,23 +382,6 @@ actively employ them in gossip-based anti-entropy.  For example,
 Cassandra only executes Merkle tree anti-entropy when it is manually
 requested (e.g., \texttt{nodetool repair})~\cite{cassandra-merkle}.
 
-\begin{comment}
-\url{http://wiki.apache.org/cassandra/Operations#Repairing_missing_or_inconsistent_data}
-\end{comment}
-
-This prior work has two properties with important implications for
-practitioners.  First, existing theory treats quorum sizes as fixed; a
-write quorum is chosen and no other replicas in the system
-subsequently learn about the value unless it is written again.  The
-theory does not account for propagation of versions across time and
-between replicas (anti-entropic processes).  Second, much of this
-prior work assumes Byzantine failure.  If the description of prior
-work seemed simplistic, it is largely because most of the literature
-content addresses problems such as adversarial quorum selection and
-scheduling.  In this work, we re-evaluate both of these assumptions.
-We elaborate further in the next subsection.
-
-
 There are significant differences between data systems in the wild and
 the theory describing quorum operation.  First, replication factors
 for distributed data systems are relatively low.  Typical replication
@@ -1276,7 +1259,10 @@ consistent.
 & 5.63 & 1870.86 & 0 & 3.45 & 241.19 & 0 & 0.65 & 4.09 & 0 & 0.65 & 112.65 & 0 \\
 \hline
 \end{tabular}
-\caption{$t$-visibility for $p_{staler} = .001$ ($99.9\%$ probability of consistency) and $99.9\%$ read ($L_r$) and write latency ($L_w$ across $R$ and $W$, $N$$=$$3$. (Note: table under construction).}
+\caption{$t$-visibility for $p_{staler} = .001$ ($99.9\%$ probability
+  of consistency for $50,000$ reads and writes) and $99.9\%$ read
+  ($L_r$) and write latency ($L_w$) across $R$ and $W$, $N$$=$$3$
+  ($1M$ reads and writes).}
 \label{table:lat-stale}
 \end{table*}
 
