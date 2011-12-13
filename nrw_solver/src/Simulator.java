@@ -96,6 +96,162 @@ class ExponentialDelayModel implements DelayModel
     }
 }
 
+class YammerDelayModel implements DelayModel
+{
+    Random rand;
+
+    public YammerDelayModel()
+    {
+        this.rand = new Random();
+    }
+
+    double getNextExponential(double lambda)
+    {
+        return Math.log(1-rand.nextDouble())/(-lambda);
+    }
+
+    double getNextPareto(double m, double a)
+    {
+        return m / Math.pow(rand.nextDouble(), 1/a);
+    }
+
+    double getNextGaussian(double mean, double std)
+    {
+        return rand.nextGaussian()*std+mean;
+    }
+
+    public double getWriteSendDelay()
+    {
+        if(rand.nextDouble() < .061)
+        {
+            return getNextExponential(.0028);
+        }
+        else
+        {
+            return getNextPareto(3, 3.5);
+        }
+    }
+
+    public double getReadSendDelay()
+    {
+        if(rand.nextDouble() < .018)
+        {
+            return getNextExponential(.0217);
+        }
+        else
+        {
+            return getNextPareto(1.5, 3.8);
+        }
+    }
+
+    public double getWriteAckDelay()
+    {
+        return getReadSendDelay();
+    }
+
+    public double getReadAckDelay()
+    {
+        return getReadSendDelay();
+    }
+}
+
+class LinkedSSDDelay implements DelayModel
+{
+    Random rand;
+
+    public LinkedSSDDelay()
+    {
+        this.rand = new Random();
+    }
+
+    double getNextExponential(double lambda)
+    {
+        return Math.log(1-rand.nextDouble())/(-lambda);
+    }
+
+    double getNextPareto(double m, double a)
+    {
+        return m / Math.pow(rand.nextDouble(), 1/a);
+    }
+
+    public double getWriteSendDelay()
+    {
+        if(rand.nextDouble() < .0878)
+        {
+            return getNextExponential(1.66);
+        }
+        else
+        {
+            return getNextPareto(.235, 10.0);
+        }
+    }
+
+    public double getReadSendDelay()
+    {
+        return getWriteSendDelay();
+    }
+
+    public double getWriteAckDelay()
+    {
+        return getWriteSendDelay();
+    }
+
+    public double getReadAckDelay()
+    {
+        return getWriteSendDelay();
+    }
+}
+
+class LinkedDiskDelay implements DelayModel
+{
+    Random rand;
+    LinkedSSDDelay ssd;
+
+    public LinkedDiskDelay()
+    {
+        this.rand = new Random();
+        ssd = new LinkedSSDDelay();
+    }
+
+    double getNextExponential(double lambda)
+    {
+        return Math.log(1-rand.nextDouble())/(-lambda);
+    }
+
+    double getNextPareto(double m, double a)
+    {
+        return m / Math.pow(rand.nextDouble(), 1/a);
+    }
+
+    public double getWriteSendDelay()
+    {
+        if(rand.nextDouble() < .62)
+        {
+            return getNextExponential(.183);
+        }
+        else
+        {
+            return getNextPareto(1.05, 1.51);
+        }
+    }
+
+    public double getReadSendDelay()
+    {
+        return ssd.getReadSendDelay();
+    }
+
+    public double getWriteAckDelay()
+    {
+        return ssd.getWriteAckDelay();
+    }
+
+    public double getReadAckDelay()
+    {
+        return ssd.getReadAckDelay();
+    }
+}
+
+
 class EmpiricalDelayModel implements DelayModel
 {
     LatencyModel ackLatencyModel;
@@ -200,7 +356,7 @@ class StaleCalc
             if(multidc && rep != chosenRDC)
             {
                 thisR += dcdelay;
-                thisA += dcdelay;
+                thisS += dcdelay;
             }
 
             Rs.add(thisR);
@@ -282,6 +438,24 @@ public class Simulator {
               delaymodel = new ExponentialDelayModel(Double.parseDouble(args[8]),
                                                 Double.parseDouble(args[9]));
           }
+          else if(args[7].equals("YMMR"))
+          {
+              delaymodel = new YammerDelayModel();
+          }
+          else if(args[7].equals("LNKD-SSD"))
+          {
+              delaymodel = new LinkedSSDDelay();
+          }
+          else if(args[7].equals("LNKD-DISK"))
+          {
+              delaymodel = new LinkedDiskDelay();
+          }
+          else if(args[7].equals("WAN"))
+          {
+              delaymodel = new LinkedDiskDelay();
+              multidc = true;
+              dcdelay = 75.0;
+          }
       }
       catch(Exception e)
       {
@@ -318,6 +492,17 @@ public class Simulator {
           }
       }
 
+      boolean long_time = false;
+
+      for(int i = 0; i < args.length; ++i)
+      {
+          if(args[i].equals("L"))
+          {
+              long_time = true;
+              break;
+          }
+      }
+
       if(optsinput.equals("LATS"))
       {
           Vector<Double> reads = new Vector<Double>();
@@ -331,7 +516,7 @@ public class Simulator {
 
           System.out.println("WRITE");
           Collections.sort(writes);
-          for(double p = 0; p < 1; p += .01)
+          for(double p = 0; p < 1; p += 1)
           {
               int index = (int)Math.round(p*writes.size());
               if(index >= writes.size())
@@ -381,9 +566,16 @@ public class Simulator {
                   times.add(t);
               }
           }
+          else if(long_time)
+          {
+              for(double t = 1; t < 1500; t++)
+              {
+                  times.add(t);
+              }
+          }
           else
           {
-              for(double t = 0; t < 200; t++)
+              for(double t = 0; t < 150; t+=.1)
               {
                   times.add(t);
               }
