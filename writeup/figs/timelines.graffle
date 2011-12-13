@@ -62,7 +62,7 @@
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -91,7 +91,7 @@
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -120,7 +120,7 @@
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -149,7 +149,7 @@
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -178,7 +178,7 @@
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -203,7 +203,7 @@
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{34.967773, 108.09962}, {15, 17}}</string>
+			<string>{{34.967773, 108.09962}, {17, 16}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -213,7 +213,7 @@
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -245,7 +245,7 @@
 				<integer>0</integer>
 				<key>Text</key>
 				<string>{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf230
-{\fonttbl\f0\fnil\fcharset0 HelveticaNeue-Light;}
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;}
 {\colortbl;\red255\green255\blue255;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
 
@@ -258,7 +258,7 @@
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{99.573235, 126.70997}, {72.90625, 30}}</string>
+			<string>{{99.573235, 126.70997}, {72.90625, 28}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -268,7 +268,7 @@
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -300,7 +300,7 @@
 				<integer>0</integer>
 				<key>Text</key>
 				<string>{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf230
-{\fonttbl\f0\fnil\fcharset0 HelveticaNeue-Light;}
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;}
 {\colortbl;\red255\green255\blue255;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
 
@@ -312,7 +312,7 @@ read}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{262.64154, 126.70997}, {72.90625, 30}}</string>
+			<string>{{262.64154, 126.70997}, {72.90625, 28}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -322,7 +322,7 @@ read}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -354,7 +354,7 @@ read}</string>
 				<integer>0</integer>
 				<key>Text</key>
 				<string>{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf230
-{\fonttbl\f0\fnil\fcharset0 HelveticaNeue-Light;}
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;}
 {\colortbl;\red255\green255\blue255;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
 
@@ -370,7 +370,7 @@ returns}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -400,7 +400,7 @@ returns}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -437,7 +437,7 @@ returns}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -462,7 +462,7 @@ returns}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{128.07228, 79.439262}, {92.966797, 14}}</string>
+			<string>{{128.07228, 79.439262}, {92.966797, 13}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -472,7 +472,7 @@ returns}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -504,7 +504,7 @@ returns}</string>
 				<integer>0</integer>
 				<key>Text</key>
 				<string>{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf230
-{\fonttbl\f0\fnil\fcharset0 LucidaGrande;}
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;}
 {\colortbl;\red255\green255\blue255;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
 
@@ -519,7 +519,7 @@ returns}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -559,7 +559,7 @@ returns}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -584,7 +584,7 @@ returns}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{176.63185, 126.76856}, {72.90625, 30}}</string>
+			<string>{{176.63185, 126.76856}, {72.90625, 28}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -594,7 +594,7 @@ returns}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -626,7 +626,7 @@ returns}</string>
 				<integer>0</integer>
 				<key>Text</key>
 				<string>{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf230
-{\fonttbl\f0\fnil\fcharset0 HelveticaNeue-Light;}
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;}
 {\colortbl;\red255\green255\blue255;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
 
@@ -642,7 +642,7 @@ initiated}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -671,7 +671,7 @@ initiated}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -700,7 +700,7 @@ initiated}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -729,7 +729,7 @@ initiated}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -758,7 +758,7 @@ initiated}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -787,7 +787,7 @@ initiated}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -816,7 +816,7 @@ initiated}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -841,7 +841,7 @@ initiated}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{34.467773, 193.59998}, {16, 17}}</string>
+			<string>{{34.467773, 193.59998}, {17, 16}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -851,7 +851,7 @@ initiated}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -883,7 +883,7 @@ initiated}</string>
 				<integer>0</integer>
 				<key>Text</key>
 				<string>{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf230
-{\fonttbl\f0\fnil\fcharset0 HelveticaNeue-Light;}
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;}
 {\colortbl;\red255\green255\blue255;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
 
@@ -896,7 +896,7 @@ initiated}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{99.573235, 212.21033}, {72.90625, 30}}</string>
+			<string>{{99.573235, 212.21033}, {72.90625, 28}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -906,7 +906,7 @@ initiated}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -938,7 +938,7 @@ initiated}</string>
 				<integer>0</integer>
 				<key>Text</key>
 				<string>{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf230
-{\fonttbl\f0\fnil\fcharset0 HelveticaNeue-Light;}
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;}
 {\colortbl;\red255\green255\blue255;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
 
@@ -950,7 +950,7 @@ read}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{306.58182, 151.51566}, {125.26791, 15}}</string>
+			<string>{{306.58182, 151.51566}, {125.26791, 14}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -960,7 +960,7 @@ read}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -994,7 +994,7 @@ read}</string>
 				<integer>0</integer>
 				<key>Text</key>
 				<string>{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf230
-{\fonttbl\f0\fnil\fcharset0 HelveticaNeue-Light;}
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;}
 {\colortbl;\red255\green255\blue255;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
 
@@ -1006,7 +1006,7 @@ Version Timelines}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{262.6416, 212.21033}, {72.90625, 30}}</string>
+			<string>{{262.6416, 212.21033}, {72.90625, 28}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -1016,7 +1016,7 @@ Version Timelines}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -1048,7 +1048,7 @@ Version Timelines}</string>
 				<integer>0</integer>
 				<key>Text</key>
 				<string>{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf230
-{\fonttbl\f0\fnil\fcharset0 HelveticaNeue-Light;}
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;}
 {\colortbl;\red255\green255\blue255;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
 
@@ -1064,7 +1064,7 @@ returns}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -1094,7 +1094,7 @@ returns}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -1131,7 +1131,7 @@ returns}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -1156,7 +1156,7 @@ returns}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{128.07227, 164.93964}, {92.966797, 30}}</string>
+			<string>{{128.07227, 164.93964}, {92.966797, 28}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -1166,7 +1166,7 @@ returns}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -1198,14 +1198,14 @@ returns}</string>
 				<integer>0</integer>
 				<key>Text</key>
 				<string>{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf230
-{\fonttbl\f0\fnil\fcharset0 LucidaGrande;\f1\fnil\fcharset0 HelveticaNeue-Light;}
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;}
 {\colortbl;\red255\green255\blue255;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
 
 \f0\fs22 \cf0 1+\uc0\u947 
-\f1\fs24 gw/
-\f0\fs22 \uc0\u947 
-\f1\fs24 cr\
+\fs24 gw/
+\fs22 \uc0\u947 
+\fs24 cr\
 }</string>
 				<key>VerticalPad</key>
 				<integer>0</integer>
@@ -1217,7 +1217,7 @@ returns}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -1257,7 +1257,7 @@ returns}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -1282,7 +1282,7 @@ returns}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{176.63184, 212.26892}, {72.90625, 30}}</string>
+			<string>{{176.63184, 212.26892}, {72.90625, 28}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -1292,7 +1292,7 @@ returns}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -1324,7 +1324,7 @@ returns}</string>
 				<integer>0</integer>
 				<key>Text</key>
 				<string>{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf230
-{\fonttbl\f0\fnil\fcharset0 HelveticaNeue-Light;}
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;}
 {\colortbl;\red255\green255\blue255;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc
 
@@ -1340,7 +1340,7 @@ initiated}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -1369,7 +1369,7 @@ initiated}</string>
 			<key>FontInfo</key>
 			<dict>
 				<key>Font</key>
-				<string>HelveticaNeue-Light</string>
+				<string>ArialMT</string>
 				<key>Size</key>
 				<real>12</real>
 			</dict>
@@ -1440,7 +1440,7 @@ initiated}</string>
 	<key>MasterSheets</key>
 	<array/>
 	<key>ModificationDate</key>
-	<string>2011-12-13 06:05:46 +0000</string>
+	<string>2011-12-13 21:14:35 +0000</string>
 	<key>Modifier</key>
 	<string>Peter Bailis</string>
 	<key>NotesVisible</key>
