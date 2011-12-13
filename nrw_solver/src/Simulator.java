@@ -363,8 +363,9 @@ class StaleCalc
             readlats.add(thisR+thisS);
         }
 
-        Collections.sort(writelats);
-        double w_t = writelats.get(W-1);
+        Vector<Double> sortedwrites = (Vector<Double>)writelats.clone();
+        Collections.sort(sortedwrites);
+        double w_t = sortedwrites.get(W-1);
 
         Vector<Double> sortedreads = (Vector<Double>)readlats.clone();
         Collections.sort(sortedreads);
