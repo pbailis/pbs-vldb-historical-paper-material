@@ -327,7 +327,7 @@ guaranteed strongly consistent data when $R+W > N$.  Setting $W>\lceil
 N/2 \rceil$ ensures that a majority of replicas will receive a value
 in the presence of multiple concurrent writes.
 
-For improved latency, operators often set $R+W \leq N$.  Cassandra's
+For improved latency, operators often set $R+W \leq N$. Cassandra's
 default operation configuration is $N$$=$$3$,
 $R$$=$$W$$=$$1$~\cite{cassandradefault}. The Apache Cassandra 1.0
 Documentation claims that ``a majority of users do writes at
@@ -335,16 +335,20 @@ consistency level [$W$$=$$1$]'', while the Cassandra Query Language
 defaults to $R$$=$$W$$=$$1$ as well~\cite{cassandra-docs}.  Production
 Cassandra users report using $R$$=$$W$$=$$1$ in the ``general case''
 because it provides ``maximum performance''~\cite{maxperfblog}, which
-appears to be a commonly held belief~\cite{reddit, outbrain}.  Riak
+appears to be a commonly held belief~\cite{reddit, outbrain}.
+Cassandra has a ``minor'' patch for session guarantees, but this has
+not yet been integrated into the mainline
+source~\cite{cassandra-session} as of version 1.0; according to our
+discussions with developers, this is due to lack of interest. Riak
 defaults to $N$$=$$3$, $R$$=$$W$$=$$2$~\cite{riakdefault-n,
-  riakdefault-rw}.  Voldemort does not provide sample configurations,
-but Voldemort's authors (and operators) at LinkedIn~\cite{feinbergpc}
-often choose $N$$=$$c$, $R$$=$$W$$=$$ \lceil c/2 \rceil$ for odd $c$.
-However, for applications requiring ``very low latency and high
-availability,'' LinkedIn deploys Voldemort with $N$$=$$3$,
-$R$$=$$W$$=$$1$.  For other applications, LinkedIn deployments
-Voldemort with $N$$=$$2$, $R$$=$$W$$=$$1$, providing ``some
-consistency,'' particularly when $N$$=$$3$ replication is not
+  riakdefault-rw}.  Finally, Voldemort does not provide sample
+configurations, but Voldemort's authors (and operators) at
+LinkedIn~\cite{feinbergpc} often choose $N$$=$$c$, $R$$=$$W$$=$$
+\lceil c/2 \rceil$ for odd $c$.  However, for applications requiring
+``very low latency and high availability,'' LinkedIn deploys Voldemort
+with $N$$=$$3$, $R$$=$$W$$=$$1$.  For other applications, LinkedIn
+deployments Voldemort with $N$$=$$2$, $R$$=$$W$$=$$1$, providing
+``some consistency,'' particularly when $N$$=$$3$ replication is not
 required.  Additionally, Voldemort supports a concept of preferred
 reads and writes, meaning it will block until either the preferred
 number of replicas respond or a timeout occurs, at which point the
