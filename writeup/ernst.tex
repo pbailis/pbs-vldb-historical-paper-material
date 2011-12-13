@@ -405,7 +405,7 @@ In this section, we introduce the theory of Probabilistically Bounded
 Staleness to describe the consistency provided by existing eventually
 consistent data stores.  PBS extends prior work on
 probabilistic quorums by accounting for staleness of both versions and
-across time.  We introduce the notions of PBS $k$-quorums, which
+across time.  We introduce the notions of PBS $k$-staleness, which
 stochastically limit the staleness of versions returned by read
 quorums, PBS $t$-visibility, which stochastically bounds the time
 before a committed version appears to readers, and PBS $<k,
@@ -425,17 +425,17 @@ however we model Dynamo-style quorums in Section
 \ref{sec:dynamo}. We discuss further refinements to our
 assumptions in Section \ref{sec:discussion}.
 
-\subsection{PBS $k$-quorums}
+\subsection{PBS $k$-staleness}
 
 Probabilistic quorums allow us to determine the probability of
 returning the most recent value written to the database, but do not
 tell us what happens when the most recent value is not returned.
 Here, we determine the probability of returning a value within a
-bounded number of versions.  In the following model, we consider static
+bounded number of versions.  In the following model, we non-expanding 
 write quorums (no anti-entropy) and compose multiple independent write
 quorums to model the probable overlap of $k$ independent write sets.
 \begin{definition}
-A quorum system obeys \textit{PBS $k$-quorum consistency} if, with
+A quorum system obeys \textit{PBS $k$-staleness consistency} if, with
 probability $1-p_{staler}$, at least one value in any read quorum will
 have been committed no later than $k$ versions after the latest committed
 version when the read begins.
@@ -449,7 +449,7 @@ these as $k$-regular semantics~\cite{non-strict}.
 \centering
 \includegraphics[width=\columnwidth]{figs/timelines.pdf}
 \caption{Possible versions returned by read operations under
-  PBS $k$-quorums (A) and PBS monotonic reads (B). In
+  PBS $k$-staleness (A) and PBS monotonic reads (B). In
   $k$-consistency, the read operation will return a version no later
   than $k$ versions older than the last committed value when it
   started; more versions may be committed during the read and may be
@@ -511,11 +511,12 @@ monotonic reads by requiring that, if a more recent data version is
 available, it is returned.
 
 We observe that monotonic reads is a special case of PBS $k$-quorums
-where $k$ is determined by a client's rate of reads from a data item
-($\gamma_{cr}$) and the global, system-wide rate of writes to the same
-data item ($\gamma_{gw}$).  If we know these rates exactly, the number
-of versions between client reads is $\frac{\gamma_{gw}}{\gamma_{cr}}$,
-as shown in Figure \ref{fig:timelines}B.  We can calculate the
+(see Figure~\ref{fig:timelines}B), where $k$ is determined by a
+client's rate of reads from a data item ($\gamma_{cr}$) and the
+global, system-wide rate of writes to the same data item
+($\gamma_{gw}$).  If we know these rates exactly, the number of
+versions between client reads is $\frac{\gamma_{gw}}{\gamma_{cr}}$, as
+shown in Figure \ref{fig:timelines}B.  We can calculate the
 probability of probabilistic monotonic reads as a special case of
 $k$-staleness where $k=1+\frac{\gamma_{gw}}{\gamma_{cr}}$.  For
 example, extending the example in Equation \ref{eq:k-consistency}:
@@ -1463,7 +1464,7 @@ Scott Shenker, Doug Terry, Greg Valiant, and Patrick Wendell,
 Ghodsi, who, in addition to providing feedback, originally piqued our
 interest in theoretical quorum systems.
 
-This work was supported in part by AMPLab gits from Google, SAP,
+This work was supported in part by AMPLab gifts from Google, SAP,
 Amazon Web Services, Cloudera, Ericsson, Huawei, IBM, Intel,
 MarkLogic, Microsoft, NEC Labs, NetApp, Oracle, Splunk, and VMware and
 by DARPA (contract \#FA8650-11-C-7136).  This material is based upon
