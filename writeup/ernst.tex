@@ -714,8 +714,10 @@ of staleness due to the possibility of reordering.
 Depending on which coordinator a client contacts, some reads and
 writes may be served locally.  In this case, subject to local query
 processing delays, a read or write to $R$ or $W$ nodes is behaves like
-a read or write to $R-1$ or $W-1$ nodes, respectively.  Modeling
-non-local (e.g., proxied) coordinators is a conservative analysis.
+a read or write to $R-1$ or $W-1$ nodes, respectively.  Although we do
+not do so, \textit{WARS} can be adopted to handle local reads and
+writes.  Proxying reads is conservative, while proxying writes may
+increase staleness.
 
 An individual client will likely incur additional time between its
 reads and writes due to latency required to contact the data store.
