@@ -62,11 +62,11 @@ returned, other than that the system will ``eventually'' return the
 most recent version in the absence of new writes.
 
 Distributed quorums can be used to ensure strong consistency across
-multiple replicas of a data item by overlapping read and write sets at
-the cost of latency. However, waiting for responses from the
-potentially large resulting quorum sizes increases operation latency,
-an important consideration for service operators. For example, at
-Amazon, 100 ms of additional latency resulted in 1\% drop in
+multiple replicas of a data item by overlapping read and write
+sets. However, waiting for responses from the potentially large
+resulting quorum sizes increases operation latency, an important
+consideration for service operators. For example, at Amazon, 100 ms of
+additional latency resulted in 1\% drop in
 sales~\cite{amazon-latency}, while 500 ms of additional latency in
 Google's search product resulted in a corresponding 20\% decrease in
 traffic~\cite{google-talk}.  At scale, these decreases correspond to
@@ -85,7 +85,7 @@ and variable-sized partial quorums, providing eventual consistency.
 
 Despite the weak guarantees provided by eventual consistency
 semantics~\cite{hamilton-cap, cops, walter}, operators frequently
-employ partial quorums~\cite{cassandra, feinbergpc}--they are often
+employ partial quorums~\cite{cassandra, feinbergpc, reddit}--they are often
 ``good enough'' for applications, given their latency benefits, which
 are especially important as latencies grow (e.g. a wide-area network
 scenario)~\cite{abadilatconsist, feinbergpc}.  Programs that possess
@@ -877,18 +877,17 @@ code---and instrumented parts of the database to provide timing
 information about reads and writes.  By analyzing Cassandra logs, we
 were able to reconstruct the latency distributions of write requests,
 write acknowledgements, read requests, and read responses.  We
-disabled read repair because \textit{WARS} is read-rate independent.
+disabled read repair because it is external to \textit{WARS}.
 
-We deployed Cassandra and compared the observed staleness to our
-predicted staleness for a number of configurations.  To provide a
-single point of order for the series of reads and writes in the
-system, we used $N+1$ Cassandra nodes for each experiment involving
-$N$ nodes.  After configuring the Cassandra schema, we determined the
-node that did not store the data and sent all requests through it,
-effectively creating a remote proxy.  \textit{WARS} is more general
-than the specific proxy configuration, however using a centralized
-proxy allows us to avoid most issues with clock skew between replicas
-and rely less heavily on globally synchronized clocks.
+To provide a single point of order for the series of reads and writes
+in the system, we used $N+1$ Cassandra nodes for each experiment
+involving $N$ nodes.  After configuring the Cassandra schema, we
+determined the node that did not store the data and sent all requests
+through it, effectively creating a remote proxy.  \textit{WARS} is
+more general than the specific proxy configuration, however using a
+centralized proxy allows us to avoid most issues with clock skew
+between replicas and rely less heavily on globally synchronized
+clocks.
 
 We ran Cassandra on a set of machines with 2.2GHz AMD Opteron 2214
 dual-core SMT processors with 4GB of 667MHz DDR2 memory serving
