@@ -23,6 +23,78 @@ year = {2006},
 pages = {70–-113}}
 } 
 
+@inproceedings{antientropy,
+ author = {Demers, Alan and Greene, Dan and Hauser, Carl and Irish, Wes and Larson, John and Shenker, Scott and Sturgis, Howard and Swinehart, Dan and Terry, Doug},
+ title = {Epidemic algorithms for replicated database maintenance},
+booktitle={PODC 1987}}
+
+@online{datastax,
+title = {{DataStax}},
+howpublished = "\url{http://www.datastax.com/}"}
+
+@online{cassandra-docs,
+title = {Apache Cassandra 1.0 Documentation: About Data Consistency in Cassandra},
+howpublished = "\url{http://www.datastax.com/docs/1.0/dml/data_consistency}"}
+
+@online{maxperfblog,
+author = {Dominic Williams},
+title = {{HBase vs Cassandra: why we moved}},
+note = {24 February 2010 (accessed 13 December 2011)},
+howpublished = "\url{http://ria101.wordpress.com/2010/02/24/hbase-vs-cassandra-why-we-moved}"}
+
+@online{outbrain,
+author = {{Outbrain Inc.}},
+title = {{Introduction to no:sql [sic] and Cassandra (and Outbrain)}},
+note = {January 2010},
+howpublished = "\url{https://docs.google.com/present/view?id=ahbp3bktzpkc_220f7v26vg7}"}
+
+@online{riaktalktwo,
+title = {Rolling with {Riak}},
+author = {John Lynch},
+note = {Talk presented at {SD Ruby} meeting (Podcast 81), 2010},
+howpublished = "\url{http://sdruby.org/podcast/81}"}
+
+@online{riaktalkone,
+title = {Consistency or Bust: Breaking a {Riak} Cluster},
+author = {Jeffrey Kirkell},
+howpublished = "\url{http://www.oscon.com/oscon2011/public/schedule/detail/19762}",
+note = {Talk at O'Reilly OSCON 2011, 27 July 2011}}
+
+@online{cassandradefault,
+title = {{Cassandra 1.0 Thrift Configuration}},
+howpublished = "\url{https://github.com/apache/cassandra/blob/cassandra-1.0/interface/cassandra.thrift}"}
+
+@online{cassandra-merkle,
+title = {Cassandra Wiki: Operations},
+howpublished =
+                  "\url{http://wiki.apache.org/cassandra/Operations#Repairing_missing_or_inconsistent_data}",
+note = {accessed 13 December 2011}}
+
+@incollection{nosql,
+author = {Adam Marcus},
+title = {{The NoSQL Ecosystem}},
+booktitle = {The Architecture of Open Source Applications},
+pages = {185--205},
+editor = {Amy Brown and Greg Wilson},
+year = {2011}}
+
+@online{reddit,
+author = {David King},
+title = {As \textit{keltranis}, comment on "reddit's now running on Cassandra"},
+note = {March 2010},
+howpublished = "\url{http://www.reddit.com/r/programming/comments/bcqhi/reddits_now_running_on_cassandra/c0m3wh6}"}
+
+@online{riakdefault-n,
+author= {{Basho Technologies, Inc.}},
+title = {Riak Wiki: Riak > Concepts > Replication},
+note = {Accessed 13 December 2011},
+howpublished = "\url{http://wiki.basho.com/Replication.html}"}
+
+@online{riakdefault-rw,
+author = {{Basho Technologies, Inc.}},
+title = {\texttt{riak\_kv} 1.0 Application},
+howpublished = "\url{https://github.com/basho/riak_kv/blob/1.0/src/riak_kv_app.erl}"}
+
 @online{abadi-cap,
 author = {Daniel Abadi},
 title = {{DBMS Musings: Problems with CAP, and Yahoo's little known NoSQL system}},
@@ -218,6 +290,11 @@ author = {Ittai Abraham and Dahlia Malkhi},
 title = {Probabilistic Quorums for Dynamic Systems (Extended Abstract)},
 booktitle = {DISC 2003}}
 
+@inproceedigns{piql,
+author = {Michael Armbrust and Kristal Curtis and Tim Kraska, Armando Fox and Michael J. Franklin and David A. Patterson},
+title = {Success-Tolerant Query Processing in the Cloud},
+booktitle = {VLDB 2012}}
+
 @article{vogels-defs,
  author = {Vogels, Werner},
  title = {Eventually consistent},
@@ -316,21 +393,26 @@ title = {{Project Voldemort}},
 howpublished="\url{http://project-voldemort.com/}"}
 
 @inproceedings {voldemortpub,
-title = {Project Voldemort: Reliable Distributed Storage},
+title = {{Project Voldemort}: Reliable Distributed Storage},
 author = {Alex Feinberg},
 booktitle = {ICDE 2011}}
 
-@inproceedings {nonstrict-availability,
-   author = {Aiyer, Amitanand and Alvisi, Lorenzo and Bazzi, Rida},
-   title = {On the Availability of Non-strict Quorum Systems},
-   booktitle={DISC 2005}
-}
 
 @INPROCEEDINGS{sessionguarantees,
     author = {Douglas B. Terry and Alan J. Demers and Karin Petersen and Mike J. Spreitzer and Marvin M. Theimer and Brent B. Welch},
     title = {Session Guarantees for Weakly Consistent Replicated Data},
     booktitle = {PDIS 1994}
 }
+
+@online{cassandra-session,
+howpublished = "\url{https://issues.apache.org/jira/browse/CASSANDRA-876}",
+title = {Apache Cassandra Jira: ``Support session (read-after-write) consistency''},
+note = {October 2010 (accessed 13 December 2011)}}
+
+@inproceedings{quorums-start,
+title = {Weighted Voting for Replicated Data},
+author = {David K. Gifford},
+booktitle = {SOSP 1979}}
 
 @inproceedings{cops,
    author = {Wyatt Lloyd and Michael J. Freedmand and Michael Kaminsky and
@@ -339,6 +421,25 @@ booktitle = {ICDE 2011}}
 	Wide-Area Storage with {COPS}},
    booktitle = {SOSP 2011},
 }
+
+@article{vectorclock,
+author = {Leslie Lamport},
+title = {Time, clocks, and the ordering of events in a distributed system},
+journal = {Communications of the ACM},
+volume = {21(7)},
+pages = {558--565},
+year = {1978}}
+
+@inproceedings{synch-clocks,
+title = {Practical Uses of Synchronized Clocks in Distributed Systems},
+author = {Barbara Liskov},
+booktitle = {PODC 1991}}
+
+@inproceedings{zookeeper,
+title = {{ZooKeeper}: Wait-free coordination for Internet-scale systems},
+author = {Patrick Hunt and Mahadev Konar and Flavio P. Junqueira and Benjamin Reed},
+booktitle = {USENIX ATC 2010}}
+
 
 @inproceedings{cassandra-sigmod,
 author = {A. Lakshman and  P. Malik and K. Ranganathan},

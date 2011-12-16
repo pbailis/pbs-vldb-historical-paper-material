@@ -405,3 +405,25 @@ versions stale.
 
 \end{appendix}
 \end{comment}
+
+
+
+In the language of the probabilistic quorum literature, we have
+constructed a PBS $k$-quorum from $k$ $\varepsilon$-quorum systems
+where $\varepsilon \leq \sqrt[k]{p_{staler}}$. This system has
+load~\cite[Definition 3.2]{quorumsystems} $\geq
+\frac{1-\varepsilon^{\frac{1}{2k}}}{\sqrt{n}}$, an exponentially lower
+bound than a strict probabilistic quorum.  This follows immediately
+from~\cite[Corollary 3.12]{prob-quorum}.
+
+
+When
+constructed from $k$ $\varepsilon$-consistent systems (as we have
+here), this consistency model has load $\geq
+\frac{(1-p_{staler}^{\frac{1}{2C}})}{\sqrt{N}}$, where
+$C=\frac{\gamma_{gw}}{\gamma_{cr}}$.
+
+\caption{$t$-visibility for $p_{staler} = .001$ ($99.9\%$ probability
+  of consistency for $50,000$ reads and writes) and $99.9\%$ read
+  ($L_r$) and write latency ($L_w$) across $R$ and $W$, $N$$=$$3$
+  ($1M$ reads and writes).}
