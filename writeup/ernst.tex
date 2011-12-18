@@ -590,8 +590,7 @@ quorums.  Additionally, one can model both transient and permanent
 failures by increasing the tail probabilities in $P_w$.
 
 
-\subsection{PBS $\langle k, t
-  \rangle$-staleness Consistency}
+\subsection{PBS $\langle k, t \rangle$-staleness}
 
 We can combine the previous models to combine both versioned and
 real-time staleness metrics to answer questions of the following form:
@@ -856,24 +855,17 @@ Unsurprisingly, our observations matched \textit{WARS}.
 We modified Cassandra, a data store originally designed at Facebook,
 which provides Dynamo-style partial quorum semantics, offering
 per-request quorum sizes and a BigTable-like data
-model~\cite{cassandra, cassandra-sigmod}.  Our changes to Cassandra were minimal:
-we added support for partial quorums of size greater than
-three---requiring changes to the wire protocol and request handling
-code---and instrumented parts of the database to provide timing
-information about reads and writes.  By analyzing Cassandra logs, we
-were able to reconstruct the latency distributions of write requests,
-write acknowledgements, read requests, and read responses.  We
-disabled read repair because it is external to \textit{WARS}.
-
-To provide a single point of order for the series of reads and writes
-in the system, we used $N+1$ Cassandra nodes for each experiment
-involving $N$ nodes.  After configuring the Cassandra schema, we
-determined the node that did not store the data and sent all requests
-through it, effectively creating a remote proxy.  \textit{WARS} is
-more general than the specific proxy configuration, however using a
-centralized proxy allows us to avoid most issues with clock skew
-between replicas and rely less heavily on globally synchronized
-clocks.
+model~\cite{cassandra, cassandra-sigmod}, to provide timing
+information about reads and writes.  To provide a single point of
+order for the series of reads and writes in the system, we used $N+1$
+Cassandra nodes for each experiment involving $N$ nodes.  After
+configuring the Cassandra schema, we determined the node that did not
+store the data and sent all requests through it, effectively creating
+a remote proxy.  \textit{WARS} is more general than the specific proxy
+configuration, however using a centralized proxy allows us to avoid
+most issues with clock skew between replicas and rely less heavily on
+globally synchronized clocks.  We disabled read repair because it is
+external to \textit{WARS}.
 
 We ran Cassandra on a set of machines with 2.2GHz AMD Opteron 2214
 dual-core SMT processors with 4GB of 667MHz DDR2 memory serving
@@ -886,7 +878,7 @@ distributions in Section~\ref{sec:latencies}) and measured the
 probability of staleness.  Under the empirically-measured delay
 distributions, our simulation was accurate for $t$-visibility for
 $t\in\{1,\cdots,199\}$ with RMSE=0.0023\%.  This validates our Monte
-Carlo analysis.
+Carlo simulator.
 
 \subsection{Production Latency Distributions}
 \label{sec:latencies}
@@ -1423,9 +1415,8 @@ An interactive demonstration of Dynamo-style PBS is available online at \url{htt
 \section*{Acknowledgements}
 
 The authors would like to thank Alex Feinberg and Coda Hale for their
-cooperation in providing real-world distributions for experiments and
-exemplifying positive industrial-academic relations in their actions
-and assistance.
+cooperation in providing real-world distributions for experiments and for
+exemplifying positive industrial-academic relations through their conduct.
 
 The authors would also like to thank the following individuals whose
 discussions and feedback improved this work: Marcos Aguilera, Peter
@@ -1437,7 +1428,7 @@ especially like to thank Ali Ghodsi, who, in addition to providing
 feedback, originally piqued our interest in theoretical quorum
 systems.
 
-This work was supported in part by AMPLab gifts from Google, SAP,
+This work was supported in part by gifts from Google, SAP,
 Amazon Web Services, Cloudera, Ericsson, Huawei, IBM, Intel,
 MarkLogic, Microsoft, NEC Labs, NetApp, Oracle, Splunk, and VMware and
 by DARPA (contract \#FA8650-11-C-7136).  This material is based upon
