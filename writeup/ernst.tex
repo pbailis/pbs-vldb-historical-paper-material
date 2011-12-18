@@ -823,12 +823,9 @@ understand how frequently ``eventually consistent'' means
 
 Recall that PBS $k$-staleness is easily captured in closed form for
 non-expanding quorums.  In practice, without anti-entropy, we observe
-that their equations hold true.  However, in a system employing
-anti-entropy, we cannot disentangle time and versions.  In this
-section, we focus mainly on $t$-visibility but briefly describe some
-$\langle k, t \rangle$-staleness results.
+that our derived equations hold true.
 
-In this section, we focus on worst-case bounds for staleness.  While
+In this section, we focus on worst-case bounds for PBS $t$-visibility.  While
 we could improve the staleness results by considering additional
 anti-entropic processes, we make the bare minimum of assumptions as
 dictated by the \textit{WARS}  model.  Opting for conservative analyses
@@ -838,15 +835,16 @@ the applicability of these results.
 
 \subsection{Monte Carlo Simulator}
 
-We implemented \textit{WARS}  in a simple event-driven simulation environment.
+We implemented \textit{WARS} in an event-driven simulator.
 Calculating $t$-visibility for a given value of $t$ is rather
 straightforward: draw $N$ samples from \texttt{W}, \texttt{A},
-\texttt{R}, and \texttt{S} at time $t$ (denote index $i$ as $[i]$), compute $w_t = \texttt{W}[W]+\texttt{A}[W]$, and check whether the
-first $R$ samples of \texttt{R}, ordered by
-$\texttt{R}[i]+\texttt{S}[i]$ obey $w_t+\texttt{R}[i] \leq
-\texttt{W}[i]$.  This requires only a few lines of code.  Implementing
-$\langle k, t \rangle$-staleness requires remembering write ordering
-and history but is not difficult.
+\texttt{R}, and \texttt{S} at time $t$ (denote index $i$ as $[i]$),
+compute $w_t = $ the $W$th smallest value of the respective
+$\texttt{W}+\texttt{A}$ values, and check whether the first $R$
+samples of \texttt{R}, ordered by $\texttt{R}[i]+\texttt{S}[i]$ obey
+$w_t+\texttt{R}[i] + t\leq \texttt{W}[i]$.  This requires only a few
+lines of code.  Implementing $\langle k, t \rangle$-staleness requires
+remembering write ordering and history but is not difficult.
 
 \subsection{Model Validation}
 
@@ -894,7 +892,7 @@ Carlo analysis.
 \label{sec:latencies}
 
 \textit{WARS} depends only on latency distributions, and, rather than
-conjecture as to what represents ``reasonable'' scenarios, we analyzed
+conjecture as to what represent ``reasonable'' scenarios, we analyzed
 production distributions from two internet-scale companies, LinkedIn
 and Yammer.
 
@@ -985,21 +983,20 @@ Mean Rate & 718.18 gets/s & 45.65 puts/s\\
 \subsection{Production Latency Model Fitting}
 
 While insights from production data are invaluable, they are
-underspecified for \textit{WARS}.  First, they are summary statistics,
-so we need to calculate the underlying distribution.  More
-importantly, the operation latencies represent round-trip times, while
-\textit{WARS} requires the constituent one-way latencies for reads and
-writes.  Accordingly, to derive
-\texttt{W},\texttt{A},\texttt{R},\texttt{S} for each configuration, we
-made a series of assumptions.  These assumptions are imperfect, and do
-not perfectly mirror the real world.  As we demonstrated in our
+underspecified for \textit{WARS}.  First, the data we collected are
+summary statistics, but \textit{WARS} requires the underlying
+distributions.  More importantly, the operation latencies represent
+round-trip times, while \textit{WARS} requires the constituent one-way
+latencies for both reads and writes.  As we demonstrated in our
 Cassandra experiments, these latency distributions are easily
 collected.  However, because they are not currently collected in
-practice, we must do our best to fill in the gaps.  Without additional
-data on the latency required to read multiple replicas, we assume that
-each latency distribution is independently, identically distributed.
-We believe that these assumptions are justified given the advantage of
-production data over synthetic distributions.
+practice, we must do our best to fill in the gaps. Accordingly, to
+derive \texttt{W},\texttt{A},\texttt{R},\texttt{S} for each
+configuration, we made a series of assumptions, which we believe are
+justified given the advantage of production data over synthetic
+distributions.  Without additional data on the latency required to
+read multiple replicas, we assume that each latency distribution is
+independently, identically distributed.
 
 LinkedIn provided two latency distributions, which we denote
 \texttt{LNKD-SSD} and \texttt{LNKD-DISK} for the SSD and spinning
@@ -1022,22 +1019,22 @@ calculated \texttt{W} separately.
 \begin{tabular}{|c|r|}
 \hline
 \multirow{4}{*}{\texttt{LNKD-SSD}} & \multicolumn{1}{|l|}{$\texttt{W} = \texttt{A}= \texttt{R} = \texttt{S}:$} \\
-& 8.78\%: Exponential, $\lambda = 1.66$ \\
 & 91.22\%: Pareto, $x_m=.235, \alpha=10$\\
+& 8.78\%: Exponential, $\lambda = 1.66$ \\
 & N-RMSE: .55\%\\\hline
 \multirow{4}{*}{\texttt{LNKD-DISK}} & \multicolumn{1}{|l|}{$\texttt{A}= \texttt{R} = \texttt{S}: \texttt{LNKD-SSD}$}\\\cline{2-2}
 & \multicolumn{1}{|l|}{\texttt{W}:}\\
-& \hfill 62\%: Exponential, $\lambda = .183$ \\
 & 38\%: Pareto, $x_m=1.05, \alpha=1.51$\\
+& \hfill 62\%: Exponential, $\lambda = .183$ \\
 & N-RMSE: .26\%\\
 \hline
 \multirow{8}{*}{\texttt{YMMR}} & \multicolumn{1}{|l|}{\texttt{W}:} \\
-& 6.1\%: Exponential, $\lambda = .0028$ \\
 & 93.9\%: Pareto, $x_m=3, \alpha=3.35$\\
+& 6.1\%: Exponential, $\lambda = .0028$ \\
 & N-RMSE: 1.84\%\\\cline{2-2}
 & \multicolumn{1}{|l|}{$\texttt{A}= \texttt{R} = \texttt{S}:$}\\
-& 1.8\%: Exponential, $\lambda=.0217$\\
 & 98.2\%: Pareto, $x_m=1.5, \alpha=3.8$\\
+& 1.8\%: Exponential, $\lambda=.0217$\\
 & N-RMSE: .06\%\\
 \hline
 \end{tabular}
@@ -1054,8 +1051,8 @@ provided distributions, again assuming symmetric \texttt{A},
 long exponential tail.  At the $98$th percentile, the write
 distribution takes a sharp turn.  Fitting the data closely resulted in
 an extremely long tail, with $99.99+$th percentile writes requiring
-tens of seconds, much higher than Yammer specified.  Accordingly, we
-fit the $98$th percentile knee conservatively---without the $98$th
+tens of seconds---much higher than Yammer specified.  Accordingly, we
+fit the $98$th percentile knee conservatively; without the $98$th
 percentile, the write fit N-RMSE is .104\%.
 
 
@@ -1086,9 +1083,9 @@ Table~\ref{table:fits}. We plot each fitted distribution in
 Figure~\ref{fig:latencies}.  Note that for $R$, $W$ of one,
 \texttt{LNKD-DISK} is not equivalent to \texttt{WAN}.  This is
 because, in \texttt{LNKD-DISK}, we only have to wait for the first of
-$N$ local reads (writes) to return, whereas there is only one local
-read (write) for \texttt{WAN}, and all other read (write) requests will
-be delayed at least 150ms.
+$N$ local reads (writes) to return, whereas, for \texttt{WAN}, there
+is only one local read (write) and all other read (write) requests
+are be delayed at least 150ms.
 
 \subsection{Observed $t$-visibility}
 
@@ -1247,7 +1244,7 @@ consistent.
 \section{Discussion and Future Work}
 \label{sec:discussion}
 
-PBS enables several modifications to partial quorum systems that we
+PBS enables several enhancements to partial quorum systems that we
 have not yet addressed.  Here, we briefly discuss them along with
 improvements to our models.
 
@@ -1258,55 +1255,55 @@ minimum durability.  Data store operators can subsequently provide
 service level agreements to applications and provide quantitative
 trade-offs to developers, allowing them to reason about staleness
 versus end-user latency.  Operators can determine configurations
-analytically (and potentially revise them given online feedback).  PBS
-provides a quantitative lens for analyzing consistency guarantees that
-were previously unknown.  While this optimization formulation is
-likely convex, the state space for configurations is rather small
-($O(N^2)$).  This optimization also allows disentanglement of
-replication for reasons of durability from replication for reasons of
-low latency and higher capacity.  Operators can specify a minimum set
-of nodes for druability and availability but may want to increase $N$,
-which decreases tail latency for a fixed $R$ and $W$.
+analytically and revise them given online feedback.  PBS provides a
+quantitative lens for analyzing consistency guarantees that were
+previously unknown.  While this optimization formulation is likely
+convex, the state space for configurations is rather small ($O(N^2)$).
+This optimization also allows disentanglement of replication for
+reasons of durability from replication for reasons of low latency and
+higher capacity.  For example, operators can specify a minimum
+replication factor for durability and availability but may want to
+automatically increase $N$, which decreases tail latency for a fixed
+$R$ and $W$.
 
 \textbf{Variable configurations.} We have assumed the use of a single
 replica configuration ($N$, $R$, and $W$) across all operations.
 However, one could consider varying these operations over time and
 across keys, and many KVSs such as Cassandra and Riak allow the use of
-per-operation consistency tuning at runtime.  By specifying an
-\textit{average} operation latency, one could periodically modify $R$ and $W$ to
-more efficiently guarantee a desired bound on staleness.  Similarly,
-under scenarios with unexpectedly heavy load, one might consider
-increasing the number of replicas and scaling $R$ and $W$ accordingly,
-requiring additional refinements to our model, essentially revisiting
-prior work on fluid replication~\cite{fluidreplication}.
+per-operation consistency settings.  By specifying an \textit{average}
+operation latency, one could periodically modify $R$ and $W$ to more
+efficiently guarantee a desired bound on staleness.  Similarly, under
+scenarios with unexpectedly heavy load, one might consider increasing
+the number of replicas and scaling $R$ and $W$ accordingly, requiring
+additional refinements to our model, essentially revisiting prior work
+on fluid replication~\cite{fluidreplication}.
 
-\textbf{Stronger guarantees.} In this paper, we have limited our
-discussions to probabilistic bounded staleness.  One might consider
-analyzing the possibility that a data store provide a stronger yet
-still eventually consistent guarantee such as causal consistency.
-Predicting the probability of attaining more complex consistency
-semantics requires additional modeling of application access patterns.
-For example, to attain causal session guarantees, we would need to
-know which replicas are contacted and whether clients inform one
-another about causal relationships out-of-band from the data store.
-This is possible, but modeling the \textit{worst-case} semantics of
-these operations is likely to result in unfavorably low bounds on
-consistency properties.  We can see this in Aiyer et al.'s analysis of
-Byzantine $k$-quorums~\cite{multi-k-quorum}.  In a worst-case
-deployment, with an adversarial scheduler, the lower bound on
-staleness is quite high; we conjecture that the bound would be even
-higher if the authors performed an analysis of stronger consistency
-models.
+\textbf{Stronger guarantees.} In this paper, we have focused on
+probabilistic staleness analysis, but there are a range of stronger
+models such as causal consistency within the spectrum of eventual
+consistency~\cite{vogels-defs}.  Predicting the probability of
+attaining more complex consistency semantics requires additional
+modeling of application access patterns.  For example, to attain
+causal session guarantees, we would need to know which replicas are
+contacted and whether clients inform one another about causal
+relationships out-of-band from the data store.  This is possible, but
+modeling the \textit{worst-case} semantics of these operations is
+likely to result in unfavorably low bounds on consistency properties.
+We can see this in Aiyer et al.'s analysis of Byzantine
+$k$-quorums~\cite{multi-k-quorum}.  In a worst-case deployment, with
+an adversarial scheduler, the lower bound on staleness is quite high;
+we conjecture that the bound would be even higher had the authors
+performed an analysis of stronger consistency models.
 
 \textbf{Alternative architectures.} We have analyzed Dynamo-style
 $t$-visibility in depth.  As we discussed, Dynamo is conceptually easy
-to understand (\textit{WARS}) and implement but is painful to analyze
+to understand and implement (\textit{WARS}) but is painful to analyze
 analytically, leading us to favor Monte Carlo analysis.  Dynamo is
 surprisingly resilient to inconsistency in practice, but attaining
 \textit{provable} (even probabilistically provable) $t$-staleness
 bounds would be desirable for applications that cannot tolerate
 statistical error.  While research on deterministic bounded staleness
-(Section~\ref{sec:relatedwork}) provides provably deterministic bounds
+(Section~\ref{sec:relatedwork}) provides provable deterministic bounds
 (often sacrificing availability), it is unclear whether there is a
 design that finds the middle ground between operational elegance and
 easy, provable analysis in the eventually consistent protocol design
@@ -1383,9 +1380,9 @@ that in turn serve reads depending on probabilistic models regarding
 their staleness.  AQuA actively selects which replica to contact
 depending on the staleness bound and replica staleness predictions.
 TRAPP~\cite{trapp} provides tradeoffs between precision and
-performance for continuously evolving numerical data.  In
-TACT~\cite{vahdat-article, vahdat-bounded} consistency is modeled
-according to numerical error, order error, and staleness.  TACT bounds
+performance for continuously evolving numerical data.
+TACT~\cite{vahdat-article, vahdat-bounded} models consistency along
+three axes: numerical error, order error, and staleness.  TACT bounds
 staleness by ensuring that each replica makes (transitive) contact
 with all other replicas in the system within a given time window.
 Finally, PIQL~\cite{piql} bounds the number of operations performed
@@ -1396,7 +1393,7 @@ In this work, we analyze quorum replication systems and study the
 properties real-world Dynamo-style quorum systems in depth.  Many of
 the aforementioned deterministic bounded staleness systems represent the
 deterministic dual of PBS, and their bounding algorithms could likely
-be employed in a write-all quorum system like Dynamo.
+be employed in an expanding partial quorum system like Dynamo.
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -1464,18 +1461,19 @@ Justin Sheehy
 
 \begin{appendix}
 \section{PBS Quorum Load}
-The theoretical quorum literature describes the \textit{load} of a quorum
-system as a metric for the frequency of accessing the busiest quorum
+Theory literature describes the \textit{load} of a quorum system as a
+metric for the frequency of accessing the busiest quorum
 member~\cite[Definition 3.2]{quorumsystems}.  Intuitively, the busiest
-quorum member limits the number of requests, or capacity, that a given
-quorum system can sustain~\cite[Corollary 3.9]{quorumsystems}.
+quorum member limits the number of requests that a given quorum system
+can sustain, called its \textit{capacity}~\cite[Corollary
+  3.9]{quorumsystems}.
 
 Prior work determined that probabilistic quorum systems did not offer
-significant benefits to load (a constant factor improvement compared
-to strict quorum systems)~\cite{prob-quorum}.  Here, we show that PBS
-$k$-quorums provide asymptotically lower load than traditional
-probabilistic quorum systems (and, transitively, than strict quorum
-systems).
+significant benefits to load (providing a constant factor improvement
+compared to strict quorum systems)~\cite{prob-quorum}.  Here, we show
+that PBS $k$-quorums provide asymptotically lower load than
+traditional probabilistic quorum systems (and, transitively, than
+strict quorum systems).
 
 The probabilistic quorum literature defines an
 $\varepsilon$-intersecting quorum system as a quorum system that
@@ -1485,22 +1483,23 @@ quorum system has a lower bound load of
 $\frac{1-\sqrt{\varepsilon}}{\sqrt{N}}$~\cite[Corollary
   3.12]{prob-quorum}.
 
-By considering $k$ versions of staleness, we are considering the
-intersection of multiple $\varepsilon$-intersecting quorum systems.
-However, for a given probability $p$ of inconsistency, if we are
-willing to tolerate $k$ versions of staleness, we need only require
-that that $\varepsilon = \sqrt[k]{p}$.  This implies that our PBS
-$k$-quorum system construction has load no less than
-$\frac{(1-p)^{\frac{1}{2k}}}{\sqrt{N}}$, a lower bound than
-traditional probabilistic quorum systems.  PBS monotonic reads results
-in a lower bound on load of $\frac{(1-p)^{\frac{1}{2C}}}{\sqrt{N}}$, where
+In considering $k$ versions of staleness, we consider the intersection
+of $k$ $\varepsilon$-intersecting quorum systems.  For a given
+probability $p$ of inconsistency, if we are willing to tolerate $k$
+versions of staleness, we need only require that that $\varepsilon =
+\sqrt[k]{p}$.  This implies that our PBS $k$-quorum system
+construction has load of at least
+$\frac{(1-p)^{\frac{1}{2k}}}{\sqrt{N}}$, an improved lower bound
+compared to traditional probabilistic quorum systems.  PBS monotonic
+reads results in a lower bound on load of
+$\frac{(1-p)^{\frac{1}{2C}}}{\sqrt{N}}$, where
 $C=1+\frac{\gamma_{gw}}{\gamma_{cr}}$.
 
 These results are intuitive: if we are willing to tolerate multiple
 versions of staleness, we need to contact fewer replicas.  However, we
 believe this is the first formal demonstration that staleness
-tolerance lowers load on quorum members, raising quorum system
-capacity.
+tolerance lowers the load requirement for a quorum system,
+subsequently increasing its capacity.
 
 
 \end{appendix}
