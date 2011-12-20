@@ -144,8 +144,7 @@ We make the following contributions in this paper:
 \item We develop the theory of Probabilistically Bounded Staleness
   (PBS) for partial quorums. PBS describes the probability of
   staleness across both versions ($k$-staleness) and time
-  ($t$-visibility) as well as probabilistic monotonic reads
-  consistency.
+  ($t$-visibility) as well as monotonic reads consistency.
 
 \item We provide a closed-form analysis of $k$-staleness demonstrating
   how the probability of receiving data $k$ versions stale is
@@ -181,7 +180,10 @@ In this section, we provide background regarding quorum systems both
 in theoretical academic literature and in practice.  We begin by
 overviewing work on traditional and probabilistic quorum systems.  We
 next discuss Dynamo-style quorums, currently the most widely deployed
-replication strategy for commercially available data storage systems employing quorum replication.
+replication strategy for commercially available data storage systems
+employing quorum replication.  Finally, we survey reports of
+practitioner usage of partial quorums for three Dynamo-style data
+systems.
 
 \subsection{Quorum Foundations: Theory}
 
@@ -213,10 +215,11 @@ operations, reading and writing to sets of nodes in a strict quorum
 system ensures strong consistency in the absence of failures.  The
 minimum sized quorum defines its fault tolerance.  A simple example of
 a strict quorum system is the majority quorum system, in which each
-quorum is of size $\lceil \frac{N}{2}\rceil$.  However, the theory literature
-contains numerous alternative quorum systems providing varying
-asymptotic properties of capacity, scalability, and fault-tolerance,
-from tree-quorums to grid-quorums.  Jim\'{e}nex-Peris et. al provide a
+quorum is of size $\lceil \frac{N}{2}\rceil$.  However, the theory
+literature contains numerous alternative quorum systems providing
+varying asymptotic properties of capacity, scalability, and
+fault-tolerance, from tree-quorums~\cite{treequorum} to
+grid-quorums~\cite{quorumsystems}.  Jim\'{e}nex-Peris et. al provide a
 useful overview of these traditional, strict quorum
 systems~\cite{quorums-alternative}.
 
@@ -228,18 +231,20 @@ the literature: probabilistic quorum systems and k-quorums.
 \textit{Probabilistic quorum systems} provide probabilistic guarantees
 about whether data returned by a quorum read is consistent.  As the
 number of nodes in the system scales, we can achieve an arbitrarily
-high probability of consistency~\cite{prob-quorum}.  Intuitively,
-this is a consequence of the Birthday Paradox: as the number of
-replicas increases, the probability of non-intersection between any two quorums decreases.  Prior work has examined the effect of ``dynamic
-systems'' in terms of quorum member churn (e.g., joining and leaving a
-distributed hash table)~\cite{prob-quorum-dynamic} as well as
-network-aware quorum placement~\cite{delay-quorum, quorum-placement}
-but did not model write propagation. Additionally, and most
-importantly, to the best of our knowledge, probabilistic quorums have
-only been used to study the probability of strong consistency and have
-not been used to study bounded staleness, particularly in the presence
-of anti-entropic processes.  Merideth and Reiter provide a useful
-overview of recent advances in quorum systems~\cite{quorum-overview}.
+high probability of consistency~\cite{prob-quorum}.  Intuitively, this
+is a consequence of the Birthday Paradox: as the number of replicas
+increases, the probability of non-intersection between any two quorums
+decreases.  Prior work has examined the effect of ``dynamic systems''
+in terms of quorum member churn (e.g., joining and leaving a
+distributed hash table)~\cite{prob-quorum-dynamic}, network-aware
+quorum placement~\cite{delay-quorum, quorum-placement}, and network
+partitions~\cite{partitionedquorum} but did not model write
+propagation. Additionally, and most importantly, to the best of our
+knowledge, probabilistic quorums have only been used to study the
+probability of strong consistency and have not been used to study
+bounded staleness, particularly in the presence of anti-entropic
+processes.  Merideth and Reiter provide a useful overview of recent
+advances in quorum systems~\cite{quorum-overview}.
 
 As an example of a probabilistic quorum system, given $N$ replicas and
 randomly chosen read and write quorums of sizes $R$ and $W$, we can
@@ -309,38 +314,6 @@ when $R+W > N$.  Setting $W>\lceil N/2 \rceil$ ensures that a majority
 of replicas will will receive a write in the presence of multiple
 concurrent write requests.
 
-For improved latency, operators often set $R+W \leq N$. Cassandra's
-default operation configuration is $N$$=$$3$,
-$R$$=$$W$$=$$1$~\cite{cassandradefault}. The Apache Cassandra 1.0
-Documentation claims that ``a majority of users do writes at
-consistency level [$W$$=$$1$]'', while the Cassandra Query Language
-defaults to $R$$=$$W$$=$$1$ as well~\cite{cassandra-docs}.  Production
-Cassandra users report using $R$$=$$W$$=$$1$ in the ``general case''
-because it provides ``maximum performance''~\cite{maxperfblog}, which
-appears to be a commonly held belief~\cite{reddit, outbrain}.
-Cassandra has a ``minor'' patch for session
-guarantees~\cite{sessionguarantees}, but this has not yet been
-integrated into the mainline source~\cite{cassandra-session} as of
-version 1.0; according to our discussions with developers, this is due
-to lack of interest. Riak defaults to $N$$=$$3$,
-$R$$=$$W$$=$$2$~\cite{riakdefault-n, riakdefault-rw}, however users
-suggest using $R$$=$$W$$=$$1$, $N$$=$$2$ for ``low value'' data (and
-variants of overlapping quorums for ``web,'' ``mission critical,'' and
-``financial'' data)~\cite{riaktalkone, riaktalktwo}.  Finally,
-Voldemort does not provide sample configurations, but Voldemort's
-authors (and operators) at LinkedIn~\cite{feinbergpc} often choose
-$N$$=$$c$, $R$$=$$W$$=$$ \lceil c/2 \rceil$ for odd $c$.  For
-applications requiring ``very low latency and high availability,''
-LinkedIn deploys Voldemort with $N$$=$$3$, $R$$=$$W$$=$$1$.  For other
-applications, LinkedIn deployments Voldemort with $N$$=$$2$,
-$R$$=$$W$$=$$1$, providing ``some consistency,'' particularly when
-$N$$=$$3$ replication is not required.  Additionally, Voldemort
-supports a concept of preferred reads and writes, meaning it will
-block until either the preferred number of replicas respond or a
-timeout occurs, at which point the request succeeds.  In the low
-latency case, preferred reads is either two or is disabled.  In the
-$N$$=$$2$ case, preferred reads and preferred writes are set to two.
-
 \begin{figure}
 \centering
 \includegraphics[width=.8\columnwidth]{figs/dynamo-quorum.pdf}
@@ -382,6 +355,50 @@ as \textit{expanding partial quorum systems}.  Third, as in much of
 the practical literature, practitioners largely focus on fail-stop
 failure modes instead of Byzantine failure~\cite{birman-byzantine}.
 Following standard practice, we do not consider Byzantine failure.
+
+\subsection{Typical Quorum Configurations}
+
+For improved latency, operators often set $R+W \leq N$.  Here, we
+survey partial quorum configurations drawn from practitioner accounts.
+In summary, many operators appear to use partial quorum
+configurations, frequently citing performance benefits and high
+availability.
+
+ Cassandra's default operation configuration is $N$$=$$3$,
+ $R$$=$$W$$=$$1$~\cite{cassandradefault}. The Apache Cassandra 1.0
+ Documentation claims that ``a majority of users do writes at
+ consistency level [$W$$=$$1$]'', while the Cassandra Query Language
+ defaults to $R$$=$$W$$=$$1$ as well~\cite{cassandra-docs}.
+ Production Cassandra users report using $R$$=$$W$$=$$1$ in the
+ ``general case'' because it provides ``maximum
+ performance''~\cite{maxperfblog}, which appears to be a commonly held
+ belief~\cite{reddit, outbrain}.  Cassandra has a ``minor'' patch for
+ session guarantees~\cite{sessionguarantees}, but this has not yet
+ been integrated into the mainline source~\cite{cassandra-session} as
+ of version 1.0; according to our discussions with developers, this is
+ due to lack of interest.
+
+Riak defaults to $N$$=$$3$, $R$$=$$W$$=$$2$~\cite{riakdefault-n,
+  riakdefault-rw}, however users suggest using $R$$=$$W$$=$$1$,
+$N$$=$$2$ for ``low value'' data (and variants of overlapping quorums
+for ``web,'' ``mission critical,'' and ``financial''
+data)~\cite{riaktalkone, riaktalktwo}.
+
+ Finally, Voldemort does not provide sample configurations, but
+ Voldemort's authors (and operators) at LinkedIn~\cite{feinbergpc}
+ often choose $N$$=$$c$, $R$$=$$W$$=$$ \lceil c/2 \rceil$ for odd $c$.
+ For applications requiring ``very low latency and high
+ availability,'' LinkedIn deploys Voldemort with $N$$=$$3$,
+ $R$$=$$W$$=$$1$.  For other applications, LinkedIn deployments
+ Voldemort with $N$$=$$2$, $R$$=$$W$$=$$1$, providing ``some
+ consistency,'' particularly when $N$$=$$3$ replication is not
+ required.  Additionally, Voldemort supports a concept of preferred
+ reads and writes, meaning it will block until either the preferred
+ number of replicas respond or a timeout occurs, at which point the
+ request succeeds.  In the low latency case, preferred reads is either
+ two or is disabled.  In the $N$$=$$2$ case, preferred reads and
+ preferred writes are set to two.
+
 
 \section{Probabilistically Bounded\\Staleness}
 \label{sec:pbs}
@@ -1319,7 +1336,8 @@ failure rates and additional care in gathering latency distributions.
 \label{sec:relatedwork}
 
 We surveyed quorum replication
-techniques~\cite{prob-quorum-dynamic,non-strict, multi-k-quorum,quorum-placement, quorums-alternative, prob-quorum,
+techniques~\cite{prob-quorum-dynamic, treequorum,non-strict,
+  multi-k-quorum, quorums-start, quorum-placement, partitionedquorum, quorums-alternative, prob-quorum,
   quorum-overview, quorumsystems} in Section~\ref{sec:background}.  In
 this work, we specifically draw inspiration from probabilistic
 quorums~\cite{prob-quorum} and deterministic
