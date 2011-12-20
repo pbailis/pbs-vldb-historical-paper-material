@@ -87,68 +87,55 @@ and variable-sized partial quorums, providing eventual consistency.
 
 Despite the weak guarantees provided by eventual consistency
 semantics~\cite{hamilton-cap, cops, walter}, operators frequently
-employ partial quorums~\cite{cassandra, feinbergpc, reddit}--they are often
-``good enough'' for applications, given their latency benefits, which
-are especially important as latencies grow (e.g. a wide-area network
-scenario)~\cite{abadilatconsist, feinbergpc}.  Programs that possess
-``ACID 2.0'' semantics---employing a combination of associativity,
-commutativity, and idempotency and are distributed---are well-suited
-to handling staleness~\cite{calm, helland}.  However, basic eventually
-consistent semantics do not specify the degree of staleness that is
-observed.
+employ partial quorums~\cite{cassandra, cassandra-docs,
+  cassandradefault,feinbergpc,reddit, outbrain, maxperfblog}--they are
+often ``good enough'' for applications, given their latency benefits,
+which are especially important as latencies grow (e.g. a wide-area
+network scenario)~\cite{abadilatconsist, feinbergpc}.  Programs and
+services that possess so-called ``ACID 2.0'' semantics---employing a
+combination of associativity, commutativity, and idempotency and are
+distributed---are well-suited to handling staleness~\cite{calm,
+  helland}.  The proliferation of partial quorum configurations
+suggests that either data store operators are simply na\"{\i}ve and
+misguided or that, in practice, eventually consistent data stores are
+providing a reasonable degree of consistency.
 
-Prior work evaluated the probability of strong consistency for 
-partial quorum systems where, in the absence of failures, the read
-and write sets do not change over time.  Theoretical research on
-\textit{probabilistic quorums} demonstrated how partial quorums can be
-employed to provide arbitrarily high probability of strong
-consistency~\cite{prob-quorum, quorum-overview}. In theory, these
-systems provide excellent asymptotic behavior but are limited in
-practical applicability due to their reliance on high replication
-factors.  This work predicts \textit{how often} a response will be
-stale but not \textit{how stale} a stale response will be.
+``Weakly eventually consistent'' is not synonymous with ``no hope of
+consistency''; the basic semantics of eventual consistency suggest
+that this is the case, but practice suggests otherwise. Under
+worst-case conditions, eventual consistency results in an unbounded
+degree of data staleness, but the average case is frequently rather
+different.  Although an eventually consistent system makes no promises
+regarding data staleness, it can provide predictions.  Instead of
+providing guarantees, eventually consistent data stores can describe
+what consistency they are \textit{likely} to provide for varying
+degrees of certainty.  However, there is little prior work that
+describes how to predict consistency and staleness under practical
+conditions.  Accordingly, the current state-of-the-art requires data
+system users to make rough guesses or perform online profiling to
+determine the consistency provided by their data stores.
 
-In this paper, we present algorithms and models for accurately
-predicting the staleness of partial quorums across multiple versions
-and wall clock time, called Probabilistically Bounded Staleness (PBS)
-for partial quorums. PBS can be used to determine the probability of
-reading one of the last $k$ versions of a data item ($k$-staleness),
-of reading a data item $t$ seconds after it is written
-($t$-visibility), and of experiencing a combination of the two
-($\langle k, t \rangle$-staleness).  PBS can also be used to provide
-probabilistic guarantees on monotonic reads, a form of session
-guarantees where reads are guaranteed to return data items no older
-than what has been previously read by the same
-process~\cite{sessionguarantees, vogels-defs}.  PBS does not enforce
-deterministic staleness bounds~\cite{ aqua, trapp,vahdat-article,
-  vahdat-bounded, frac} but is instead intended as a lens for
-analyzing and potentially improving \textit{existing} systems.
+To do better, we need to know when and why eventually-consistent
+systems return stale data as well as the staleness of the data they
+return.  In this work, we answer these questions in the context of
+quorum replicated data stores by expanding theoretical research on
+\textit{probabilistic quorums}~\cite{prob-quorum, quorum-overview} to
+account for multi-version staleness, anti-entropy, and quorum
+dissemination protocols as found in the wild.  More precisely, we
+present algorithms and models for accurately predicting the staleness
+of partial quorums across multiple versions and wall clock time,
+called Probabilistically Bounded Staleness (PBS) for partial
+quorums. PBS can be used to determine the probability of reading one
+of the last $k$ versions of a data item ($k$-staleness), of reading a
+data item $t$ seconds after it is written ($t$-visibility), and of
+experiencing a combination of the two ($\langle k, t
+\rangle$-staleness). PBS does not enforce deterministic staleness
+bounds~\cite{ aqua, trapp,vahdat-article, vahdat-bounded, frac} but is
+instead intended as a lens for analyzing and potentially improving
+\textit{existing} systems.
 
-To summarize our results regarding $k$-staleness, reading data that is
-multiple versions stale is unlikely.  We derive a closed-form solution
-for $k$-staleness for traditional quorum systems.  Our analysis
-demonstrates that, as $k$ increases, there is an exponential reduction
-in the probability of returning data that is staler than $k$
-versions. With a modest global write rate to a particular key, a
-client making read requests no greater than the write rate has a high
-probability of observing monotonic reads consistency.
-  
-To summarize our results regarding $t$-staleness, observing staleness
-across time depends on the write propagation rate and the latency
-between coordinators and replicas.  In this paper, we examine
-Dynamo-style partial quorums~\cite{dynamo}, currently the most widely
-deployed quorum replication strategy.  We show how staleness in the
-Dynamo model is a consequence of message reordering and discuss the
-effect of latency variance on expected staleness across time.  We
-present algorithms for asynchronous staleness detection including
-simple staleness detection that is easily implementable within Dynamo
-but may provide false positives and more complex, precise staleness
-detection. Using production latency distributions provided by two
-internet-scale companies, we analyze the likelihood of $t$-staleness
-across time and replica configurations.  We find that reads observe
-consistency with high probability and, tens of milliseconds after
-commit, in the absence of extremely long-tailed write latencies, reads
-are frequently consistent.
+
+
 
 We make the following contributions in this paper:
 
@@ -516,7 +503,6 @@ reads is $\frac{\gamma_{gw}}{\gamma_{cr}}$, as shown in Figure
 probabilistic monotonic reads as a special case of $k$-staleness where
 $k=1+\frac{\gamma_{gw}}{\gamma_{cr}}$.  For example, extending the
 example in Equation \ref{eq:k-consistency}:
-
 \begin{equation}
 \label{eq:prob-mr}
 p_{s} = \left(\frac{{N-W \choose R}}{{N \choose R}}\right)^{1+\gamma_{gw}/\gamma_{cr}}
@@ -566,12 +552,10 @@ By definition, for expanding quorums, $\forall c \in [0, w], P_w(c,0)
 certainty.  We can model the probability of PBS $t$-visibility for an
 interval $t$ by summing the conditional probabilities of each possible
 $\mathcal{W}$:
-
 \begin{equation}
 \label{eq:tv-instantreads}
 p_{s} = \frac{{N-W \choose N}}{{N \choose R}}+\sum_{c\in(W, N]} \frac{{N-c \choose N}}{{N \choose R}}\cdot [P_w(c+1, t)-P_w(c,t)]
 \end{equation}
-
 However, the above equation assumes reads occur instantaneously and
 writes commit immediately after $W$ replicas have the version (i.e.,
 there is no delay acknowledging the write to the coordinating node).
