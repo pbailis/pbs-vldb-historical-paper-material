@@ -7,7 +7,7 @@ import java.util.List;
 //TODO replace with exceptions
 public class LatencyModelValidator {
     private static int NUM_REPLICAS = 1;
-    static boolean ValidateModel(LatencyModel toCheck) throws RuntimeException
+    public static boolean ValidateModel(LatencyModel toCheck) throws RuntimeException
     {
         List<Double> domain = toCheck.getRange(NUM_REPLICAS);
 
