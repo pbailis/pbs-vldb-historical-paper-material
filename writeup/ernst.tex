@@ -91,14 +91,14 @@ employ partial quorums~\cite{cassandra, cassandra-docs,
   cassandradefault,feinbergpc,reddit, outbrain, maxperfblog}--they are
 often ``good enough'' for applications, given their latency benefits,
 which are especially important as latencies grow (e.g. a wide-area
-network scenario)~\cite{abadilatconsist, feinbergpc}.  Programs and
-services that possess so-called ``ACID 2.0'' semantics---employing a
-combination of associativity, commutativity, and idempotency and are
-distributed---are well-suited to handling staleness~\cite{calm,
-  helland}.  The proliferation of partial quorum configurations
-suggests that either data store operators are simply na\"{\i}ve and
-misguided or that, in practice, eventually consistent data stores are
-providing a reasonable degree of consistency.
+network scenario)~\cite{abadilatconsist, feinbergpc}.  Given that many
+programs can handle bounded staleness through the use of associative
+and commutative operations (e.g., timelines, logs, and
+notifications)~\cite{calm, helland}, these trade-offs are often
+justified.  Most importantly, the proliferation of partial quorum
+configurations suggests that either data store operators are simply
+na\"{\i}ve and misguided or that, in practice, eventually consistent
+data stores are providing a reasonable degree of consistency.
 
 ``Weakly eventually consistent'' is not synonymous with ``no hope of
 consistency''; the basic semantics of eventual consistency dictate
