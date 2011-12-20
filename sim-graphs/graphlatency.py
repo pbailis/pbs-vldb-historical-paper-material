@@ -2,6 +2,8 @@
 from configs import *
 from simutils import *
 from pylab import *
+import matplotlib as mpl
+
 
 rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
 
@@ -10,12 +12,20 @@ N=3
 R=1
 W=1
 k=1
-iters = 10000
+iters = 1000000
+
+mpl.rcParams['font.size'] = 18
+mpl.rcParams['figure.subplot.bottom'] = .17
+mpl.rcParams['figure.subplot.left'] = .14
+mpl.rcParams['lines.markersize'] = 12
+mpl.rcParams['lines.linewidth'] = 1.5
+
+
 
 readlats = {}
 writelats = {}
 
-for i in range(1, 3):
+for i in range(1, 4):
     R=i
     W=i
     for config in configs:
@@ -47,14 +57,21 @@ for i in range(1, 3):
         
         plot([readlats[config][1][0]], [readlats[config][0][0]], config.markerfmt, label=config.name, color=config.color)
         
-    figtext(.14, .88, "R=%d" % (R), size="x-large")
+    figtext(.17, .85, "R=%d" % (R), size="large")
         
-    xlabel("Read Latency (ms)")
-    ylabel("CDF")
+    if(R==2):
+        xlabel("Read Latency (ms)", fontsize="large")
+    if(R==1):
+        ylabel("CDF", fontsize="large")
     
     semilogx()
         
+    xlim(xmin=.01)
+    #this is just to get rid of the 000 at the bottom of the graph
+    ylim(ymin=.00001)
+
     #legend(loc="lower left")
+
     savefig("readlats-%d.pdf" % (R))
 
     clf()
@@ -66,17 +83,32 @@ for i in range(1, 3):
 
         plot([writelats[config][1][0]], [writelats[config][0][0]], config.markerfmt, label=config.name, color=config.color)
 
-    figtext(.14, .88, "W=%d" % (W), size="x-large")
+    figtext(.17, .85, "W=%d" % (W), size="large")
 
-    xlabel("Write Latency (ms)")
-    ylabel("CDF")
+    if(W==2):
+        xlabel("Write Latency (ms)", fontsize="large")
+    if(W==1):
+        ylabel("CDF", fontsize="large")
+
+    xlim(xmin=.01, xmax=1000)
+
+    #this is just to get rid of the 000 at the bottom of the graph
+    ylim(ymin=.00001)
 
     semilogx()
 
-    if(W==1):
-        legend(loc="lower left")
+
     savefig("writelats-%d.pdf" % (W))
     clf()
 
+
+fig = figure()
+figlegend = figure(figsize=(2.25*len(configs), .25))
+ax = fig.add_subplot(111)
+lines = []
+for config in configs:
+    lines.append(ax.plot([0],[0], config.markerfmt, label=config.name, color=config.color))
+figlegend.legend(lines, [config.name for config in configs], loc="center", ncol=len(configs))
+figlegend.savefig('latlegend.pdf')
     
 

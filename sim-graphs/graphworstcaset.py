@@ -13,6 +13,8 @@ readsperwrite = 10
 
 results = {}
 
+markertimes = [1, 2, 3, 4,5,6,7,8,9,11,12.5,15,20,30,40,50,60,70,80,90]
+
 for R in [1, 2]:
     for W in [1, 2]:
         if R+W > N:
@@ -44,7 +46,20 @@ for R in [1, 2]:
         for config in configs:
             if config.name == "WAN":
                 continue
-            plot(results[config][0], results[config][1], config.markerfmt[1:], label=config.name, color=config.color)
+
+            t = results[config][0]
+            stale = results[config][1]
+
+            plot(t, stale, config.markerfmt[1:], color=config.color)
+
+            mt = [time for time in markertimes if time in t]
+
+            for time in mt:
+                plot([t[time]], [stale[time]], config.markerfmt, color=config.color)
+
+            tindex = t.index(markertimes[0])
+            plot([t[tindex]], [stale[tindex]], config.markerfmt, label=config.name, color=config.color)
+
             plot(results[config][2], results[config][3], '--', color=config.color, lw=2)
 
         xlabel("t-visibility (ms)")
