@@ -909,16 +909,16 @@ data storage, engineers at LinkedIn built Voldemort, a Dynamo-style
 quorum replicated key value store~\cite{voldemort, voldemortpub}.
 Alex Feinberg, a lead engineer on Voldemort, graciously provided us
 with latency distributions for a single node replaying peak load
-traffic for the ``Who Viewed My Profile?'' data set on LinkedIn,
-representing 60\% read and 40\% read-modify-write
-traffic~\cite{feinbergpc} (Table~\ref{table:linkedin}).  Feinberg
-reports that ``with spinning disks, we're largely IO bound and latency
-is largely determined by the kind of disks we're using, data to memory
-ratio and request distribution.  With [solid state drives (SSDs)],
-we're CPU and/or network bound (depending on value size).''  As an
-interesting aside, Feinberg also notes that ``maximum latency is
-generally determined by [garbage collection] activity (rare, but
-happens occasionally) and is within hundreds of milliseconds.''
+traffic for a user-facing service at LinkedIn, representing 60\% read
+and 40\% read-modify-write traffic~\cite{feinbergpc}
+(Table~\ref{table:linkedin}).  Feinberg reports that ``with spinning
+disks, we're largely IO bound and latency is largely determined by the
+kind of disks we're using, data to memory ratio and request
+distribution.  With [solid state drives (SSDs)], we're CPU and/or
+network bound (depending on value size).''  As an interesting aside,
+Feinberg also notes that ``maximum latency is generally determined by
+[garbage collection] activity (rare, but happens occasionally) and is
+within hundreds of milliseconds.''
 
 \begin{table}
 \centering
