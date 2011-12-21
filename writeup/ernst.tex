@@ -97,17 +97,17 @@ through the use of associative and commutative operations (e.g.,
 timelines, logs, and notifications)~\cite{calm, helland}, these
 trade-offs are often justified.  Most importantly, the proliferation
 of partial quorum configurations suggests that either data store
-operators are simply na\"{\i}ve and misguided or that, in practice,
-eventually consistent data stores are providing a reasonable degree of
-consistency.
+operators are simply na\"{\i}ve and misguided or, more likely, in
+practice, eventually consistent data stores provide a reasonable degree
+of consistency.
 
 Is ``weakly eventually consistent'' synonymous with ``no chance of
 consistency''? The basic semantics of eventual consistency dictate
 that this is the case, but practice suggests otherwise. Under
 worst-case conditions, eventual consistency results in an unbounded
-degree of data staleness, but the average case is frequently
-different.  Eventually consistent data stores cannot promise
-consistency, but they can describe what consistency they are
+degree of data staleness, but, as we will show, the average case is
+frequently different.  Eventually consistent data stores cannot
+promise consistency, but they can describe what consistency they are
 \textit{likely} to provide for varying degrees of certainty.  However,
 there is little prior work that describes how to make these
 consistency and staleness predictions under practical conditions.
@@ -115,7 +115,7 @@ Accordingly, the current state-of-the-art requires data system users
 to make rough guesses or perform online profiling to determine the
 consistency provided by their data stores.
 
-To do better, we need to know when and why eventually-consistent
+To do better, we need to know when and why eventually consistent
 systems return stale data as well as the staleness of the data they
 return.  In this work, we answer these questions in the context of
 quorum replicated data stores by expanding theoretical research on
@@ -135,21 +135,21 @@ instead intended as a lens for analyzing and potentially improving
 \textit{existing} systems.
 
 We provide closed-form solutions for PBS $k$-staleness and use Monte
-Carlo analysis to explore the trade-off between latency and staleness.
-We present a detailed study of Dynamo-style $t$-visibility using
+Carlo analysis to explore the trade-off between latency and $t$-visibility.
+We present a detailed study of Dynamo-style PBS $t$-visibility using
 production latency distributions to explain why real-world partial
 quorum systems are frequently configured to employ eventual
 consistency. For example, at 99.9th percentile confidence and combined
 read and write latency, for one production workload, we observe a
 $59.5\%$ latency improvement ($3.26$ to $1.32$ ms) in exchange for a
-$1.58$ ms window of inconsistency with solid state drives and a
+$1.58$ ms window of inconsistency using solid state drives and a
 $16.5\%$ latency improvement ($15.01$ to $12.53$ ms) in exchange for a
 $13.6$ ms window of inconsistency using spinning disks.  Under another
 workload, with a long-tailed latency distribution, we observe a
 $81.1\%$ latency improvement ($230$ to $43.3$ ms) for a $202$ ms
 window of inconsistency.  While the benefit of these trade-offs is
 application-specific, our analysis demonstrates the performance
-benefits many operators choose over strong consistency.
+benefits many operators opt for instead of strong consistency.
 
 We make the following contributions in this paper:
 
