@@ -135,21 +135,21 @@ instead intended as a lens for analyzing and potentially improving
 \textit{existing} systems.
 
 We provide closed-form solutions for PBS $k$-staleness and use Monte
-Carlo analysis to explore the trade-off between latency and $t$-visibility.
-We present a detailed study of Dynamo-style PBS $t$-visibility using
-production latency distributions to explain why real-world partial
-quorum systems are frequently configured to employ eventual
-consistency. For example, at 99.9th percentile confidence and combined
-read and write latency, for one production workload, we observe a
-$59.5\%$ latency improvement ($3.26$ to $1.32$ ms) in exchange for a
-$1.58$ ms window of inconsistency using solid state drives and a
-$16.5\%$ latency improvement ($15.01$ to $12.53$ ms) in exchange for a
-$13.6$ ms window of inconsistency using spinning disks.  Under another
-workload, with a long-tailed latency distribution, we observe a
-$81.1\%$ latency improvement ($230$ to $43.3$ ms) for a $202$ ms
-window of inconsistency.  While the benefit of these trade-offs is
-application-specific, our analysis demonstrates the performance
-benefits many operators opt for over strong consistency.
+Carlo analysis to explore the trade-off between latency and
+$t$-visibility.  We present a detailed study of Dynamo-style PBS
+$t$-visibility using production latency distributions to explain why
+real-world partial quorum systems operators frequently choose to
+employ partial quorums. For example, at $99.9$th percentile confidence
+and combined read and write latency, for one production workload, we
+observe a $59.5\%$ latency improvement ($3.26$ to $1.32$ ms) in
+exchange for a $1.58$ ms window of inconsistency using solid state
+drives and a $16.5\%$ latency improvement ($15.01$ to $12.53$ ms) in
+exchange for a $13.6$ ms window of inconsistency using spinning disks.
+Under another workload, with a long-tailed latency distribution, we
+observe a $81.1\%$ latency improvement ($230$ to $43.3$ ms) for a
+$202$ ms window of inconsistency.  While the benefit of these
+trade-offs is application-specific, our analysis demonstrates the
+performance benefits many operators opt for over strong consistency.
 
 We make the following contributions in this paper:
 
