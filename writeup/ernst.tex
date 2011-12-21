@@ -88,9 +88,9 @@ and variable-sized partial quorums, providing eventual consistency.
 Despite the weak guarantees provided by eventual consistency
 semantics~\cite{hamilton-cap, cops, walter}, operators frequently
 employ partial quorums~\cite{cassandra, cassandra-docs,
-  cassandradefault,feinbergpc,reddit, outbrain, maxperfblog}--they are
+  cassandradefault,feinbergpc,reddit, outbrain, maxperfblog}---they are
 often ``good enough'' for applications, given their latency benefits,
-which are especially important as latencies grow (e.g. a wide-area
+which are especially important as latencies grow (e.g., a wide-area
 network scenario)~\cite{abadilatconsist, feinbergpc}.  Given that many
 programs can handle staleness resulting from eventual consistency
 through the use of associative and commutative operations (e.g.,
@@ -101,9 +101,9 @@ operators are simply na\"{\i}ve and misguided or, more likely, in
 practice, eventually consistent data stores provide a reasonable degree
 of consistency.
 
-Is ``weakly eventually consistent'' synonymous with ``no chance of
+Is ``weakly eventually consistent'' synonymous with ``no expectation of
 consistency''? The basic semantics of eventual consistency dictate
-that this is the case, but practice suggests otherwise. Under
+that this may be the case, but practice suggests otherwise. Under
 worst-case conditions, eventual consistency results in an unbounded
 degree of data staleness, but, as we will show, the average case is
 frequently different.  Eventually consistent data stores cannot
@@ -149,7 +149,7 @@ workload, with a long-tailed latency distribution, we observe a
 $81.1\%$ latency improvement ($230$ to $43.3$ ms) for a $202$ ms
 window of inconsistency.  While the benefit of these trade-offs is
 application-specific, our analysis demonstrates the performance
-benefits many operators opt for instead of strong consistency.
+benefits many operators opt for over strong consistency.
 
 We make the following contributions in this paper:
 
