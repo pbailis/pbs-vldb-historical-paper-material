@@ -85,21 +85,21 @@ Voldemort~\cite{voldemort}) offer a choice between these two modes of
 quorum replication: overlapping quorums, providing strong consistency,
 and variable-sized partial quorums, providing eventual consistency.
 
-Despite the weak guarantees provided by eventual consistency
-semantics~\cite{hamilton-cap, cops, walter}, operators frequently
+Despite the weak guarantees eventual
+consistency provides~\cite{hamilton-cap, cops, walter}, operators frequently
 employ partial quorums~\cite{cassandra, cassandra-docs,
-  cassandradefault,feinbergpc,reddit, outbrain, maxperfblog}---they are
-often ``good enough'' for applications, given their latency benefits,
-which are especially important as latencies grow (e.g., a wide-area
-network scenario)~\cite{abadilatconsist, feinbergpc}.  Given that many
-programs can handle staleness resulting from eventual consistency
-through the use of associative and commutative operations (e.g.,
-timelines, logs, and notifications)~\cite{calm, helland}, these
+  cassandradefault,feinbergpc,reddit, outbrain, maxperfblog}---they
+are often ``good enough'' for applications, given their latency
+benefits, which are especially important as latencies grow (e.g., a
+wide-area network scenario)~\cite{abadilatconsist, feinbergpc}.  Given
+that many programs can handle staleness resulting from eventual
+consistency through the use of associative and commutative operations
+(e.g., timelines, logs, and notifications)~\cite{calm, helland}, these
 trade-offs are often justified.  Most importantly, the proliferation
 of partial quorum configurations suggests that either data store
 operators are simply na\"{\i}ve and misguided or, more likely, in
-practice, eventually consistent data stores provide a reasonable degree
-of consistency.
+practice, eventually consistent data stores provide a reasonable
+degree of consistency.
 
 Is ``weakly eventually consistent'' synonymous with ``no expectation of
 consistency''? The basic semantics of eventual consistency dictate
