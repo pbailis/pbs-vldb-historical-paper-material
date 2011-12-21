@@ -92,13 +92,14 @@ employ partial quorums~\cite{cassandra, cassandra-docs,
 often ``good enough'' for applications, given their latency benefits,
 which are especially important as latencies grow (e.g. a wide-area
 network scenario)~\cite{abadilatconsist, feinbergpc}.  Given that many
-programs can handle bounded staleness through the use of associative
-and commutative operations (e.g., timelines, logs, and
-notifications)~\cite{calm, helland}, these trade-offs are often
-justified.  Most importantly, the proliferation of partial quorum
-configurations suggests that either data store operators are simply
-na\"{\i}ve and misguided or that, in practice, eventually consistent
-data stores are providing a reasonable degree of consistency.
+programs can handle staleness resulting from eventual consistency
+through the use of associative and commutative operations (e.g.,
+timelines, logs, and notifications)~\cite{calm, helland}, these
+trade-offs are often justified.  Most importantly, the proliferation
+of partial quorum configurations suggests that either data store
+operators are simply na\"{\i}ve and misguided or that, in practice,
+eventually consistent data stores are providing a reasonable degree of
+consistency.
 
 Is ``weakly eventually consistent'' synonymous with ``no hope of
 consistency''? The basic semantics of eventual consistency dictate
@@ -134,8 +135,22 @@ bounds~\cite{ aqua, trapp,vahdat-article, vahdat-bounded, frac} but is
 instead intended as a lens for analyzing and potentially improving
 \textit{existing} systems.
 
-
-
+We provide closed-form solutions for PBS $k$-staleness and use Monte
+Carlo analysis to explore the trade-off between latency and staleness.
+We present a detailed study of Dynamo-style $t$-visibility using
+production latency distributions to explain why real-world partial
+quorum systems are frequently configured to employ eventual
+consistency. For example, at 99.9th percentile confidence and combined
+read and write latency, for one production workload, we observe a
+$59.5\%$ latency improvement ($3.26$ to $1.32$ ms) in exchange for a
+$1.58$ ms window of inconsistency with solid state drives and a
+$16.5\%$ latency improvement ($15.01$ to $12.53$ ms) in exchange for a
+$13.6$ ms window of inconsistency using spinning disks.  Under another
+workload, with a long-tailed latency distribution, we observe a
+$81.1\%$ latency improvement ($230$ to $43.3$ ms) for a $202$ ms
+window of inconsistency.  While the benefit of these trade-offs is
+application-specific, our analysis demonstrates the performance
+benefits many operators choose over strong consistency.
 
 We make the following contributions in this paper:
 
@@ -366,7 +381,7 @@ availability.
 
  Cassandra's default operation configuration is $N$$=$$3$,
  $R$$=$$W$$=$$1$~\cite{cassandradefault}. The Apache Cassandra 1.0
- Documentation claims that ``a majority of users do writes at
+ documentation claims that ``a majority of users do writes at
  consistency level [$W$$=$$1$]'', while the Cassandra Query Language
  defaults to $R$$=$$W$$=$$1$ as well~\cite{cassandra-docs}.
  Production Cassandra users report using $R$$=$$W$$=$$1$ in the
@@ -410,8 +425,8 @@ probabilistic quorums by accounting for staleness of both versions and
 across time.  We introduce the notions of PBS $k$-staleness, which
 stochastically limit the staleness of versions returned by read
 quorums, PBS $t$-visibility, which stochastically bounds the time
-before a committed version appears to readers, and PBS $<k,
-t>$-quorums, a combination of the two prior models.
+before a committed version appears to readers, and PBS $\langle k,
+t \rangle$-staleness, a combination of the two prior models.
 
 
 Practical concerns guide the following theoretical contributions.  We
@@ -438,7 +453,7 @@ quorums to model the probable overlap of $k$ independent write sets.
 \begin{definition}
 A quorum system obeys \textit{PBS $k$-staleness consistency} if, with
 probability $1-p_{s}$, at least one value in any read quorum will
-have been committed no later than $k$ versions after the latest committed
+have been committed within $k$ versions of the latest committed
 version when the read begins.
 \end{definition}
 Versions whose writes that are not yet committed (in-flight) may be
@@ -599,12 +614,11 @@ what is the probability that a read will return a value no older than
 $k$ versions stale if the last write committed no sooner than $t$ seconds
 ago?
 \begin{definition}
-A quorum system obeys \textit{PBS $\langle k, t
-  \rangle$-staleness consistency} if, with probability $1-p_{s}$, at
-least one value in any read quorum will have been committed no later
-than $k$ versions after the latest committed version when the read
-begins, provided the read begins $t$ units of time after the previous
-$k$ versions commit.
+A quorum system obeys \textit{PBS $\langle k, t \rangle$-staleness
+  consistency} if, with probability $1-p_{s}$, at least one value in
+any read quorum will be within $k$ versions of the latest committed
+version when the read begins, provided the read begins $t$ units of
+time after the previous $k$ versions commit.
 \end{definition}
 The definition of $p_{s}$ follows from the prior definitions:
 \begin{equation}
@@ -746,7 +760,7 @@ anti-entropy protocols) depend on the rate of exchange.  \textit{WARS}
 is read rate independent but is affected by the write rate.  If
 multiple writes overlap (that is, have overlapping periods where they
 are in-flight but are not committed) the probability of inconsistency
-decreases.  Intuitively, this is because overlapping writes results in
+decreases.  Intuitively, this is because overlapping writes results in an
 increased chance that a client reads as-yet-uncommitted data.
 Accordingly, because \textit{WARS} does not capture read repair or
 Merkle tree exchange, it represents a lower bound for PBS
