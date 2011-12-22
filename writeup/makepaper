@@ -5,4 +5,4 @@
 		\\gdef\\GITAbrHash{%h}\
 		\\gdef\\GITAuthorDate{%ad}\
 		\\gdef\\GITAuthorName{%an}" >> vc.tex
-pdflatex ernst && bibtex ernst && pdflatex ernst && pdflatex ernst && cp ernst.pdf ~/Dropbox/Public && open ernst.pdf
+pdflatex ernst && bibtex ernst && pdflatex ernst && pdflatex ernst && open ernst.pdf

@@ -1,4 +1,48 @@
 
+The remainder of this paper is as follows: in
+Section~\ref{sec:background}, we provide an overview of quorum systems
+and Dynamo-style quorums.  In Section~\ref{sec:pbs}, we introduce
+Probabilistically Bounded Staleness and provide a closed-form analysis
+of PBS $k$-staleness under traditional static quorums.  In
+Section~\ref{sec:dynamo}, we model Dynamo-style quorum systems and
+discuss when and why staleness occurs.  In
+Section~\ref{sec:dynamoeval}, we use real-world workloads and Monte
+Carlo analysis to determine how often Dynamo-style quorums return
+stale values in practice.  In Section~\ref{sec:discussion}, we
+describe further improvements to PBS partial quorums. In
+Section~\ref{sec:relatedwork}, we discuss related work. In
+Section~\ref{sec:conclusion}, we conclude.
+
+
+
+To summarize our results regarding $k$-staleness, reading data that is
+multiple versions stale is unlikely.  We derive a closed-form solution
+for $k$-staleness for traditional quorum systems.  Our analysis
+demonstrates that, as $k$ increases, there is an exponential reduction
+in the probability of returning data that is staler than $k$
+versions. With a modest global write rate to a particular key, a
+client making read requests no greater than the write rate has a high
+probability of observing monotonic reads consistency.
+  
+To summarize our results regarding $t$-staleness, observing staleness
+across time depends on the write propagation rate and the latency
+between coordinators and replicas.  In this paper, we examine
+Dynamo-style partial quorums~\cite{dynamo}, currently the most widely
+deployed quorum replication strategy.  We show how staleness in the
+Dynamo model is a consequence of message reordering and discuss the
+effect of latency variance on expected staleness across time.  We
+present algorithms for asynchronous staleness detection including
+simple staleness detection that is easily implementable within Dynamo
+but may provide false positives and more complex, precise staleness
+detection. Using production latency distributions provided by two
+internet-scale companies, we analyze the likelihood of $t$-staleness
+across time and replica configurations.  We find that reads observe
+consistency with high probability and, tens of milliseconds after
+commit, in the absence of extremely long-tailed write latencies, reads
+are frequently consistent.
+
+
+
 \begin{comment}
 Distributed storage systems replicate data items to provide better
 performance and availability. Many of these systems use overlapping
@@ -423,7 +467,30 @@ here), this consistency model has load $\geq
 \frac{(1-p_{staler}^{\frac{1}{2C}})}{\sqrt{N}}$, where
 $C=\frac{\gamma_{gw}}{\gamma_{cr}}$.
 
-\caption{$t$-visibility for $p_{staler} = .001$ ($99.9\%$ probability
-  of consistency for $50,000$ reads and writes) and $99.9\%$ read
-  ($L_r$) and write latency ($L_w$) across $R$ and $W$, $N$$=$$3$
-  ($1M$ reads and writes).}
+
+This prior work has two properties with important implications for
+practitioners.  First, existing theory treats quorum sizes as fixed; a
+write quorum is chosen and no other replicas in the system
+subsequently learn about the value unless it is written again.  The
+theory does not account for propagation of versions across time and
+between replicas (anti-entropic processes).  Second, much of this
+prior work assumes Byzantine failure.  If the description of prior
+work seemed simplistic, it is largely because most of the literature
+content addresses problems such as adversarial quorum selection and
+scheduling.  In this work, we re-evaluate both of these assumptions.
+We elaborate further in the next subsection.
+
+
+One major challenge in
+performing our experiments was clock skew across replicas; we relied
+on both \texttt{ntp} and user-level skew measurements to bound these
+drifts.  This is a recently studied problem, particularly under VM
+migration and in the Xen hypervisor~\cite{time-virt}. In other
+experiments, simulation avoided these complexities.
+
+Across multiple latency profiles, we were able to predict staleness
+with extremely high accuracy. Under default settings, we did not
+observe any staleness due to the limited operation latency; message
+reordering was not a problem.  Using the operation delays recorded in
+Cassandra across 5000 writes, we reconstructed the latency
+distributions and repeated each experiment in simulation. 
