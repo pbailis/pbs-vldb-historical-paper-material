@@ -16,6 +16,21 @@
 
 \usepackage{mdwlist}
 
+\newenvironment{myitemize}
+{
+   \vspace{-.5em}
+    \begin{list}{$\bullet$ }{}
+        \setlength{\topsep}{0pt}
+        \setlength{\parskip}{0pt}
+        \setlength{\partopsep}{0pt}
+        \setlength{\parsep}{0pt}         
+        \setlength{\itemsep}{.5em} 
+}
+{
+    \end{list} 
+    \vspace{-.5em}
+}
+
 \title{Probabilistically Bounded Staleness and\\ Practical Partial Quorum Systems}
 
 \author{Peter Bailis, Shivaram Venkataraman, Michael J. Franklin, Ion Stoica, Joseph M. Hellerstein\\
@@ -150,7 +165,7 @@ performance benefits many operators opt for over strong consistency.
 
 We make the following contributions in this paper:
 
-\begin{itemize*}
+\begin{myitemize}
 
 \item We develop the theory of Probabilistically Bounded Staleness
   (PBS) for partial quorums. PBS describes the probability of
@@ -168,7 +183,7 @@ We make the following contributions in this paper:
   evaluate the $t$-visibility of Dynamo-style systems using a
   combination of experimentally-gathered data and production traces.
 
-\end{itemize*}
+\end{myitemize}
 
 The remainder of this paper is as follows: in
 Section~\ref{sec:background}, we provide an overview of quorum systems
