@@ -1434,18 +1434,18 @@ staleness.  FRACS~\cite{frac} allows replicas to buffer updates up to
 a given staleness threshold under several replication schemes,
 including master-drive and group gossip.  AQuA~\cite{aqua}
 asynchronously propagates updates from a designated master to replicas
-that in turn serve reads depending on probabilistic models regarding
-their staleness.  AQuA actively selects which replica to contact
-depending on the staleness bound and replica staleness predictions.
-TRAPP~\cite{trapp} provides tradeoffs between precision and
-performance for continuously evolving numerical data.
-TACT~\cite{vahdat-article, vahdat-bounded} models consistency along
-three axes: numerical error, order error, and staleness.  TACT bounds
-staleness by ensuring that each replica makes (transitive) contact
-with all other replicas in the system within a given time window.
-Finally, PIQL~\cite{piql} bounds the number of operations performed
-per query, trading operation latency at scale with the amount of data
-a particular query can access, impacting accuracy.
+that in turn serve reads with bounded staleness.  AQuA actively
+selects which replicas to contact depending on response time
+predictions and a guaranteed staleness bound.  TRAPP~\cite{trapp}
+provides tradeoffs between precision and performance for continuously
+evolving numerical data.  TACT~\cite{vahdat-article, vahdat-bounded}
+models consistency along three axes: numerical error, order error, and
+staleness.  TACT bounds staleness by ensuring that each replica makes
+(transitive) contact with all other replicas in the system within a
+given time window.  Finally, PIQL~\cite{piql} bounds the number of
+operations performed per query, trading operation latency at scale
+with the amount of data a particular query can access, impacting
+accuracy.
 
 In this work, we analyze quorum replication systems and study the
 properties real-world Dynamo-style quorum systems in depth.  Many of
