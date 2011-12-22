@@ -34,7 +34,7 @@
     \vspace{-.5em}
 }
 
-\title{PBS: Probabilistically Bounded Staleness\\ and Practical Partial Quorum Systems}
+\title{Probabilistically Bounded Staleness\\ and Practical Partial Quorum Systems}
 
 \author{Peter Bailis, Shivaram Venkataraman, Michael J. Franklin, Ion Stoica, Joseph M. Hellerstein\\
 \affaddr{University of California, Berkeley}\\
@@ -141,13 +141,14 @@ present algorithms and models for accurately predicting the staleness
 of partial quorums across multiple versions and wall clock time,
 called Probabilistically Bounded Staleness (PBS) for partial
 quorums. PBS can be used to determine the probability of reading one
-of the last $k$ versions of a data item ($k$-staleness), of reading a
-data item $t$ seconds after it is written ($t$-visibility), and of
-experiencing a combination of the two ($\langle k, t
-\rangle$-staleness). PBS does not enforce deterministic staleness
-bounds~\cite{ aqua, trapp,vahdat-article, vahdat-bounded, frac} but is
-primarily intended as a lens for analyzing and improving
-the behavior of \textit{existing} systems.
+of the last $k$ versions of a data item ($k$-staleness, or ``how
+consistent is eventual consistency?''), of reading a data item $t$
+seconds after it is written ($t$-visibility, or ``how eventual is
+eventual consistency?''), and of experiencing a combination of the two
+($\langle k, t \rangle$-staleness). PBS does not enforce deterministic
+staleness bounds~\cite{ aqua, trapp,vahdat-article, vahdat-bounded,
+  frac} and is primarily intended as a lens for analyzing and
+improving the behavior of \textit{existing} systems.
 
 We provide closed-form solutions for PBS $k$-staleness and use Monte
 Carlo analysis to explore the trade-off between latency and
