@@ -188,20 +188,6 @@ We make the following contributions in this paper:
 
 \end{myitemize}
 
-The remainder of this paper is as follows: in
-Section~\ref{sec:background}, we provide an overview of quorum systems
-and Dynamo-style quorums.  In Section~\ref{sec:pbs}, we introduce
-Probabilistically Bounded Staleness and provide a closed-form analysis of PBS
- $k$-staleness under traditional static quorums.  In
-Section~\ref{sec:dynamo}, we model Dynamo-style quorum systems and
-discuss when and why staleness occurs.  In Section~\ref{sec:dynamoeval}, we
-use real-world workloads and Monte Carlo analysis to determine how
-often Dynamo-style quorums return stale values in practice.  In
-Section~\ref{sec:discussion}, we describe further improvements to
-PBS partial quorums. In Section~\ref{sec:relatedwork}, we discuss
-related work, and, in Section~\ref{sec:conclusion}, we conclude.
-
-
 \vspace{\sectionskip}\section{Background}
 \label{sec:background}
 
@@ -343,7 +329,7 @@ concurrent write requests.
 
 \begin{figure}
 \centering
-\includegraphics[width=.8\columnwidth]{figs/dynamo-quorum.pdf}
+\includegraphics[width=.7\columnwidth]{figs/dynamo-quorum.pdf}
 \vspace{-8pt}
 \caption{Diagram of control flow for client write to Dynamo-style
   quorum.  Here, $N=3$, $W=2$. The client write is handled by a
@@ -484,13 +470,13 @@ literature defines these as $k$-regular semantics~\cite{non-strict}.
 \centering
 \includegraphics[width=\columnwidth]{figs/timelines.pdf}
 \vspace{-16pt}
-\caption{Possible versions returned by read operations under PBS
+\caption{Acceptable versions returnable by read operations under PBS
   $k$-staleness (A) and PBS monotonic reads (B). In $k$-staleness, the
   read operation will return a version no later than $k$ versions
   older than the last committed value when it started; more versions
   may be committed during the read and may be returned.  In monotonic
-  reads consistency, the staleness depends on the number of versions
-  committed since the time the client last completed a read.}
+  reads consistency, acceptable staleness depends on the number of
+  versions committed since the client's last read.}
 \vspace{-12pt}
 \label{fig:timelines}
 \end{figure}
@@ -690,7 +676,7 @@ commits.  This $t$ corresponds to the $t$ in PBS $t$-visibility.
 
 \begin{figure}
 \centering
-\includegraphics[width=.8\columnwidth]{figs/dynamostale.pdf}
+\includegraphics[width=.7\columnwidth]{figs/dynamostale.pdf}
 \vspace{-8pt}
 \caption{The \textit{WARS} model for message ordering in Dynamo
   describes the message flow between a coordinator and a single
@@ -971,7 +957,7 @@ Average & 0.58 \\
 \end{tabular}
 \vspace{-6pt}
 \caption{LinkedIn Voldemort single-node production latencies.}
-\vspace{-12pt}
+\vspace{-4pt}
 \label{table:linkedin}
 \end{table}
 
@@ -1013,7 +999,7 @@ Std. Dev. & 83.93 & 26.10\\
 Mean Rate & 718.18 gets/s & 45.65 puts/s\\
 \hline
 \end{tabular}
-\vspace{-6pt}
+\vspace{-4pt}
 \caption{Yammer Riak $N$$=$$3$, $R$$=$$2$, $W$$=$$2$ production latencies.}
 \vspace{-12pt}
 \label{table:yammer}
@@ -1084,11 +1070,10 @@ calculated \texttt{W} separately.
 \end{table}
 
 
-Yammer provided distributions for a single configuration but separated
-read from write latencies, which we denote \texttt{YMMR}.  Using our
-IID assumptions, we fit single-node latency distributions to the
+Yammer provided distributions for a single configuration, denoted \texttt{YMMR}, but separated read and write latencies.  Under
+our IID assumptions, we fit single-node latency distributions to the
 provided distributions, again assuming symmetric \texttt{A},
-\texttt{R}, and \texttt{S}.  The data fit a Pareto distribution with a
+\texttt{R}, and \texttt{S}.  The data again fit a Pareto distribution with a
 long exponential tail.  At the $98$th percentile, the write
 distribution takes a sharp turn.  Fitting the data closely resulted in
 an extremely long tail, with $99.99+$th percentile writes requiring
@@ -1113,12 +1098,12 @@ percentile, the write fit N-RMSE is .104\%.
 \label{fig:latencies}
 \end{figure*}
 
-Finally, we simulated a normal-case WAN replication scenario,
+Finally, we considered a normal-case WAN replication scenario, denoted
 \texttt{WAN}.  Reads and writes are routed to random data centers,
 and, accordingly, one replica operation commits quickly while the
 others are routed remotely.  We delay remote operations and responses
-by 75ms and apply \texttt{LNKD-DISK} delays once the operation reaches its
-target data center, in accordance with a near-worst-case
+by 75ms and apply \texttt{LNKD-DISK} delays once the operation reaches
+its target data center, in accordance with a near-worst-case
 multi-continent WAN network delay~\cite{dean-keynote}.
 
 We show the parameters for each distribution in
@@ -1191,10 +1176,10 @@ observation that employing SSDs lowers the write latency and results
 in lower $t$-visibility when compared to using disks.  More generally,
 this result suggests that instead of increasing read and write quorum
 sizes to decrease $t$-visibility, operators could chose to lower
-(relative) \texttt{W} latencies.  This is achievable through hardware
-configurations or by delay read latencies.  However, this latter
-option is potentially problematic for read-heavy workloads and
-introduces queuing effects for reads and writes.
+(relative) \texttt{W} latencies through hardware configuration or by
+delaying reads.  However, this latter option is potentially
+problematic for read-heavy workloads and introduces queuing effects
+for reads and writes.
 
 \begin{figure}
 \centering
@@ -1301,22 +1286,21 @@ have not yet addressed.  Here, we briefly discuss them along with
 improvements to our models.
 
 \textbf{Latency/Staleness SLAs.} Using PBS, we can automatically
-configure the configuration of replication parameters.  We can
-optimize for operation latency given constraints on staleness and
-minimum durability.  Data store operators can subsequently provide
-service level agreements to applications and provide quantitative
-trade-offs to developers, allowing them to reason about staleness
-versus end-user latency.  Operators can determine configurations
-analytically and revise them given online feedback.  PBS provides a
-quantitative lens for analyzing consistency guarantees that were
-previously unknown.  While this optimization formulation is likely
-convex, the state space for configurations is rather small ($O(N^2)$).
-This optimization also allows disentanglement of replication for
-reasons of durability from replication for reasons of low latency and
-higher capacity.  For example, operators can specify a minimum
-replication factor for durability and availability but may want to
-automatically increase $N$, which decreases tail latency for a fixed
-$R$ and $W$.
+configure the configuration of replication parameters, optimizing
+operation latency given constraints on staleness and minimum
+durability.  Data store operators can subsequently provide service
+level agreements to applications and provide quantitative trade-offs
+to developers, allowing them to reason about staleness versus end-user
+latency.  Operators can determine configurations analytically and
+revise them given online feedback.  PBS provides a quantitative lens
+for analyzing consistency guarantees that were previously unknown.
+This optimization formulation is likely non-convex, but the state
+space for configurations is small ($O(N^2)$).  This optimization also
+allows disentanglement of replication for reasons of durability from
+replication for reasons of low latency and higher capacity.  For
+example, operators can specify a minimum replication factor for
+durability and availability but may want to automatically increase
+$N$, which decreases tail latency for fixed $R$ and $W$.
 
 \textbf{Variable configurations.} We have assumed the use of a single
 replica configuration ($N$, $R$, and $W$) across all operations.
@@ -1386,10 +1370,9 @@ $N$$=$$3$).  However, it would be beneficial to quantify this impact
 more precisely given actual failure distributions.  We have asserted
 that failures or latency spikes can be accommodated in \textit{WARS}
 by adjusting latency distributions to match failure probabilities.
-However, modeling the probability of treating replicas as inactive
-(while it is just hung) and modeling recovery semantics such as hinted
-handoff would be fruitful.  This requires additional information about
-failure rates and additional care in gathering latency distributions.
+Modeling modeling recovery semantics such as hinted handoff would also
+be fruitful.  These improvements require additional information about
+failure rates and their impact on latency distributions.
 
 \vspace{\sectionskip}\section{Related Work}
 \label{sec:relatedwork}
