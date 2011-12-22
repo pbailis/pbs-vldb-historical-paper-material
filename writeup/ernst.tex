@@ -237,8 +237,8 @@ each operation from a set of sets of replicas, known as a
 systems, but one easy solution is to use read and write quorums of
 fixed sizes, which we will denote $R$ and $W$, respectively, for a set
 of nodes of size $N$.  To recap, the data system uses one quorum
-system per data item.  The quorum systems across data items may be
-identical, but they need not be.
+system per data item.  Across data items, the quorum systems need not
+be identical
 
 Informally, a strict quorum system is a quorum system with the
 property that any two quorums (sets) in the quorum system overlap
@@ -289,10 +289,10 @@ quorums of size $R$:
 \label{eq:prob-strict}
 p_{stale}=\frac{{N-W \choose R}}{{N \choose R}}
 \end{equation}
-The probability of inconsistency is quite high except for large values
-of $N$.  With $N=100$, $R=W=30$, $p_{stale} = 1.88 \times
+The probability of inconsistency is high except at large $N$.  With
+$N=100$, $R=W=30$, $p_{stale} = 1.88 \times
 10^{-6}$~\cite{non-strict}.  However, with $N=3$, $R=W=1$, $p_{stale}
-= .\overline{6}$.  The asymptotics of this class of systems are
+= .\overline{6}$.  The asymptotics of these systems are
 excellent---but only asymptotically.
 
 \textit{$k$-quorum systems} provide strong \textit{deterministic}
@@ -393,30 +393,29 @@ Following standard practice, we do not consider Byzantine failure.
 \vspace{\subsectionskip}\subsection{Typical Quorum Configurations}
 
 For improved latency, operators often set $R+W \leq N$.  Here, we
-survey partial quorum configurations drawn from practitioner accounts.
-In summary, many operators appear to use partial quorum
-configurations, frequently citing performance benefits and high
-availability.
+survey quorum configurations according to practitioner accounts.  Mny
+operators appear to use partial quorum configurations, frequently
+citing performance benefits and high availability.
 
- Cassandra's default operation configuration is $N$$=$$3$,
- $R$$=$$W$$=$$1$~\cite{cassandradefault}. The Apache Cassandra 1.0
- documentation claims that ``a majority of users do writes at
- consistency level [$W$$=$$1$]'', while the Cassandra Query Language
- defaults to $R$$=$$W$$=$$1$ as well~\cite{cassandra-docs}.
- Production Cassandra users report using $R$$=$$W$$=$$1$ in the
- ``general case'' because it provides ``maximum
- performance''~\cite{maxperfblog}, which appears to be a commonly held
- belief~\cite{reddit, outbrain}.  Cassandra has a ``minor'' patch for
- session guarantees~\cite{sessionguarantees}, but this has not yet
- been integrated into the mainline source~\cite{cassandra-session} as
- of version 1.0; according to our discussions with developers, this is
- due to lack of interest.
+Cassandra defaults to $N$$=$$3$,
+$R$$=$$W$$=$$1$~\cite{cassandradefault}. The Apache Cassandra 1.0
+documentation claims that ``a majority of users do writes at
+consistency level [$W$$=$$1$]'', while the Cassandra Query Language
+defaults to $R$$=$$W$$=$$1$ as well~\cite{cassandra-docs}.  Production
+Cassandra users report using $R$$=$$W$$=$$1$ in the ``general case''
+because it provides ``maximum performance''~\cite{maxperfblog}, which
+appears to be a commonly held belief~\cite{reddit, outbrain}.
+Cassandra has a ``minor'' patch for session
+guarantees~\cite{sessionguarantees}, but this has not yet been
+integrated into the mainline source~\cite{cassandra-session} as of
+version 1.0; according to our discussions with developers, this is due
+to lack of interest.
 
 Riak defaults to $N$$=$$3$, $R$$=$$W$$=$$2$~\cite{riakdefault-n,
-  riakdefault-rw}, however users suggest using $R$$=$$W$$=$$1$,
-$N$$=$$2$ for ``low value'' data (and variants of overlapping quorums
-for ``web,'' ``mission critical,'' and ``financial''
-data)~\cite{riaktalkone, riaktalktwo}.
+  riakdefault-rw}. Users suggest using $R$$=$$W$$=$$1$, $N$$=$$2$ for
+``low value'' data (and variants of strict quorums for ``web,''
+``mission critical,'' and ``financial'' data)~\cite{riaktalkone,
+  riaktalktwo}.
 
  Finally, Voldemort does not provide sample configurations, but
  Voldemort's authors (and operators) at LinkedIn~\cite{feinbergpc}
@@ -483,9 +482,8 @@ have been committed within $k$ versions of the latest committed
 version when the read begins.
 \end{definition}
 Versions whose writes that are not yet committed (in-flight) may be
-returned by a read in this formulation of probabilistic $k$-quorums
-(see Figure \ref{fig:timelines}A).  The $k$-quorum literature defines
-these as $k$-regular semantics~\cite{non-strict}.
+returned by a read (see Figure \ref{fig:timelines}A).  The $k$-quorum
+literature defines these as $k$-regular semantics~\cite{non-strict}.
 
 \begin{figure}
 \centering
@@ -637,10 +635,9 @@ failures by increasing the tail probabilities in $P_w$.
 \vspace{\subsectionskip}\subsection{PBS $\langle k, t \rangle$-staleness}
 
 We can combine the previous models to combine both versioned and
-real-time staleness metrics to answer questions of the following form:
-what is the probability that a read will return a value no older than
-$k$ versions stale if the last write committed no sooner than $t$ seconds
-ago?
+real-time staleness metrics to determine the probability that a read
+will return a value no older than $k$ versions stale if the last write
+committed no sooner than $t$ seconds ago:
 \begin{definition}
 A quorum system obeys \textit{PBS $\langle k, t \rangle$-staleness
   consistency} if, with probability $1-p_{s}$, at least one value in
@@ -654,11 +651,10 @@ p_{s} = \left(\frac{{N-W \choose R}}{{N \choose R}}+\sum_{c\in[W, N)} \frac{{N-c
 \end{equation}
 In this equation, in addition to (again) assuming instantaneous reads,
 we also assume the pathological case where the last $k$ writes all
-occurred at the same time.  This is not likely in practice, so if we
-can determine the time since commit for the last $k$ writes, we can
-improve this staleness bound by considering each quorum's $p_{s}$
-at $RT=t$ separately.  However, this equation provides a conservative
-upper bound on $p_{s}$.
+occurred at the same time.  This is unlikely, so, if we can determine
+the time since commit for the last $k$ writes, we can improve this
+bound by considering each quorum's $p_{s}$ at $RT=t$ separately.
+However, this equation provides a conservative upper bound on $p_{s}$.
 
 Note that the prior definitions of consistency are encapsulated by PBS
 $\langle k, t \rangle$-staleness consistency. probabilistic $k$-quorum
@@ -818,9 +814,12 @@ undefined; after $m$ milliseconds, there is a newer version.
 \vspace{\subsectionskip}\subsection{Asynchronous Staleness Detection}
 
 Even if a system provides an extremely high probability of
-consistency, it  may be useful if applications can be notified when
+consistency, it may be useful if applications can be notified when
 data returned is inconsistent, or staler than expected.  The Dynamo
-model is naturally equipped for staleness detection.
+model is naturally equipped for staleness detection.  The following
+discussion is couched in the terms of strong consistency, but it is
+easily extended to PBS $k$-staleness and $\langle k, t
+\rangle$-staleness.
 
 Knowing whether a response is stale at read time requires strong
 consistency.  By checking all possible values in the domain against a
@@ -857,9 +856,7 @@ a centralized service~\cite{zookeeper} or using distributed
 consensus~\cite{paxos}.  Eliminating false positives requires
 modifications to the Dynamo protocol but is definitely feasible.
 
-While this discussion has been couched in the terms of strong
-consistency, it is easily extended to PBS $k$-staleness and PBS
-$\langle k, t \rangle$-staleness.
+
 
 \vspace{\sectionskip}\section{Evaluating Dynamo {\large $t$}-visibility}
 \label{sec:dynamoeval}
@@ -941,8 +938,7 @@ Carlo simulator.
 
 \textit{WARS} depends only on latency distributions, and, rather than
 conjecture as to what represent ``reasonable'' scenarios, we analyzed
-production distributions from two internet-scale companies, LinkedIn
-and Yammer.
+production distributions from two internet-scale companies.
 
 LinkedIn~\cite{linkedin} is an online professional social network
 claiming over 135 million members as of November
@@ -1453,7 +1449,7 @@ staleness by ensuring that each replica makes (transitive) contact
 with all other replicas in the system within a given time window.
 Finally, PIQL~\cite{piql} bounds the number of operations performed
 per query, trading operation latency at scale with the amount of data
-a particular query can access, potentially impacting accuracy.
+a particular query can access, impacting accuracy.
 
 In this work, we analyze quorum replication systems and study the
 properties real-world Dynamo-style quorum systems in depth.  Many of
