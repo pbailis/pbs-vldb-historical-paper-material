@@ -126,8 +126,8 @@ promise consistency, but they can describe what consistency they are
 \textit{likely} to provide for varying degrees of certainty.  However,
 there is little prior work that describes how to make these
 consistency and staleness predictions under practical conditions.
-Accordingly, the current state-of-the-art requires data system users
-to make rough guesses or perform online profiling to determine the
+Accordingly, the current state-of-the-art requires that data system
+users make rough guesses or perform online profiling to determine the
 consistency provided by their data stores.
 
 To do better, we need to know when and why eventually consistent
@@ -489,15 +489,13 @@ literature defines these as $k$-regular semantics~\cite{non-strict}.
 \centering
 \includegraphics[width=\columnwidth]{figs/timelines.pdf}
 \vspace{-16pt}
-\caption{Possible versions returned by read operations under
-  PBS $k$-staleness (A) and PBS monotonic reads (B). In
-  $k$-consistency, the read operation will return a version no later
-  than $k$ versions older than the last committed value when it
-  started; more versions may be committed during the read and may be
-  returned.  In monotonic reads consistency, the staleness depends on
-  the number of versions committed since the time the client last
-  completed a read.  This is determined by the proportion of client's
-  reads to the number of writes committed to the key.}
+\caption{Possible versions returned by read operations under PBS
+  $k$-staleness (A) and PBS monotonic reads (B). In $k$-staleness, the
+  read operation will return a version no later than $k$ versions
+  older than the last committed value when it started; more versions
+  may be committed during the read and may be returned.  In monotonic
+  reads consistency, the staleness depends on the number of versions
+  committed since the time the client last completed a read.}
 \vspace{-12pt}
 \label{fig:timelines}
 \end{figure}
@@ -942,21 +940,20 @@ production distributions from two internet-scale companies.
 
 LinkedIn~\cite{linkedin} is an online professional social network
 claiming over 135 million members as of November
-2011~\cite{linkedinmembers}. To handle highly available, low latency
-data storage, engineers at LinkedIn built Voldemort, a Dynamo-style
-quorum replicated key value store~\cite{voldemort, voldemortpub}.
-Alex Feinberg, a lead engineer on Voldemort, graciously provided us
-with latency distributions for a single node replaying peak load
-traffic for a user-facing service at LinkedIn, representing 60\% read
-and 40\% read-modify-write traffic~\cite{feinbergpc}
-(Table~\ref{table:linkedin}).  Feinberg reports that ``with spinning
-disks, we're largely IO bound and latency is largely determined by the
-kind of disks we're using, data to memory ratio and request
-distribution.  With [solid state drives (SSDs)], we're CPU and/or
-network bound (depending on value size).''  As an interesting aside,
-Feinberg also notes that ``maximum latency is generally determined by
-[garbage collection] activity (rare, but happens occasionally) and is
-within hundreds of milliseconds.''
+2011~\cite{linkedinmembers}. To provide highly available, low latency
+data storage, engineers at LinkedIn built Voldemort~\cite{voldemort,
+  voldemortpub}.  Alex Feinberg, a lead engineer on Voldemort,
+graciously provided us with latency distributions for a single node
+replaying peak load traffic for a user-facing service at LinkedIn,
+representing 60\% read and 40\% read-modify-write
+traffic~\cite{feinbergpc} (Table~\ref{table:linkedin}).  Feinberg
+reports that ``with spinning disks, we're largely IO bound and latency
+is largely determined by the kind of disks we're using, data to memory
+ratio and request distribution.  With [solid state drives (SSDs)],
+we're CPU and/or network bound (depending on value size).''  As an
+interesting aside, Feinberg also notes that ``maximum latency is
+generally determined by [garbage collection] activity (rare, but
+happens occasionally) and is within hundreds of milliseconds.''
 
 \begin{table}
 \centering
@@ -986,8 +983,7 @@ Average & 0.58 \\
 Yammer is an online social network designed to provide enterprises
 with private social networking capabilities.  As of December 2011,
 Yammer claimed over 100,000 companies as customers~\cite{yammer}.
-Yammer uses Basho's Riak, another open source Dynamo-style quorum
-replicated database for client data~\cite{riak}.  Coda Hale,
+Yammer uses Basho's Riak for some client data~\cite{riak}.  Coda Hale,
 infrastructure architect, and Ryan Kennedy, also of Yammer, presented
 on their use of Riak including surprisingly in-depth performance
 numbers in March 2011~\cite{riakyammer}.  Yammer provided us with more
@@ -1540,7 +1536,7 @@ The probabilistic quorum literature defines an
 $\varepsilon$-intersecting quorum system as a quorum system that
 provides a $1-\varepsilon$ probability of returning consistent
 data~\cite[Definition 3.1]{prob-quorum}.  A $\varepsilon$-intersecting
-quorum system has a lower bound load of
+quorum system has load of at least 
 $\frac{1-\sqrt{\varepsilon}}{\sqrt{N}}$~\cite[Corollary
   3.12]{prob-quorum}.
 
@@ -1557,10 +1553,9 @@ $\frac{(1-p)^{\frac{1}{2C}}}{\sqrt{N}}$, where
 $C=1+\frac{\gamma_{gw}}{\gamma_{cr}}$.
 
 These results are intuitive: if we are willing to tolerate multiple
-versions of staleness, we need to contact fewer replicas.  However, we
-believe this is the first formal demonstration that staleness
-tolerance lowers the load requirement for a quorum system,
-subsequently increasing its capacity.
+versions of staleness, we need to contact fewer replicas.  Staleness
+tolerance lowers the load of a quorum system, subsequently increasing
+its capacity.
 
 
 
