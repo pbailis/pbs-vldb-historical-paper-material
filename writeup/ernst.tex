@@ -411,7 +411,14 @@ data)~\cite{riaktalkone, riaktalktwo}.
  number of replicas respond or a timeout occurs, at which point the
  request succeeds.  In the low latency case, preferred reads is either
  two or is disabled.  In the $N$$=$$2$ case, preferred reads and
- preferred writes are set to two.
+ preferred writes are set to two.  Voldemort also slightly differs
+ from Dynamo in that it sends read requests to $R$ of $N$ replicas
+ (not $N$ of $N$)~\cite{voldemortpub}; this decreases load per replica
+ and network traffic at the expense of read latency and potential
+ availability.  However, provided the per-request staleness
+ probabilities are independent, this does not affect staleness
+ because, even when sending reads to $N$ of $N$ replicas, coordinators
+ still only wait for $R$ responses.
 
 
 \section{Probabilistically Bounded\\Staleness}
@@ -719,10 +726,16 @@ processing delays, a read or write to $R$ or $W$ nodes is behaves like
 a read or write to $R-1$ or $W-1$ nodes, respectively.  Although we do
 not do so, \textit{WARS} can be adopted to handle local reads and
 writes.  Determining whether requests will be proxied (and, if not,
-which replicas serve which requests) is deployment-specific.
+which replicas serve which requests) is data store and
+deployment-specific.  Dynamo forwards write requests to a designator
+coordinator solely for the purpose of establishing a version
+ordering~\cite[Section 6.4]{dynamo} (easily achievable through other
+mechanisms~\cite{zookeeper}).  Dynamo's authors observed a latency
+improvement by proxying all operations and having clients act as
+coordinators---Voldemort adopts this architecture~\cite{voldemortclient}.
 
-An individual client will likely incur additional time between its
-reads and writes due to latency required to contact the data store.
+An end-user will likely incur additional time between his or her
+reads and writes due to latency required to contact the datacenter.
 An individual making requests to a web service using his or her
 browser will likely incur tens or hundreds of milliseconds of delay
 between requests.  Although we do not consider this delay here, it is
