@@ -242,17 +242,15 @@ be identical
 
 Informally, a strict quorum system is a quorum system with the
 property that any two quorums (sets) in the quorum system overlap
-(have non-empty intersection). When considering distributed get/put
-operations, reading and writing to sets of nodes in a strict quorum
-system ensures strong consistency in the absence of failures.  The
-minimum sized quorum defines its fault tolerance.  A simple example of
-a strict quorum system is the majority quorum system, in which each
-quorum is of size $\lceil \frac{N}{2}\rceil$.  However, the theory
-literature contains numerous alternative quorum systems providing
-varying asymptotic properties of capacity, scalability, and
-fault-tolerance, from tree-quorums~\cite{treequorum} to
-grid-quorums~\cite{quorumsystems}.  Jim\'{e}nex-Peris et. al provide a
-useful overview of these traditional, strict quorum
+(have non-empty intersection). This ensures consistency.  The minimum
+sized quorum defines the system's fault tolerance, or availability.  A
+simple example of a strict quorum system is the majority quorum
+system, in which each quorum is of size $\lceil \frac{N}{2}\rceil$.
+However, the theory literature contains many alternative quorum
+system designs providing varying asymptotic properties of capacity,
+scalability, and fault tolerance, from tree-quorums~\cite{treequorum}
+to grid-quorums~\cite{quorumsystems}.  Jim\'{e}nez-Peris et. al
+provide an overview of traditional, strict quorum
 systems~\cite{quorums-alternative}.
 
 Partial quorum systems are natural extensions of strict quorum
@@ -275,8 +273,8 @@ propagation. Additionally, and most importantly, to the best of our
 knowledge, probabilistic quorums have only been used to study the
 probability of strong consistency and have not been used to study
 bounded staleness, particularly in the presence of anti-entropic
-processes.  Merideth and Reiter provide a useful overview of recent
-advances in quorum systems~\cite{quorum-overview}.
+processes.  Merideth and Reiter provide an overview of recent advances
+in quorum systems~\cite{quorum-overview}.
 
 As an example of a probabilistic quorum system, given $N$ replicas and
 randomly chosen read and write quorums of sizes $R$ and $W$, we can
@@ -287,24 +285,24 @@ written to in the write quorum divided by the number of possible
 quorums of size $R$:
 \begin{equation}
 \label{eq:prob-strict}
-p_{stale}=\frac{{N-W \choose R}}{{N \choose R}}
+p_{s}=\frac{{N-W \choose R}}{{N \choose R}}
 \end{equation}
-The probability of inconsistency is high except at large $N$.  With
-$N=100$, $R=W=30$, $p_{stale} = 1.88 \times
-10^{-6}$~\cite{non-strict}.  However, with $N=3$, $R=W=1$, $p_{stale}
+The probability of inconsistency is high except for large $N$.  With
+$N=100$, $R=W=30$, $p_{s} = 1.88 \times
+10^{-6}$~\cite{non-strict}.  However, with $N=3$, $R=W=1$, $p_{s}
 = .\overline{6}$.  The asymptotics of these systems are
 excellent---but only asymptotically.
 
-\textit{$k$-quorum systems} provide strong \textit{deterministic}
-guarantees that the partial quorum system will return a value that was
-written within $k$ versions of the most recent
-write~\cite{non-strict}.  In the single-writer scenario, a round-robin
-write scheduling scheme where each write is sent to $\frac{N}{k}$
-replicas ensures that any replica is no more than $k$ versions
-out-of-date.  However, with multiple writers, the global ordering
-properties that the single-writer was able to control are lost, and
-the best known algorithm for the pathological case results in a lower
-bound of $(2N-1)(k-1)+N$ versions staleness~\cite{multi-k-quorum}.
+\textit{$k$-quorum systems} provide \textit{deterministic} guarantees
+that a partial quorum system will return values that are within $k$
+versions of the most recent write~\cite{non-strict}.  In the
+single-writer scenario, a round-robin write scheduling scheme where
+each write is sent to $\frac{N}{k}$ replicas ensures that any replica
+is no more than $k$ versions out-of-date.  However, with multiple
+writers, the global ordering properties that the single-writer was
+able to control are lost, and the best known algorithm for the
+pathological case results in a lower bound of $(2N-1)(k-1)+N$ versions
+staleness~\cite{multi-k-quorum}.
 
 This prior work makes two important assumptions: first, it treats
 quorum sizes as fixed, where the set of nodes with a version does not
@@ -512,13 +510,13 @@ system, the probability of non-intersection is simply Equation
 p_{s} = \left(\frac{{N-W \choose R}}{{N \choose R}}\right)^k
 \end{equation}
 
-For the $N=3, R=W=1$ case, this means that the probability of
-returning a version within $2$ versions is $.\overline{5}$, within $3$
-versions $.\overline{703}$, and within $5$ versions $> .868$, and $10$
-versions $>.98$.  With $N=3, R=1, W=2$ (alternatively, $R=2, W=1$),
-these probabilities increase: $k=1 \rightarrow
-.\overline{6}$, $k=2 \rightarrow .\overline{8}, k=5 \rightarrow >
-.995$.
+For the $N$$=$$3$, $R$$=$$W$$=$$1$ case, this means that the
+probability of returning a version within $2$ versions is
+$.\overline{5}$, within $3$ versions $.\overline{703}$, and within $5$
+versions $> .868$, and $10$ versions $>.98$.  With
+$N$$=$$3$,$R$$=$$1$, $W$$=$$2$ (equivalently, $R$$=$$2$, $W$$=$$1$),
+these probabilities increase: $k$$=$$1 \rightarrow .\overline{6}$, $k$$=$$2
+\rightarrow .\overline{8}$, and $k$$=$$5 \rightarrow > .995$.
 
 This closed form solution holds for quorums that do not change size
 over time.  For expanding partial quourm systems, this solution is an
