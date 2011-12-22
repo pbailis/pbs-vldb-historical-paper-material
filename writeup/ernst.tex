@@ -112,7 +112,7 @@ consistency through the use of associative and commutative operations
 (e.g., timelines, logs, and notifications)~\cite{calm, helland}, these
 trade-offs are often justified.  Most importantly, the proliferation
 of partial quorum configurations suggests that either data store
-operators are simply na\"{\i}ve and misguided or, more likely, in
+operators are simply na\"{\i}ve and misguided or that, in
 practice, eventually consistent data stores provide a reasonable
 degree of consistency.
 
@@ -145,12 +145,9 @@ of the last $k$ versions of a data item ($k$-staleness), of reading a
 data item $t$ seconds after it is written ($t$-visibility), and of
 experiencing a combination of the two ($\langle k, t
 \rangle$-staleness). PBS does not enforce deterministic staleness
-bounds~\cite{ aqua, trapp,vahdat-article, vahdat-bounded, frac} or
-describe a new design point in the increasingly crowded spectrum of
-consistency models~\cite{cops, walter, sessionguarantees,
-  vogels-defs}; rather, PBS is primarily intended as a lens for
-clarifying, analyzing, and improving the behavior of \textit{existing}
-systems.
+bounds~\cite{ aqua, trapp,vahdat-article, vahdat-bounded, frac} but is
+primarily intended as a lens for clarifying, analyzing, and improving
+the behavior of \textit{existing} systems.
 
 We provide closed-form solutions for PBS $k$-staleness and use Monte
 Carlo analysis to explore the trade-off between latency and
@@ -522,7 +519,7 @@ This closed form solution holds for quorums that do not change size
 over time.  For expanding partial quourm systems, this solution is an
 upper bound on the probability of staleness.  We discuss the
 \textit{load} improvements offered by PBS $k$-staleness as discussed
-in quorum system literature in the Appendix.
+in quorum system literature in the appendix.
 
 \vspace{\subsectionskip}\subsection{PBS Monotonic Reads}
 
