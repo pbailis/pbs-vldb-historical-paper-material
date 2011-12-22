@@ -14,6 +14,8 @@
 
   \renewcommand{\ttdefault}{cmtt}
 
+\newcommand{\sectionskip}{-0em}
+\newcommand{\subsectionskip}{-0em}
 \usepackage{mdwlist}
 
 \newenvironment{myitemize}
@@ -31,7 +33,7 @@
     \vspace{-.5em}
 }
 
-\title{Probabilistically Bounded Staleness and\\ Practical Partial Quorum Systems}
+\title{PBS: Probabilistically Bounded Staleness\\ and Practical Partial Quorum Systems}
 
 \author{Peter Bailis, Shivaram Venkataraman, Michael J. Franklin, Ion Stoica, Joseph M. Hellerstein\\
 \affaddr{University of California, Berkeley}\\
@@ -58,7 +60,7 @@
 
 \input{abstract}
 
-\section{Introduction}
+\vspace{\sectionskip}\section{Introduction}
 
 Modern distributed storage systems need to be scalable, highly
 available, and fast.  These systems typically replicate data across
@@ -199,7 +201,7 @@ PBS partial quorums. In Section~\ref{sec:relatedwork}, we discuss
 related work, and, in Section~\ref{sec:conclusion}, we conclude.
 
 
-\section{Background}
+\vspace{\sectionskip}\section{Background}
 \label{sec:background}
 
 In this section, we provide background regarding quorum systems both
@@ -211,7 +213,7 @@ employing quorum replication.  Finally, we survey reports of
 practitioner usage of partial quorums for three Dynamo-style data
 systems.
 
-\subsection{Quorum Foundations: Theory}
+\vspace{\subsectionskip}\subsection{Quorum Foundations: Theory}
 
 Quorum systems have long been proposed as a replication strategy for
 distributed data storage~\cite{quorums-start}.  Under quorum
@@ -305,7 +307,7 @@ quorum sizes as fixed, where the set of nodes with a version does not
 grow over time, and, second, it frequently assumes Byzantine failure.
 We revisit these assumptions at the end of the next section.
 
-\subsection{Quorum Foundations: Practice}
+\vspace{\subsectionskip}\subsection{Quorum Foundations: Practice}
 \label{sec:practice}
 
 In practice, many distributed data management systems use quorums as a
@@ -384,7 +386,7 @@ the practical literature, practitioners largely focus on fail-stop
 failure modes instead of Byzantine failure~\cite{birman-byzantine}.
 Following standard practice, we do not consider Byzantine failure.
 
-\subsection{Typical Quorum Configurations}
+\vspace{\subsectionskip}\subsection{Typical Quorum Configurations}
 
 For improved latency, operators often set $R+W \leq N$.  Here, we
 survey partial quorum configurations drawn from practitioner accounts.
@@ -435,7 +437,7 @@ data)~\cite{riaktalkone, riaktalktwo}.
  still only wait for $R$ responses.
 
 
-\section{Probabilistically Bounded\\Staleness}
+\vspace{\sectionskip}\section{Probabilistically Bounded\\Staleness}
 \label{sec:pbs}
 
 In this section, we introduce the theory of Probabilistically Bounded
@@ -461,7 +463,7 @@ we model Dynamo-style quorums in Section \ref{sec:dynamo}. We discuss
 further refinements to our assumptions in Section
 \ref{sec:discussion}.
 
-\subsection{PBS $k$-staleness}
+\vspace{\subsectionskip}\subsection{PBS $k$-staleness}
 
 Probabilistic quorums allow us to determine the probability of
 returning the most recent value written to the database, but do not
@@ -522,9 +524,9 @@ This closed form solution holds for quorums that do not change size
 over time.  For expanding partial quourm systems, this solution is an
 upper bound on the probability of staleness.  We discuss the
 \textit{load} improvements offered by PBS $k$-staleness as discussed
-in quorum system literature in Appendix A.
+in quorum system literature in the Appendix.
 
-\subsection{PBS Monotonic Reads}
+\vspace{\subsectionskip}\subsection{PBS Monotonic Reads}
 
 With additional information, we can use PBS $k$-staleness to predict
 whether a client will ever read staler data than it has already read.
@@ -571,7 +573,7 @@ integrate into these calculations.  By performing appropriate
 admission control, operators can control these rates to achieve
 monotonic reads guarantees.
 
-\subsection{PBS $t$-visibility}
+\vspace{\subsectionskip}\subsection{PBS $t$-visibility}
 \label{sec:tvis}
 
 Until now, we have considered only quorums that do not grow over time.
@@ -628,7 +630,7 @@ quorums.  Additionally, one can model both transient and permanent
 failures by increasing the tail probabilities in $P_w$.
 
 
-\subsection{PBS $\langle k, t \rangle$-staleness}
+\vspace{\subsectionskip}\subsection{PBS $\langle k, t \rangle$-staleness}
 
 We can combine the previous models to combine both versioned and
 real-time staleness metrics to answer questions of the following form:
@@ -667,7 +669,7 @@ Accordingly, having derived a closed-form model for $k$-visibility, in
 the remainder of this paper, we focus mainly on deriving specific models
 for $t$-visibility.
 
-\section{Dynamo-style $t$-visibility}
+\vspace{\sectionskip}\section{Dynamo-style $t$-visibility}
 \label{sec:dynamo}
 
 We have formulated a closed-form analytical model for $k$-staleness,
@@ -678,7 +680,7 @@ context of Dynamo-style data storage systems.  We describe how to
 model the probability of staleness in these systems and how to
 asynchronously detect staleness.
 
-\subsection{Inconsistency in Dynamo: WARS Model}
+\vspace{\subsectionskip}\subsection{Inconsistency in Dynamo: WARS Model}
 
 Dynamo-style quorum systems are inconsistent as a result of read and
 write message reordering.  Reads and writes are sent to all quorum
@@ -778,7 +780,7 @@ using Monte Carlo analysis, which suffices for our purposes in
 practice and, from a practical perspective, is relatively easy to
 implement.
 
-\subsection{Additional Anti-entropy}
+\vspace{\subsectionskip}\subsection{Additional Anti-entropy}
 
 As we discussed in Section~\ref{sec:practice}, anti-entropic processes
 decrease the probability of staleness by further propagating versions
@@ -809,7 +811,7 @@ Intuitively, if two writes to a key are spaced $m$ milliseconds apart,
 then the $t$-visibility of the first write for $t > m$ milliseconds is
 undefined; after $m$ milliseconds, there is a newer version.
 
-\subsection{Asynchronous Staleness Detection}
+\vspace{\subsectionskip}\subsection{Asynchronous Staleness Detection}
 
 Even if a system provides an extremely high probability of
 consistency, it  may be useful if applications can be notified when
@@ -855,7 +857,7 @@ While this discussion has been couched in the terms of strong
 consistency, it is easily extended to PBS $k$-staleness and PBS
 $\langle k, t \rangle$-staleness.
 
-\section{Evaluating Dynamo $t$-visibility}
+\vspace{\sectionskip}\section{Evaluating Dynamo {\large $t$}-visibility}
 \label{sec:dynamoeval}
 
 As discussed in Section~\ref{sec:tvis}, PBS $t$-visibility depends on
@@ -882,7 +884,7 @@ decreases the number of varibles in our experiments (each of which is
 supported by empirical observations from practitioners) and increases
 the applicability of these results.
 
-\subsection{Monte Carlo Simulator}
+\vspace{\subsectionskip}\subsection{Monte Carlo Simulator}
 
 We implemented \textit{WARS} in an event-driven simulator.
 Calculating $t$-visibility for a given value of $t$ is rather
@@ -895,7 +897,7 @@ $w_t+\texttt{R}[i] + t\leq \texttt{W}[i]$.  This requires only a few
 lines of code.  Implementing $\langle k, t \rangle$-staleness requires
 remembering write ordering and history but is not difficult.
 
-\subsection{Model Validation}
+\vspace{\subsectionskip}\subsection{Model Validation}
 
 To validate \textit{WARS}  (and our subsequent analyses), we instrumented a
 commercially available, open source Dynamo-style key-value store to
@@ -930,7 +932,7 @@ distributions, our simulation was accurate for $t$-visibility for
 $t\in\{1,\cdots,199\}$ with RMSE=0.0023\%.  This validates our Monte
 Carlo simulator.
 
-\subsection{Production Latency Distributions}
+\vspace{\subsectionskip}\subsection{Production Latency Distributions}
 \label{sec:latencies}
 
 \textit{WARS} depends only on latency distributions, and, rather than
@@ -1026,7 +1028,7 @@ Mean Rate & 718.18 gets/s & 45.65 puts/s\\
 \label{table:yammer}
 \end{table}
 
-\subsection{Production Latency Model Fitting}
+\vspace{\subsectionskip}\subsection{Production Latency Model Fitting}
 
 While insights from production data are invaluable, they are
 underspecified for \textit{WARS}.  First, the data we collected are
@@ -1137,7 +1139,7 @@ $N$ local reads (writes) to return, whereas, for \texttt{WAN}, there
 is only one local read (write) and all other read (write) requests
 are be delayed at least 150ms.
 
-\subsection{Observed $t$-visibility}
+\vspace{\subsectionskip}\subsection{Observed {\large$t$}-visibility}
 
 We measured the $t$-visibility for each distribution
 (Figure~\ref{fig:tvis}).  We simulated reads
@@ -1178,7 +1180,7 @@ long propagation to observe the most recent value.
 \label{fig:tvis}
 \end{figure*}
 
-\subsection{Latency Tail Effects}
+\vspace{\subsectionskip}\subsection{Latency Tail Effects}
 
 %the ratio of \texttt{W} to \texttt{A}=\texttt{R}=\texttt{S} and swept
 %a range of exp 
@@ -1212,7 +1214,7 @@ introduces queuing effects for reads and writes.
 \label{fig:varydelay}
 \end{figure}
 
-\subsection{Replica Size}
+\vspace{\subsectionskip}\subsection{Replica Size}
 
 We consider how changing the number of replicas (N) affects
 $t$-visibility while maintaining $R$$=$$W$$=$$1$. The results shown in
@@ -1239,7 +1241,7 @@ the write latency distribution.
 \label{fig:varyn}
 \end{figure*}
 
-\subsection{Latency vs. $t$-visibility}
+\vspace{\subsectionskip}\subsection{Latency vs. $t$-visibility}
 
 As we have discussed, choosing a value for $R$ and $W$ results in a
 trade-off between operation latency and the $t$-visibility observed by
@@ -1300,7 +1302,7 @@ consistent.
 \end{table*}
 
 
-\section{Discussion and Future Work}
+\vspace{\sectionskip}\section{Discussion and Future Work}
 \label{sec:discussion}
 
 PBS enables several enhancements to partial quorum systems that we
@@ -1398,7 +1400,7 @@ However, modeling the probability of treating replicas as inactive
 handoff would be fruitful.  This requires additional information about
 failure rates and additional care in gathering latency distributions.
 
-\section{Related Work}
+\vspace{\sectionskip}\section{Related Work}
 \label{sec:relatedwork}
 
 We surveyed quorum replication
@@ -1455,7 +1457,7 @@ the aforementioned deterministic bounded staleness systems represent the
 deterministic dual of PBS, and their bounding algorithms could likely
 be employed in an expanding partial quorum system like Dynamo.
 
-\section{Conclusion}
+\vspace{\sectionskip}\section{Conclusion}
 \label{sec:conclusion}
 
 In this paper, we developed models for the staleness of values
@@ -1518,8 +1520,8 @@ Justin Sheehy
 \bibliography{ernst}
 }
 
-\begin{appendix}
-\section{PBS Quorum Load}
+\vspace{\sectionskip}
+\section*{APPENDIX: LOAD AND PBS {\large$k$}-STALENESS}
 Theory literature describes the \textit{load} of a quorum system as a
 metric for the frequency of accessing the busiest quorum
 member~\cite[Definition 3.2]{quorumsystems}.  Intuitively, the busiest
@@ -1530,9 +1532,9 @@ can sustain, called its \textit{capacity}~\cite[Corollary
 Prior work determined that probabilistic quorum systems did not offer
 significant benefits to load (providing a constant factor improvement
 compared to strict quorum systems)~\cite{prob-quorum}.  Here, we show
-that PBS $k$-quorums provide asymptotically lower load than
-traditional probabilistic quorum systems (and, transitively, than
-strict quorum systems).
+that quorums tolerating PBS $k$-staleness have asymptotically lower
+load than traditional probabilistic quorum systems (and, transitively,
+than strict quorum systems).
 
 The probabilistic quorum literature defines an
 $\varepsilon$-intersecting quorum system as a quorum system that
@@ -1546,7 +1548,7 @@ In considering $k$ versions of staleness, we consider the intersection
 of $k$ $\varepsilon$-intersecting quorum systems.  For a given
 probability $p$ of inconsistency, if we are willing to tolerate $k$
 versions of staleness, we need only require that that $\varepsilon =
-\sqrt[k]{p}$.  This implies that our PBS $k$-quorum system
+\sqrt[k]{p}$.  This implies that our PBS $k$-staleness system
 construction has load of at least
 $\frac{(1-p)^{\frac{1}{2k}}}{\sqrt{N}}$, an improved lower bound
 compared to traditional probabilistic quorum systems.  PBS monotonic
@@ -1561,7 +1563,6 @@ tolerance lowers the load requirement for a quorum system,
 subsequently increasing its capacity.
 
 
-\end{appendix}
 
 
 \end{document}
