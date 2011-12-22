@@ -772,13 +772,18 @@ anti-entropy protocols) depend on the rate of exchange.  \textit{WARS}
 is read rate independent but is affected by the write rate.  If
 multiple writes overlap (that is, have overlapping periods where they
 are in-flight but are not committed) the probability of inconsistency
-decreases.  Intuitively, this is because overlapping writes results in an
-increased chance that a client reads as-yet-uncommitted data.
+decreases.  Intuitively, this is because overlapping writes results in
+an increased chance that a client reads as-yet-uncommitted data.
 Accordingly, because \textit{WARS} does not capture read repair or
 Merkle tree exchange, it represents a lower bound for PBS
-$t$-staleness for Dynamo-style expanding partial quorums. In practice,
-versions may be fresher than predicted.\begin{comment} {\color{red}
-    Peter A: more general}\end{comment}
+$t$-staleness for Dynamo-style expanding partial quorums\footnote{In
+  particular, read repair is equivalent to issuing a write
+  for each read request delayed by the time required to receive $N$
+  read responses (or some subset of them, depending on the
+  implementation), except the version written is not newer than the
+  last committed version.}. In practice, versions may be fresher than
+predicted.\begin{comment} {\color{red} Peter A: more
+    general}\end{comment}
 
 In the presence of multiple concurrent writes (or even periodic
 writes), $t$-visibility time is bounded by the time between writes.
