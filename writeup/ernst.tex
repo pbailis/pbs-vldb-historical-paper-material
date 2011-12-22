@@ -299,8 +299,8 @@ excellent---but only asymptotically.
 guarantees that the partial quorum system will return a value that was
 written within $k$ versions of the most recent
 write~\cite{non-strict}.  In the single-writer scenario, a round-robin
-write scheduling scheme where each write is sent to $\frac{N}{K}$
-replicas ensures that any replica is no more than $K$ versions
+write scheduling scheme where each write is sent to $\frac{N}{k}$
+replicas ensures that any replica is no more than $k$ versions
 out-of-date.  However, with multiple writers, the global ordering
 properties that the single-writer was able to control are lost, and
 the best known algorithm for the pathological case results in a lower
