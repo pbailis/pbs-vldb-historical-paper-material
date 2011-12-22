@@ -27,8 +27,6 @@
 
 \input{vc.tex}
 
-\setlength{\dbltextfloatsep}{1em}
-\setlength{\dblfloatsep}{1.5em}
 
 \begin{document}
 
@@ -331,11 +329,13 @@ concurrent write requests.
 \begin{figure}
 \centering
 \includegraphics[width=.8\columnwidth]{figs/dynamo-quorum.pdf}
+\vspace{-8pt}
 \caption{Diagram of control flow for client write to Dynamo-style
   quorum.  Here, $N=3$, $W=2$. The client write is handled by a
   coordinator node and sent to all replicas. The write succeeds when
   $W$ replicas respond.  Note that the coordinator is possibly a
   replica as well, invoking a local write.}
+\vspace{-12pt}
 \label{fig:dynamo-quorum}
 \end{figure}
 
@@ -470,6 +470,7 @@ these as $k$-regular semantics~\cite{non-strict}.
 \begin{figure}
 \centering
 \includegraphics[width=\columnwidth]{figs/timelines.pdf}
+\vspace{-8pt}
 \caption{Possible versions returned by read operations under
   PBS $k$-staleness (A) and PBS monotonic reads (B). In
   $k$-consistency, the read operation will return a version no later
@@ -479,6 +480,7 @@ these as $k$-regular semantics~\cite{non-strict}.
   the number of versions committed since the time the client last
   completed a read.  This is determined by the proportion of client's
   reads to the number of writes committed to the key.}
+\vspace{-12pt}
 \label{fig:timelines}
 \end{figure}
 
@@ -680,12 +682,14 @@ commits.  This $t$ corresponds to the $t$ in PBS $t$-visibility.
 \begin{figure}
 \centering
 \includegraphics[width=.8\columnwidth]{figs/dynamostale.pdf}
+\vspace{-8pt}
 \caption{The \textit{WARS} model for message ordering in Dynamo
   describes the message flow between a coordinator and a single
   replica for a write followed by a read $t$ seconds after commit.  In
   an $N$ replica system, this message flow occurs $N$ times, once for
   each of the $N$ replicas.  The read and write may be handled by
   different coordinators.}
+\vspace{-12pt}
 \label{fig:dynamo-diagram}
 \end{figure}
 
@@ -957,7 +961,9 @@ Average & 0.58 \\
 99 & 2\\
 \hline
 \end{tabular}
+\vspace{-6pt}
 \caption{LinkedIn Voldemort single-node production latencies.}
+\vspace{-12pt}
 \label{table:linkedin}
 \end{table}
 
@@ -1000,7 +1006,9 @@ Std. Dev. & 83.93 & 26.10\\
 Mean Rate & 718.18 gets/s & 45.65 puts/s\\
 \hline
 \end{tabular}
+\vspace{-6pt}
 \caption{Yammer Riak $N$$=$$3$, $R$$=$$2$, $W$$=$$2$ production latencies.}
+\vspace{-12pt}
 \label{table:yammer}
 \end{table}
 
@@ -1062,7 +1070,9 @@ calculated \texttt{W} separately.
 & N-RMSE: .06\%\\
 \hline
 \end{tabular}
+\vspace{-6pt}
 \caption{Distribution fits for production latency distributions.}
+\vspace{-12pt}
 \label{table:fits}
 \end{table}
 
@@ -1089,8 +1099,10 @@ percentile, the write fit N-RMSE is .104\%.
 \subfigure{\includegraphics[width=.6\columnwidth]{figs/writelats-1.pdf}}
 \subfigure{\includegraphics[width=.6\columnwidth]{figs/writelats-2.pdf}}
 \subfigure{\includegraphics[width=.6\columnwidth]{figs/writelats-3.pdf}}
+\vspace{-8pt}
 \caption{Read and write operation latency for \textit{WARS} latencies fitted
   to production datasets for $N$$=$$3$.}
+\vspace{-0pt}
 \label{fig:latencies}
 \end{figure*}
 
@@ -1145,7 +1157,10 @@ long propagation to observe the most recent value.
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/tstales-3N1R1W.pdf}}
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/tstales-3N2R1W.pdf}}
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/tstales-3N1R2W.pdf}}
+\vspace{-10pt}
 \caption{$t$-visibility for production operation latencies.}
+\vspace{-8pt}
+
 \label{fig:tvis}
 \end{figure*}
 
@@ -1177,7 +1192,9 @@ introduces queuing effects for reads and writes.
 \begin{figure}
 \centering
 \includegraphics[width=.85\columnwidth]{figs/rwratio.pdf}
+\vspace{-8pt}
 \caption{$t$-visibility for $N$$=$$3$, $R$$=$$W$$=$$1$ varying \texttt{W} and \texttt{A}=\texttt{R}=\texttt{S} exponentially distributed delays.  Mean latency is $1/\lambda$.}
+\vspace{-12pt}
 \label{fig:varydelay}
 \end{figure}
 
@@ -1202,7 +1219,9 @@ the write latency distribution.
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-lnkd-disk.pdf}}
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-LNKD-SSD.pdf}}
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-WAN.pdf}}
+\vspace{-14pt}
 \caption{$t$-visibility for production operating latencies for variable $N$ and $R$$=$$W$$=$$1$.}
+\vspace{-2pt}
 \label{fig:varyn}
 \end{figure*}
 
@@ -1257,10 +1276,12 @@ consistent.
 & 5.63 & 1870.86 & 0 & 3.44 & 241.55 & 0 & 0.65 & 4.09 & 0 & 0.65 & 112.65 & 0 \\
 \hline
 \end{tabular}
+\vspace{-4pt}
 \caption{$t$-visibility for $p_{s} = .001$ ($99.9\%$ probability
   of consistency for $50,000$ reads and writes) and $99.9\%$ read
   ($L_r$) and write latency ($L_w$) across $R$ and $W$, $N$$=$$3$
   ($1M$ reads and writes).}
+\vspace{-12pt}
 \label{table:lat-stale}
 \end{table*}
 
