@@ -1433,23 +1433,24 @@ be employed in an expanding partial quorum system like Dynamo.
 \vspace{\sectionskip}\section{Conclusion}
 \label{sec:conclusion}
 
-In this paper, we developed models for the staleness of values
-returned from eventually consistent quorum-replicated data stores.  By
-extending prior theory on probabilistic quorum systems, we derived an
-analytical solution for the $k$-staleness of a partial quorum system,
-representing the expected staleness of a read operation in terms of
-versions.  We analyzed the $t$-visibility, or expected staleness of a
-read in terms of real time, under Dynamo-style quorum replication.  To
-do so, we developed the the \textit{WARS} latency model to explain how
-message reordering leads to staleness under Dynamo.  To examine the
-effect of latency on $t$-staleness in practice, we used real-world
-traces from internet companies to drive a Monte Carlo analysis.  We
-find that eventually consistent quorum-replicated data stores are
-frequently consistent after only a few milliseconds, explaining the
-prevalence of partial-quorum operation configurations in practice.  We
-conclude that ``eventually consistent'' partial quorum replication
-schemes frequently deliver consistent semantics in practice due largely to the
-resilience of Dynamo-style messaging.
+In this paper, we introduced Probabilistic Bounded Staleness, which
+models the expected staleness of data returned by eventually
+consistent quorum-replicated data stores.  By extending prior theory
+on probabilistic quorum systems, we derived an analytical solution for
+the $k$-staleness of a partial quorum system, representing the
+expected staleness of a read operation in terms of versions.  We
+analyzed the $t$-visibility, or expected staleness of a read in terms
+of real time, under Dynamo-style quorum replication.  To do so, we
+developed the the \textit{WARS} latency model to explain how message
+reordering leads to staleness under Dynamo.  To examine the effect of
+latency on $t$-staleness in practice, we used real-world traces from
+internet companies to drive a Monte Carlo analysis.  We find that
+eventually consistent quorum configurations are frequently consistent
+after several milliseconds while offering latency benefits, explaining
+the prevalence of partial-quorum operation configurations in practice.
+We conclude that ``eventually consistent'' partial quorum replication
+schemes frequently deliver consistent semantics in practice due
+largely to the resilience of Dynamo-style messaging.
 
 \section*{Interactive Demonstration}
 
