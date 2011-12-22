@@ -82,7 +82,7 @@ Distributed quorums can be used to ensure strong consistency across
 multiple replicas of a data item by overlapping read and write
 sets. However, waiting for responses from the potentially large
 resulting quorum sizes increases operation latency, an important
-consideration for service operators. For example, at Amazon, 100 ms of
+consideration for service operators~\cite{perf-impact}. For example, at Amazon, 100 ms of
 additional latency resulted in a 1\% drop in
 sales~\cite{amazon-latency}, while 500 ms of additional latency in
 Google's search product resulted in a corresponding 20\% decrease in
@@ -919,9 +919,9 @@ Carlo simulator.
 conjecture as to what represent ``reasonable'' scenarios, we analyzed
 production distributions from two internet-scale companies.
 
-LinkedIn~\cite{linkedin} is an online professional social network
-claiming over 135 million members as of November
-2011~\cite{linkedinmembers}. To provide highly available, low latency
+LinkedIn is an online professional social network
+with over 135 million members as of November
+2011~\cite{linkedin}. To provide highly available, low latency
 data storage, engineers at LinkedIn built Voldemort~\cite{voldemort,
   voldemortpub}.  Alex Feinberg, a lead engineer on Voldemort,
 graciously provided us with latency distributions for a single node
@@ -961,10 +961,9 @@ Average & 0.58 \\
 \label{table:linkedin}
 \end{table}
 
-Yammer is an online social network designed to provide enterprises
-with private social networking capabilities.  As of December 2011,
-Yammer claimed over 100,000 companies as customers~\cite{yammer}.
-Yammer uses Basho's Riak for some client data~\cite{riak}.  Coda Hale,
+Yammer is an online service providing private social networking to
+over 100,000 companies as of December 2011~\cite{yammer}.  Yammer uses
+Basho's Riak for some client data~\cite{riak}.  Coda Hale,
 infrastructure architect, and Ryan Kennedy, also of Yammer, presented
 on their use of Riak including surprisingly in-depth performance
 numbers in March 2011~\cite{riakyammer}.  Yammer provided us with more
