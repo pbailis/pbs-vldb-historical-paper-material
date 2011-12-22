@@ -32,16 +32,6 @@ The rest is pretty nasty.
 <link rel=StyleSheet href="bootstrap.min.css" type="text/css">
 <link rel=StyleSheet href="consistency.css" type="text/css">
 
-<script type="text/javascript">
-var _gaq = _gaq || []; _gaq.push(['_setAccount', 'UA-27366179-1']);
-  _gaq.push(['_trackPageview']); (function() { var ga =
-  document.createElement('script'); ga.type = 'text/javascript';
-  ga.async = true; ga.src = ('https:' == document.location.protocol ?
-  'https://ssl' : 'http://www') + '.google-analytics.com/ga.js'; var s
-  = document.getElementsByTagName('script')[0];
-  s.parentNode.insertBefore(ga, s); })();
-</script>
-
 </head>
 
 <body>
@@ -69,7 +59,7 @@ var _gaq = _gaq || []; _gaq.push(['_setAccount', 'UA-27366179-1']);
             <li><a href="#instructions">Instructions</a></li>
             <li><a href="#demo">Demo</a></li>
             <li><a href="#questions">Questions</a></li>
-            <li><a href="#moreinfo">More Info</a></li>
+            <li><a href="#contact">Contact</a></li>
             <li><a href="#thanks">Thanks</a></li>
           </ul>
         </div>
@@ -82,7 +72,7 @@ var _gaq = _gaq || []; _gaq.push(['_setAccount', 'UA-27366179-1']);
 
 <section id="about">
 
-<div class="page-header"> <h1>PBS in Brief <small>  What is PBS and why should you care?</small></h1></div>
+<div class="page-header"> <h1>About PBS, in Brief <small>  What is PBS and why should you care?</small></h1></div>
 
 
 <blockquote>
@@ -95,12 +85,12 @@ foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar 
 
 
 <section id="instructions">
-<div class="page-header"> <h1>Instructions <small> Prepare yourself for greatness.</small></h1> </div>
+<div class="page-header"> <h1>Instructions <small> Prepare for greatness</small></h1> </div>
 foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz 
 </section>
 
 <section id="demo">
-<div class="page-header"> <h1>How Eventual is Eventual Consistency? <small> PBS in action under Dynamo-style quorums</small> </h1></div>
+<div class="page-header"> <h1>How Eventual is Eventual Consistency? <small> PBS in Action</small> </h1></div>
 <center>
   <div id="plot">
   <span class="graph-label">P(Consistency)</span>
@@ -125,8 +115,8 @@ foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar 
 
 <div class="span8" id="latencystat">
 <div id="statfloat">
-Read Latency: Median <span id="rlatency"></span> ms, 99.9th %ile <span id="rlatencypct"></span> ms<br>
-Write Latency: Median <span id="wlatency"></span> ms, 99.9th %ile <span id="wlatencypct"></span> ms<br>
+Read Latency: Average <span id="rlatency"></span> ms, 99.9th %ile <span id="rlatencypct"></span> ms<br>
+Write Latency: Average <span id="wlatency"></span> ms, 99.9th %ile <span id="wlatencypct"></span> ms<br>
 </div>
 </div>
 
@@ -203,9 +193,8 @@ function updateReadLatency()
     var Rl = document.getElementById("rlambda").innerHTML;
     var Sl = document.getElementById("slambda").innerHTML;
 
-    // it's inefficient to do this twice, but the example code suffers otherwise...
-    document.getElementById("rlatency").innerHTML = roundNumber(calculate_read_latency(N, R, Rl, Sl, .5),2);
-    document.getElementById("rlatencypct").innerHTML = roundNumber(calculate_read_latency(N, R, Rl, Sl, .999),2);
+    document.getElementById("rlatency").innerHTML = calculate_read_latency(N, R, Rl, Sl);
+    document.getElementById("rlatencypct").innerHTML = calculate_read_latency(N, R, Rl, Sl);
 }
 
 function updateWriteLatency()
@@ -215,8 +204,8 @@ function updateWriteLatency()
     var Wl = document.getElementById("wlambda").innerHTML;
     var Al = document.getElementById("alambda").innerHTML;
 
-    document.getElementById("wlatency").innerHTML = roundNumber(calculate_write_latency(N, W, Wl, Al, .5), 2);
-    document.getElementById("wlatencypct").innerHTML = roundNumber(calculate_write_latency(N, W, Wl, Al, .999), 2);
+    document.getElementById("wlatency").innerHTML = calculate_write_latency(N, W, Wl, Al);
+    document.getElementById("wlatencypct").innerHTML = calculate_write_latency(N, W, Wl, Al);
 }
 
 function updateProbability()
@@ -444,13 +433,13 @@ function editSLambda(slambda)
 </section>
 
 <section id="questions">
-<div class="page-header"> <h1>Questions <small>Because you're too lazy to read our paper. Not really, but you should.</small> </h1> </div>
+<div class="page-header"> <h1>Questions <small>Because you're too lazy to read our paper</small> </h1> </div>
 foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz 
 </section>
 
 
-<section id="moreinfo">
-<div class="page-header"> <h1>More Info <small>Awesome! What next?</small></h1> </div>
+<section id="contact">
+<div class="page-header"> <h1>Contact <small>How do I learn more?</small></h1> </div>
 foo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar bazfoo bar baz
 foo bar baz
 </section>
@@ -487,7 +476,7 @@ foo bar baz
 <a href="http://www.cs.berkeley.edu/~gvaliant/" target="_blank">Greg Valiant</a>, and 
 <a href="http://www.eecs.berkeley.edu/~pwendell/" target="_blank">Patrick Wendell</a>.
 This acknowledgement does not imply any sort of endorsement--just a
-pleasant thank-you.  Any errors or inaccuracies are attributable to the authors
+pleasant thank-you.  Any errors are attributable to the authors
 alone.</p>
 
 <p>This work was supported in part by <a href="http://amplab.cs.berkeley.edu/">AMPLab</a> gifts from Google, SAP,
@@ -505,13 +494,14 @@ Fellowship under Grant No. DGE 1106400.</p>
       <div class="container">
         <p class="pull-right"><a href="#">Back to top</a></p>
         <p>
-	  This page's design and layout were shamelessly cobbled together
+	  This page's design and layout were shamelessly scrapped
+          together
           using <a href="http://twitter.github.com/bootstrap/" target="_blank">Bootstrap</a>
-          and its provided sample
+          and the provided sample
           code.  <a href="http://solutoire.com/flotr/" target="_blank">Flotr</a>
           powers the graph visualization with
           some <a href="http://jqueryui.com/" target="_blank">jQuery UI</a> thrown in
-          for good measure.  This page was built by <a href="http://bailis.org/"
+          for good measure.  Built by <a href="http://bailis.org/"
           target="_blank">Peter Bailis</a>
           (<a href="http://twitter.com/pbailis"
           target="_blank">@pbailis</a>) and the PBS team<br />.

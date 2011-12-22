@@ -93,26 +93,27 @@ function calc_prob_stale(N,R,W,W_lambda, A_lambda, R_lambda, S_lambda, t, k)
 }
 
 /*
-  This functions calculate the expected latency of read/write operations.
+  This functions calculate a given percentile latency of read/write operations.
 
   The parameters are as above.
 */
 
-function calculate_write_latency(N, W, W_lambda, A_lambda)
+function calculate_write_latency(N, W, W_lambda, A_lambda, pctile)
 {
-    return calculate_operation_latency(N, W, W_lambda, A_lambda);
+    return calculate_operation_latency(N, W, W_lambda, A_lambda, pctile);
 }
 
-function calculate_read_latency(N, R, R_lambda, S_lambda)
+function calculate_read_latency(N, R, R_lambda, S_lambda, pctile)
 {
-    return calculate_operation_latency(N, R, R_lambda, S_lambda);
+    return calculate_operation_latency(N, R, R_lambda, S_lambda, pctile);
 }
 
-function calculate_operation_latency(N, waitfor, lambda1, lambda2)
+function calculate_operation_latency(N, waitfor, lambda1, lambda2, pctile)
 {
-    var ITERATIONS = 1000.0;
+    var ITERATIONS = Math.max(20000.0, 1/(1-pctile))
     var i = 0;
     lats = 0;
+    var latencies = []
     for(i = 0; i < ITERATIONS; i++)
     {
 	var round = [];
@@ -122,8 +123,8 @@ function calculate_operation_latency(N, waitfor, lambda1, lambda2)
 	    round.push(nextExponential(lambda1)+nextExponential(lambda2));
 	}
 	//the latency of this operation is the <waitfor>th fastest
-	lats += sortfloats(round)[waitfor-1];
+	latencies.push(sortfloats(round)[waitfor-1]);
     }
-    
-    return roundNumber(lats/ITERATIONS, 2);
+
+    return sortfloats(latencies)[ITERATIONS*pctile];
 }
