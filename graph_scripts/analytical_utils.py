@@ -29,14 +29,16 @@ def extract_latency_profiles(resultsdir, outdir):
     for f in listdir(resultsdir):
         if f.find("PROXY") != -1:
             proxy = f
-        elif f.find("ec2") != -1:
+        elif f.find("r") != -1:
             servers.append(f)
     
     extractcmd = "python extract_latency_profiles.py "+outdir+" "+resultsdir+"/"+proxy+"/cassandra.log"
+    extractcmd = extractcmd + " " + resultsdir+"../clock-diffs.txt"
 
     for slave in servers:
         extractcmd = extractcmd+" "+resultsdir+"/"+ slave+"/cassandra.log"
 
+    print "running " + extractcmd
     system(extractcmd)
 
 def set_up_configfile(outfile, n, w, ps, t, k, cr, cw, r, actiontype, rmodel, wmodel, writewaymodel):
