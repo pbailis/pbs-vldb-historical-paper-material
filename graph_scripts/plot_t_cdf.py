@@ -1,19 +1,31 @@
 
-
+from os import system
 from plot_utils import *
 from analytical_utils import *
+from simutils import *
 from math import ceil
 from pylab import *
 
-k=1
+k=0
+iters=50000
+writespacing=300
+readsperwrite=5000
 
 results = []
 
-lmbdas = get_lmbdas(resultsfile)
-for lmbda in lmbdas:
-    results.append(fetch_result(resultsfile, 3, 1, 1, lmbda[0], lmbda[1]))
+# Extract latency profiles first
+#system("python ./latency_profiles_for_simulator.py")
 
-results.sort(key=lambda result: result.config.wlmbda)
+lmbdas = get_lmbdas(resultsfile)
+results = fetch_results(resultsfile)
+#for lmbda in lmbdas:
+#  for R in range(1, 3):
+#    for W in range(1, 3):
+#      if R+W > 4:
+#        continue
+#      results.append(fetch_result(resultsfile, 3, R, W, lmbda[0], lmbda[1]))
+
+#results.sort(key=lambda result: result.config.wlmbda)
 
 def chunkBins(seq, num):
   avg = len(seq) / float(num)
@@ -26,60 +38,49 @@ def chunkBins(seq, num):
 
   return out
 
+#cla()
 for result in results:
-    tstales, percentiles=get_t_staleness_series(k, result)
-
-
-    ''''
-    timeandstale = zip(times, stales)
-
-    
-    numbins = 100
-
-    bins = chunkBins(timeandstale, numbins)
-
-    errorbar([average([r[0] for r in b]) for b in bins],
-             [average([r[1] for r in b]) for b in bins],
-             fmt='o-',
-             yerr=[std([r[1] for r in b]) for b in bins],
-             label = str(result.config.lmbda)[:5])
-
-    '''
-
+    print len(result.reads)
+    tstales, percentiles,stales=get_t_staleness_windows(result)
     print result.config.wlmbda, result.config.rlmbda
+    id_name = "R"+str(result.config.R)+"W"+str(result.config.W)+"-"+str(result.config.rlmbda)+str(result.config.wlmbda)
+
+    plot(tstales, percentiles, 'o-', label="R="+str(result.config.R)+",W="+str(result.config.W))
+#
+    # Run simulator for this config
+    run_sim(result.config.N, result.config.R, result.config.W, k, iters, writespacing, readsperwrite, "analyzedir-cd-"+id_name+"/onewaywrite.dist", "analyzedir-cd-"+id_name+"/onewayack.dist", "sim-results-"+id_name)
+    # Parse simulator results, calculate RMSE etc.
     
-    wlatency =  average([w.latency for w in result.writes])
-    rlatency = average([r.latency for r in result.reads])
-
-    hist([w.latency for w in result.writes], 100)
-    show()
-    cla()
-
-    print wlatency, rlatency
-
-    ratio = wlatency/rlatency
-
-    roundratio = round(ratio, 2)
-
-    plot(tstales, percentiles, 'o-', label=str(roundratio)+","+str(wlatency))
-
-for result in results:
-    continue
-    config = result.config
-
-    times, stales = sweep_t(config.rootconfigdir, config, k)
-
-    print times, stales
-    stales = [1-stale for stale in stales]
-    plot(times, stales, 'o-', label=str(result.config.wlmbda)[:5]+"A", ms=5)
+    t = []
+    stale = []
+    t_map = {}
+    for line in open("sim-results-"+id_name):
+      line = line.split()    
+      t.append(float(line[1]))
+      t_map[float(line[1])] = float(line[0])
+      stale.append(float(line[0]))
+ 
+    plot(t, stale, 's-', label=str("sim"), color="red")
+ 
+    # Calculate RMSE
+    sum_sq = 0
+    for i in xrange(0, len(tstales), 1):
+      if tstales[i] in t_map:
+        print i, tstales[i], percentiles[i], t_map[tstales[i]], stales[i]
+        obs = percentiles[i]
+        exp = t_map[tstales[i]]
+        sum_sq = sum_sq + pow((obs - exp), 2)
+ 
+    rmse = math.sqrt(sum_sq / len(tstales))
+    print "RMSE " + id_name + " is " + str(rmse)
 
 ax = gca()
 
-title("N: %d, R: %d, W: %d" % (result.config.N, result.config.R, result.config.W))
+#title("N: %d, R: %d, W: %d" % (result.config.N, result.config.R, result.config.W))
 xlabel("Time After Commit (ms)")
 ylabel("1-pstaler")
 
-legend(loc="lower right", title="Write:Read Latency")
+#legend(loc="lower right", title="Simulator-Comparison")
 
 ax.set_xscale('symlog')
 

@@ -17,13 +17,13 @@ class ReadOutput (var version_at_start: Int, var version_read: Int,
                   var start_time: Long)
 class ReadPlot (var read: ReadOutput, var commit_time_at_start: Long) 
 
-class KVServer(sendF: String, ackF: String) {
+class KVServer(writeF: String, readF: String, numThreads: Int) {
   private val kv: ConcurrentMap[Int, Int] = new ConcurrentHashMap[Int, Int]
   var rand = new Random()
   val MAX_DELAY = 20
-  val exec = new ScheduledThreadPoolExecutor(10)
-  var sendLatencyModel = new FileLatencyModel(sendF)
-  var ackLatencyModel = new FileLatencyModel(ackF)
+  val exec = new ScheduledThreadPoolExecutor(numThreads)
+  var writeLatencyModel = new FileLatencyModel(writeF)
+  var readLatencyModel = new FileLatencyModel(readF)
   val LAMBDA = 0.05
 
   def getExpRandom() : Long = {
@@ -34,23 +34,27 @@ class KVServer(sendF: String, ackF: String) {
     return rand.nextInt(MAX_DELAY)
   }
 
-  def getWriteSendDelay(): Long = {
-    return Math.round(sendLatencyModel.getInverseCDF(1,
+  def getWriteDelay(): Long = {
+    return Math.round(writeLatencyModel.getInverseCDF(1,
         rand.nextDouble()))
   }
-  def getReadSendDelay(): Long = getWriteSendDelay
+  def getReadDelay(): Long = {
+    return Math.round(readLatencyModel.getInverseCDF(1,
+        rand.nextDouble()))
+  }
 
-  def getWriteAckDelay(): Long = {
-    return Math.round(ackLatencyModel.getInverseCDF(1,
-        rand.nextDouble()))
-  }
-  def getReadAckDelay(): Long = getWriteAckDelay
+  // def getWriteAckDelay(): Long = {
+  //   return Math.round(ackLatencyModel.getInverseCDF(1,
+  //       rand.nextDouble()))
+  // }
+  // def getReadAckDelay(): Long = getWriteAckDelay
 
   def write(k: Int, v: Int, latch: CountDownLatch, 
       nlatch: CountDownLatch, m: ConcurrentMap[Int, Long]) = {
     var r = new Runnable() {
       def run = {
-        Thread.sleep(getWriteSendDelay())
+        var delay = getWriteDelay()
+        Thread.sleep(delay/2)
         if (v > kv.getOrElse(k, 0))
           kv.put(k,v)
         nlatch.countDown()
@@ -59,7 +63,7 @@ class KVServer(sendF: String, ackF: String) {
           m.put(v, fin)
         }
         //println("write replica " + v + " finished at " + fin)
-        Thread.sleep(getWriteAckDelay())
+        Thread.sleep(delay/2)
         latch.countDown()
       }
     }
@@ -70,10 +74,11 @@ class KVServer(sendF: String, ackF: String) {
     var t = new Callable[Int]() {
       def call: Int = {
         try {
-          Thread.sleep(getReadSendDelay())
+          var delay = getReadDelay()
+          Thread.sleep(delay/2)
           val ret = kv.getOrElse(k, 0)
           // println("read " + ret + " at " + new Date().getTime())
-          Thread.sleep(getReadAckDelay())
+          Thread.sleep(delay/2)
           return ret
         } finally {
           latch.countDown()
@@ -141,7 +146,7 @@ class Reader(replicas: List[KVServer], numReads: Int, R: Int, k: Int,
 
       while (numFinished < R) {
         // Race condition ? Try again 
-        Console.err.println("Too few futures finished !" + numFinished + " " + R)
+        Console.err.println("Too few futures finished ! " + numFinished + " " + R)
         // Give it a millisecond to make sure
         Thread.sleep(1)
         var tuple = getFinalValue(futures)
@@ -171,20 +176,20 @@ object Simulator {
   var W = 2
   var R = 1
   var ITERATIONS = 100 
-  var sendDelayFile: String = ""
-  var ackDelayFile: String = ""
+  var writeDelayFile: String = ""
+  var readDelayFile: String = ""
   val key = 100
-  val NUM_READERS = 5
+  val NUM_READERS = 15
 
   def main (args: Array[String]) {
     args match {
-      case Array(n, r, w, iters, sendF, ackF) => {
+      case Array(n, r, w, iters, writeF, readF) => {
         N = n.toInt
         R = r.toInt
         W = w.toInt
         ITERATIONS = iters.toInt
-        sendDelayFile = sendF
-        ackDelayFile = ackF
+        writeDelayFile = writeF
+        readDelayFile = readF
       }
       case _ => {
         System.err.println(
@@ -199,7 +204,7 @@ object Simulator {
 
     val replicas = new ListBuffer[KVServer]
     for (i <- 0 until N+1) 
-      replicas += new KVServer(sendDelayFile, ackDelayFile)
+      replicas += new KVServer(writeDelayFile, readDelayFile, NUM_READERS*2)
 
     val w = new Thread(new Writer(replicas.toList, 
         ITERATIONS, W, key, lastCommitted, finishTimes, commitTimes))

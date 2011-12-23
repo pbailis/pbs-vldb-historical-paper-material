@@ -4,9 +4,13 @@ class WriteResult:
                  version,
                  starttime,
                  endtime,
-                 latency):
+                 latency,
+                 startclock,
+                 endclock):
         self.version = version
         self.starttime = starttime
         self.endtime = endtime
         self.latency = latency
+        self.startclock = startclock
+        self.endclock = endclock
 

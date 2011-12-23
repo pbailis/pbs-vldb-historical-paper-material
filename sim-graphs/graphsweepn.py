@@ -24,7 +24,6 @@ readsperwrite = 10
 
 results = {}
 
-
 Ns = [2,3,5,10]
 markers = ['^-', 'o-', 's-', 'v-', '*-', 'D-']
 markerpos = range(2, 100, 2)
@@ -49,7 +48,6 @@ for config in configs:
         for line in open("tstale.txt"):
             if thiscutoff == -1:
                 cutindx+=1
-
             line = line.split()
             thist = float(line[1])
             thisstale = float(line[0])

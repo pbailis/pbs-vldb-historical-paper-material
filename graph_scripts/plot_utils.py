@@ -1,4 +1,5 @@
 
+from collections import defaultdict
 from k_t_result import *
 from results_class import *
 from read_result import *
@@ -7,7 +8,10 @@ from config_settings import *
 from os import listdir
 from pylab import *
 
-resultsfile = "../results/2011-11-17-01_50_03"
+#resultsfile = "../../ernst-cassandra/bench/results/2011-12-20-22_52_44"
+#resultsfile = "../results/2011-12-19-12_44_45"
+#resultsfile = "../results/2011-12-08-23_32_27"
+resultsfile = "../../ernst-cassandra/bench/results/2011-12-22-14_58_26"
 
 NS_PER_MS = 1000000.0
 
@@ -50,8 +54,9 @@ def fetch_results(resultsdir):
             lmbdas = lmbdas.split('-')
             wlmbda = lmbdas[0][2:]
             rlmbda = lmbdas[1][2:]
+            resultdir = "%s/%dN%dR%dW-WL%s-AL%s-RL%s-SL%s/" % (resultsdir, N, R, W, wlmbda, rlmbda, rlmbda, rlmbda)
 
-            config = ConfigSettings(N, R, W, wlmbda, rlmbda, resultsdir+"/"+s)
+            config = ConfigSettings(N, R, W, wlmbda, rlmbda, resultdir)
             
             yield(parse_file(config, resultsdir+"/"+d+"/"+s+"/cassandra.log"))
 
@@ -76,29 +81,39 @@ def parse_file(config, f):
         if line.find("WS") != -1:
             write_start = int(line.split()[4].strip(','))/NS_PER_MS
             write_start_version = int(line.split()[5].strip(','))
+            write_start_clock = int(line.split()[6].strip(','))
         elif line.find("WC") != -1:
             write_end = int(line.split()[2].strip(','))/NS_PER_MS
             last_committed_version = int(line.split()[3].strip(','))
+            write_end_clock = int(line.split()[4].strip(','))
 
             assert last_committed_version == write_start_version
+
+            #if (write_end_clock <= write_start_clock):
+              #print str(write_start_clock) + " " + str(write_end_clock) + " " + str(write_start_version) + " " + str(last_committed_version)
+              #continue
             assert write_end-write_start
 
-            commit_times[last_committed_version] = write_end
+            commit_times[last_committed_version] = write_end_clock
             writes.append(WriteResult(write_start_version,
                                       write_start,
                                       write_end,
-                                      write_end-write_start))
+                                      write_end-write_start,
+                                      write_start_clock,
+                                      write_end_clock))
 
     writes.sort(key=lambda w: w.endtime)
 
     #then collect read info; reads can come back before write commits!
     write_commit_index = -1
 
+    print "working with file %s" % (f)
     for line in open(f):
         if line.find("WC") != -1:
             write_commit_index += 1
         elif line.find("RS") != -1:
             read_start = int(line.split()[4])/NS_PER_MS
+            read_start_clock = int(line.split()[5])
 
             #find the corresponding write
 
@@ -133,6 +148,7 @@ def parse_file(config, f):
         elif line.find("RC") != -1:
             read_end = int(line.split()[2])/NS_PER_MS
             read_version = int(line.split()[3])
+            read_end_clock = int(line.split()[4])
 
             if config.R + config.W > config.N:
                 assert read_version >= last_committed_version_at_read_start
@@ -155,7 +171,9 @@ def parse_file(config, f):
                       #k-staleness
                       read_version - last_committed_version_at_read_start,
                       #latency
-                      (read_end - read_start))
+                      (read_end - read_start),
+                      #read start clock time
+                      read_)
 
               assert res.latency > 0
 
@@ -237,10 +255,57 @@ def get_t_staleness_series(k, result):
                 tstale = read.starttime-read.last_committed_time_at_read_start
                 break
 
+        print how_many_stale, staler, len(result.reads)
         tstales.append(tstale)
         percentiles.append(percentile/1000.0)
 
     return tstales, percentiles
+
+def round_to(n, precision):
+  correction = 0.5 if n >= 0 else -0.5
+  return int(n/precision+correction)*precision
+
+# Works only for k = 0 right now
+def get_t_staleness_windows(result):
+    # Sort the writes by start time
+    result.writes.sort(key=lambda write: write.starttime)
+    #result.reads.sort(key=lambda read: read.starttime-
+    #                  read.last_committed_time_at_read_start)
+
+    # Array counting number of stales
+    stales = defaultdict(int) #[0]*1200
+    currents = defaultdict(int) #[0]*1200
+    total_reads = 0
+    
+    print "num writes " + str(len(result.writes))
+    print "num reads " + str(len(result.reads))
+    for r in result.reads:
+      # read for this write
+      is_stale = (r.version < r.last_committed_version_at_read_start)
+      #print "is_stale " + str(is_stale)
+      timestep = int(math.ceil(r.starttime - r.last_committed_time_at_read_start))
+      if timestep >= 600:
+        #print "r.starttime %d r.last_committed_time_at_read_start %d r.version %d r.last_committed_version_at_read_start %d" % (r.starttime, r.last_committed_time_at_read_start, r.version, r.last_committed_version_at_read_start) 
+        continue
+      if is_stale:
+        stales[timestep] = stales[timestep] + 1
+        total_reads = total_reads + 1
+      else:
+        currents[timestep] = currents[timestep] + 1
+        total_reads = total_reads + 1
+    
+    percentiles = []
+    tstales = []
+    stales_count = []
+    #for t in xrange(0, 600, 1):
+    for t in sorted(stales.iterkeys()):
+      if ((stales[t] + currents[t]) >= 100):
+        #print "t:%d stales:%d currents: %d, p %f" % (t, stales[t], currents[t], 1-(float(stales[t])/float(stales[t]+currents[t])) )
+        tstales.append(t)
+        percentiles.append(1-(float(stales[t])/float(stales[t]+currents[t])))
+        stales_count.append(stales[t])
+
+    return tstales, percentiles, stales_count 
 
 def plot_cdf(results, fmt, lbl, color):
 

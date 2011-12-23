@@ -8,7 +8,10 @@ class ReadResult:
                  lastcommittedversionatreadstart,
                  lastcommittedtimeatreadstart,
                  kstale,
-                 latency):
+                 latency,
+                 startclock,
+                 endclock,
+                 lastcommittedclockatreadstart):
         self.version = version
         self.starttime = starttime
         self.endtime = endtime
@@ -16,6 +19,8 @@ class ReadResult:
         self.last_committed_time_at_read_start = lastcommittedtimeatreadstart
         self.kstale = kstale
         self.latency = latency
-
+        self.startclock = startclock
+        self.endclock = endclock
+        self.last_committed_clock_at_read_start = lastcommittedclockatreadstart
         
         assert starttime >= lastcommittedtimeatreadstart
