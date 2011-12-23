@@ -12,11 +12,13 @@ N=3
 R=1
 W=1
 k=1
-iters = 1000000
+iters = 1000
 
+mpl.rcParams['figure.figsize'] = 6,2.5
 mpl.rcParams['font.size'] = 18
-mpl.rcParams['figure.subplot.bottom'] = .17
+mpl.rcParams['figure.subplot.bottom'] = .25
 mpl.rcParams['figure.subplot.left'] = .14
+mpl.rcParams['figure.subplot.right'] = .95
 mpl.rcParams['lines.markersize'] = 12
 mpl.rcParams['lines.linewidth'] = 1.5
 
@@ -57,7 +59,7 @@ for i in range(1, 4):
         
         plot([readlats[config][1][0]], [readlats[config][0][0]], config.markerfmt, label=config.name, color=config.color)
         
-    figtext(.17, .85, "R=%d" % (R), size="large")
+    figtext(.17, .80, "R=%d" % (R), size="large")
         
     if(R==2):
         xlabel("Read Latency (ms)", fontsize="large")
@@ -66,7 +68,7 @@ for i in range(1, 4):
     
     semilogx()
         
-    xlim(xmin=.01)
+    xlim(xmin=.01, xmax=1000)
     #this is just to get rid of the 000 at the bottom of the graph
     ylim(ymin=.00001)
 
@@ -83,7 +85,7 @@ for i in range(1, 4):
 
         plot([writelats[config][1][0]], [writelats[config][0][0]], config.markerfmt, label=config.name, color=config.color)
 
-    figtext(.17, .85, "W=%d" % (W), size="large")
+    figtext(.17, .80, "W=%d" % (W), size="large")
 
     if(W==2):
         xlabel("Write Latency (ms)", fontsize="large")

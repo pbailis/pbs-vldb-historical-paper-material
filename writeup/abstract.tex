@@ -5,7 +5,7 @@ Modern storage systems employing quorum replication are often
 configured to use partial, non-strict quorums.  These systems wait
 only for a subset of their replicas to respond to a request before
 returning an answer, without guaranteeing that read and write replica
-sets overlap.  While these partial quorum mechanisms provide only
+sets intersect.  While these partial quorum mechanisms provide only
 basic eventual consistency guarantees, with no limit to the recency of
 data returned, these configurations are frequently ``good enough'' for
 practitioners given their latency benefits. In this work, we discuss

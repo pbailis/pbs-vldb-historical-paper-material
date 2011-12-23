@@ -533,6 +533,7 @@
 
 \@ifundefined{figure}{\newcounter {figure}} % this is for LaTeX2e
 
+
 \def\fps@figure{tbp}
 \def\ftype@figure{1}
 \def\ext@figure{lof}
