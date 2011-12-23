@@ -14,7 +14,7 @@ scalac -cp nrwsolver.jar Simulator.scala
 
 for lambda in 0.002000 0.005000 0.010000 0.050000 0.100000
 do
-  scala -cp nrwsolver.jar ernst.simulator.Simulator 3 1 1 $NUM_WRITES $DIR$lambda/onewaywrite.dist $DIR$lambda/onewayack.dist > data-points-5-readers-$lambda.out
+  scala -cp nrwsolver.jar ernst.simulator.Simulator 3 1 1 $NUM_WRITES $DIR$lambda/wlatency.dist $DIR$lambda/rlatency.dist > data-points-5-readers-$lambda.out
 done
 
 TMP_1="/tmp/a"
