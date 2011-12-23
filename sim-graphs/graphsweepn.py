@@ -26,7 +26,7 @@ results = {}
 
 
 Ns = [2,3,5,10]
-markers = ['o-', 's-', 'h-', '^-', '*-', 'D-']
+markers = ['^-', 'o-', 's-', 'v-', '*-', 'D-']
 markerpos = range(2, 100, 2)
 colors = ["red", "green", "blue", "black", "magenta", "cyan"]
 
@@ -82,8 +82,18 @@ for config in configs:
     xlim(xmin=.00001)
 
     title(config.name)
-    if config.name == "LNKD-DISK":
-        legend(loc="lower right", title="N")
     savefig("sweepn-%s.pdf" % (config.name))
     cla()
 
+
+cla()
+fig = figure()
+fl = figure(figsize=(2.25*len(Ns), .25))
+ax = fig.add_subplot(111)
+print figtext(.16,.15,"N:", fontsize=18)
+lines = []
+for i in range(0, len(Ns)):
+    lines.append(ax.plot([0],[0], markers[i], color=colors[i], label=str(Ns[i])))
+fl.legend(lines, Ns,  ncol=len(configs), loc="center", bbox_to_anchor=(.53,.5))
+fl.show()
+fl.savefig('nlegend.pdf')
