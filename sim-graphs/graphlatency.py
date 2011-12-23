@@ -12,7 +12,7 @@ N=3
 R=1
 W=1
 k=1
-iters = 1000
+iters = 10000
 
 mpl.rcParams['figure.figsize'] = 6,2.5
 mpl.rcParams['font.size'] = 18
@@ -31,7 +31,7 @@ for i in range(1, 4):
     R=i
     W=i
     for config in configs:
-        run_sim(N, R, W, k, iters, 10000, 10, config.simparams, "LATS", "latencies.txt")
+        run_sim(N, R, W, k, iters, 100000, 10, config.simparams, "LATS", "latencies.txt")
         wpcts = []
         wlats = []
         rpcts = []
