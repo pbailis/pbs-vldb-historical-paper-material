@@ -96,7 +96,7 @@ lines = []
 for i in range(0, len(RWs)):
     rw = RWs[i]
     lines.append(ax.plot([0],[0], markers[i], label="R=%d, W=%d" % (rw[0], rw[1]), color=colors[i]))
-fl.legend(lines, ["R=%d W=%d" % (rw[0], rw[1]) for rw in RWs],  ncol=len(configs), loc="center", bbox_to_anchor=(.53,.5))
+fl.legend(lines, ["R=%d W=%d" % (rw[0], rw[1]) for rw in RWs],  ncol=len(configs), loc="center")
 fl.show()
 fl.savefig('stalelegend.pdf')
 
