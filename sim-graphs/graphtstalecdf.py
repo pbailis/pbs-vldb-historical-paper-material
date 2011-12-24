@@ -80,12 +80,21 @@ for config in configs:
     savefig("tstales-%s.pdf" % (config.name))
     cla()
 
+fl = figure(figsize=(1.82, .3))
+fl.text(0.02, .25, "t-visibility (ms)", fontsize=20)
+savefig("stalex.pdf")
+
+fl = figure(figsize=(.35, figheight))
+fl.text(.15, .7, "P(consistency)", fontsize=20, rotation=90)
+savefig("staley.pdf")
+
 cla()
 fig = figure()
 fl = figure(figsize=(2.25*len(RWs), .25))
 ax = fig.add_subplot(111)
 lines = []
 for i in range(0, len(RWs)):
+    rw = RWs[i]
     lines.append(ax.plot([0],[0], markers[i], label="R=%d, W=%d" % (rw[0], rw[1]), color=colors[i]))
 fl.legend(lines, ["R=%d W=%d" % (rw[0], rw[1]) for rw in RWs],  ncol=len(configs), loc="center", bbox_to_anchor=(.53,.5))
 fl.show()
