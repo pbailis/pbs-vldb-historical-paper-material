@@ -26,7 +26,7 @@
     \vspace{-.5em}
 }
 
-\title{Probabilistically Bounded Staleness\\ and Practical Partial Quorum Systems}
+\title{PBS: Probabilistically Bounded Staleness\\ and Practical Partial Quorum Systems}
 
 \author{Peter Bailis, Shivaram Venkataraman, Michael J. Franklin, Ion Stoica, Joseph M. Hellerstein\\
 \affaddr{University of California, Berkeley}\\
@@ -154,11 +154,11 @@ staleness (e.g., $1.85$ ms versus $45.5$ ms wait time required for a
 $99.9$\% probability of consistency).  We also make quantitative
 observations regarding the latency-consistency trade-offs offered by
 partial quorums.  For example, at $99.9$th percentile confidence and
-combined read and write latency, for one production workload, we
+combined read and write latency, for another production workload, we
 observe an $81.1\%$ latency improvement ($230$ to $43.3$ ms) for a
 $202$ ms window of inconsistency.  While the benefit of these
 trade-offs is application-specific, our analysis demonstrates the
-performance benefits many operators opt for over strong consistency.
+performance benefits many operators choose over strong consistency.
 
 We make the following contributions in this paper:
 
@@ -226,7 +226,7 @@ system, in which each quorum is of size $\lceil \frac{N}{2}\rceil$.
 However, the theory literature contains many alternative quorum
 system designs providing varying asymptotic properties of capacity,
 scalability, and fault tolerance, from tree-quorums~\cite{treequorum}
-to grid-quorums~\cite{quorumsystems}.  Jim\'{e}nez-Peris et. al
+to grid-quorums~\cite{quorumsystems} and highly-available hybrids~\cite{92-quorums}.  Jim\'{e}nez-Peris et. al
 provide an overview of traditional, strict quorum
 systems~\cite{quorums-alternative}.
 
@@ -358,7 +358,7 @@ survey quorum configurations according to practitioner accounts.  Mny
 operators appear to use partial quorum configurations, frequently
 citing performance benefits and high availability.
 
-Cassandra~\cite{cassandra,cassdandra-sigmod} defaults to $N$$=$$3$,
+Cassandra defaults to $N$$=$$3$,
 $R$$=$$W$$=$$1$~\cite{cassandradefault}. The Apache Cassandra 1.0
 documentation claims that ``a majority of users do writes at
 consistency level [$W$$=$$1$]'', while the Cassandra Query Language
@@ -372,13 +372,13 @@ integrated into the mainline source~\cite{cassandra-session-revert};
 according to our discussions with developers, this is due to lack of
 interest.
 
-Riak~\cite{riak} defaults to $N$$=$$3$, $R$$=$$W$$=$$2$~\cite{riakdefault-n,
+Riak defaults to $N$$=$$3$, $R$$=$$W$$=$$2$~\cite{riakdefault-n,
   riakdefault-rw}. Users suggest using $R$$=$$W$$=$$1$, $N$$=$$2$ for
 ``low value'' data (and strict quorum variants for ``web,''
 ``mission critical,'' and ``financial'' data)~\cite{riaktalkone,
   riaktalktwo}.
 
- Finally, Voldemort~\cite{voldemort, voldemortpub} does not provide
+ Finally, Voldemort does not provide
  sample configurations, but Voldemort's authors (and operators) at
  LinkedIn~\cite{feinbergpc} often choose $N$$=$$c$, $R$$=$$W$$=$$
  \lceil c/2 \rceil$ for odd $c$.  For applications requiring ``very
@@ -1043,8 +1043,8 @@ considered a wide-area network replication scenario, denoted
 and, accordingly, one replica operation commits quickly while the
 others are routed remotely.  We delay remote operations and responses
 by 75ms and apply \texttt{LNKD-DISK} delays once the operation reaches
-its target data center, in accordance with a near-worst-case
-multi-continent WAN network delay~\cite{dean-keynote}  
+its target data center, representing multi-continent WAN network
+delay~\cite{dean-keynote}
 
 We show the parameters for each distribution in
 Table~\ref{table:fits}. We plot each fitted distribution in
@@ -1330,20 +1330,19 @@ problem. However, if they are independent, a replica set of $N$ failed
 nodes with $F$ failed nodes behaves like an $N-F$ replica set, and the
 probability of all $N$ nodes failing is $(.23)^N$\% (``five nines''
 reliability for $N$$=$$3$) and will likely be hidden in the
-probability tail.  However, it would be beneficial to quantify this
-impact more precisely for actual failure distributions.  We have
-asserted that failures or latency spikes can be accommodated in
-\textit{WARS} by adjusting latency distributions to match failure
-probabilities, but modeling recovery semantics such as hinted handoff
-would also be fruitful.  These improvements require additional
-information about failure rates and their impact on latency
-distributions.
+probability tail.  However, quantifying this impact more precisely
+would be beneficial but requires additional information about failure
+rates and their impact on latency distributions.  We have asserted
+that failures or latency spikes can be accommodated in \textit{WARS}
+by adjusting latency distributions to match failure probabilities, but
+modeling recovery semantics such as hinted handoff would also be
+fruitful.
 
 \vspace{\sectionskip}\section{Related Work}
 \label{sec:relatedwork}
 
 We surveyed quorum replication
-techniques~\cite{prob-quorum-dynamic, treequorum,non-strict,
+techniques~\cite{prob-quorum-dynamic, 92-quorums, treequorum, non-strict,
   multi-k-quorum, quorums-start, quorum-placement, partitionedquorum, quorums-alternative, prob-quorum,
   quorum-overview, quorumsystems} in Section~\ref{sec:background}.  In
 this work, we specifically draw inspiration from probabilistic
@@ -1505,38 +1504,36 @@ its capacity.
 
 \section*{APPENDIX B: LATENCY MODEL FITTING}
 
-While insights from production data are invaluable, they are
-underspecified for \textit{WARS}.  First, the data we collected are
-summary statistics, but \textit{WARS} requires the underlying
-distributions.  More importantly, the operation latencies represent
-round-trip times, while \textit{WARS} requires the constituent one-way
-latencies for both reads and writes.  As we demonstrated in our
-validation, these latency distributions are easily collected.
-However, because they are not currently collected in production, we
-must fill in the gaps. Accordingly, to derive \texttt{W}, \texttt{A},
-\texttt{R}, and \texttt{S} for each configuration, we made a series of
-assumptions, which we believe are justified given the benefit of
-production data.  Without additional data on the latency required to
-read multiple replicas, we assume that each latency distribution is
-independently, identically distributed (IID).  In general, our
-distributions were bi-model, with separate body and tail
-distributions.
+While the provided production figures are invaluable, they are
+underspecified for \textit{WARS}.  First, the data are summary
+statistics, but \textit{WARS} requires distributions.  More
+importantly, the operation latencies represent round-trip times, while
+\textit{WARS} requires the constituent one-way latencies for both
+reads and writes.  As our validation demonstrated, these latency
+distributions are easily collected, but, because they are not
+currently collected in production, we must fill in the
+gaps. Accordingly, to fit \texttt{W}, \texttt{A}, \texttt{R}, and
+\texttt{S} for each configuration, we made a series of assumptions,
+which we believe are justified given the benefit of production data.
+Without additional data on the latency required to read multiple
+replicas, we assume that each latency distribution is independently,
+identically distributed (IID).  In general, our distributions were
+bi-model, with separate body and tail distributions.
 
 LinkedIn provided two latency distributions, whose fits we denote
 \texttt{LNKD-SSD} and \texttt{LNKD-DISK} for the SSD and spinning
 disks, respectively.  As previously discussed, when running on SSDs,
-Voldemort is largely network and CPU bound.  Accordingly, we assumed
-that read and write operations took equivalent amounts of time and, to
-split the remaining time, we focused on the network-bound case and
-assumed that one-way trips were symmetric
-(\texttt{W}=\texttt{A}=\texttt{R}=\texttt{S}).  This allowed us to
-derive \texttt{LNKD-SSD}.  For \texttt{LNKD-DISK}, Feinberg mentioned
-that Voldemort performs at least one read before every write (average
-of 1 seek, between 1-3 seeks), and writes to the BerkeleyDB Java
-Edition backend are flushed every 30 seconds or 20
-megabytes---whichever comes first.  Accordingly, we kept the same
-\texttt{A}=\texttt{R}=\texttt{S} as in \texttt{LNKD-SSD} but
-calculated \texttt{W} separately.
+Voldemort is largely network and CPU bound.  Accordingly, for
+\texttt{LNKD-SSD}, we assumed that read and write operations took
+equivalent amounts of time and, to allocate the remaining time, we
+focused on the network-bound case and assumed that one-way messages
+were symmetric (\texttt{W}=\texttt{A}=\texttt{R}=\texttt{S}). Feinberg
+reported that Voldemort performs at least one read before every write
+(average of 1 seek, between 1-3 seeks), and writes to the BerkeleyDB
+Java Edition backend are flushed either every 30 seconds or 20
+megabytes---whichever comes first.  Accordingly, for
+\texttt{LNKD-DISK}, we used the same \texttt{A}=\texttt{R}=\texttt{S}
+as \texttt{LNKD-SSD} but fit \texttt{W} separately.
 
 Yammer provided distributions for a single configuration, denoted
 \texttt{YMMR}, but separated read and write latencies.  Under our IID
