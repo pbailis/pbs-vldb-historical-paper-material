@@ -103,7 +103,7 @@ and variable-sized partial quorums, providing eventual consistency.
 Despite the weak guarantees eventual consistency
 provides~\cite{hamilton-cap, cops, walter}, operators frequently
 employ partial quorums~\cite{cassandra, cassandra-docs,
-  cassandradefault,feinbergpc,reddit, outbrain, maxperfblog}.  Parial
+  cassandradefault,feinbergpc,reddit, outbrain, maxperfblog}.  Partial
 quorums are often ``good enough'' for applications as a result of
 their latency benefits, which are especially important as latencies
 grow (e.g., a wide-area network scenario)~\cite{abadilatconsist,
@@ -496,7 +496,7 @@ This closed form solution holds for quorums that do not change size
 over time.  For expanding partial quourm systems, this solution is an
 upper bound on the probability of staleness.  We discuss the
 \textit{load} improvements offered by PBS $k$-staleness as discussed
-in quorum system literature in the appendix.
+in quorum system literature in Appendix A.
 
 \vspace{\subsectionskip}\subsection{PBS Monotonic Reads}
 
@@ -728,13 +728,13 @@ mechanisms~\cite{zookeeper}).  Dynamo's authors observed a latency
 improvement by proxying all operations and having clients act as
 coordinators---Voldemort adopts this architecture~\cite{voldemortclient}.
 
-An end-user will likely incur additional time between his or her
-reads and writes due to latency required to contact the datacenter.
-An individual making requests to a web service using his or her
-browser will likely incur tens or hundreds of milliseconds of delay
-between requests.  Although we do not consider this delay here, it is
-useful to to consider in practical scenarios because the delay between
-reads and writes may be large.
+Many end-users will incur additional time between their respective
+reads and writes due to latency required to contact the service.
+Individual making requests to web services through their browsers will
+likely space sequential requests by tens or hundreds of milliseconds
+due to client-to-server latency.  Although we do not consider this
+delay here, it is important to remember for practical scenarios
+because the delay between reads and writes ($t$) may be large.
 
 \textit{WARS} considers the effect of message sending, delays, and
 reception, but this represents a daunting analytical formulation.  The
@@ -1001,40 +1001,26 @@ Mean Rate & 718.18 gets/s & 45.65 puts/s\\
 \label{table:yammer}
 \end{table}
 
-\vspace{\subsectionskip}\subsection{Production Latency Model Fitting}
+We fitted the distributions given by LinkedIn (\texttt{LNKD-DISK} and
+\texttt{LNKD-SSD} for the disk and SSD numbers, respectively) and
+Yammer (\texttt{YMMR}), as described in detail in Appendix B. We also
+considered a wide-area network replication scenario, denoted
+\texttt{WAN}.  Reads and writes are routed to random data centers,
+and, accordingly, one replica operation commits quickly while the
+others are routed remotely.  We delay remote operations and responses
+by 75ms and apply \texttt{LNKD-DISK} delays once the operation reaches
+its target data center, in accordance with a near-worst-case
+multi-continent WAN network delay~\cite{dean-keynote}  
 
-While insights from production data are invaluable, they are
-underspecified for \textit{WARS}.  First, the data we collected are
-summary statistics, but \textit{WARS} requires the underlying
-distributions.  More importantly, the operation latencies represent
-round-trip times, while \textit{WARS} requires the constituent one-way
-latencies for both reads and writes.  As we demonstrated in our
-Cassandra experiments, these latency distributions are easily
-collected.  However, because they are not currently collected in
-practice, we must do our best to fill in the gaps. Accordingly, to
-derive \texttt{W}, \texttt{A}, \texttt{R}, and \texttt{S} for each
-configuration, we made a series of assumptions, which we believe are
-justified given the advantage of production data over synthetic
-distributions.  Without additional data on the latency required to
-read multiple replicas, we assume that each latency distribution is
-independently, identically distributed.  In general, our distributions
-were bi-model, with separate body and tail distributions.
+We show the parameters for each distribution in
+Table~\ref{table:fits}. We plot each fitted distribution in
+Figure~\ref{fig:latencies}.  Note that for $R$, $W$ of one,
+\texttt{LNKD-DISK} is not equivalent to \texttt{WAN}.  This is
+because, in \texttt{LNKD-DISK}, we only have to wait for the first of
+$N$ local reads (writes) to return, whereas, for \texttt{WAN}, there
+is only one local read (write) and all other read (write) requests are
+be delayed at least 150ms.
 
-LinkedIn provided two latency distributions, whose fits we denote
-\texttt{LNKD-SSD} and \texttt{LNKD-DISK} for the SSD and spinning
-disks, respectively.  As previously discussed, when running on SSDs,
-Voldemort is largely network and CPU bound.  Accordingly, we assumed
-that read and write operations took equivalent amounts of time and, to
-split the remaining time, we focused on the network-bound case and
-assumed that one-way trips were symmetric
-(\texttt{W}=\texttt{A}=\texttt{R}=\texttt{S}).  This allowed us to
-derive \texttt{LNKD-SSD}.  For \texttt{LNKD-DISK}, Feinberg mentioned
-that Voldemort performs at least one read before every write (average
-of 1 seek, between 1-3 seeks), and writes to the BerkeleyDB Java
-Edition backend are flushed every 30 seconds or 20
-megabytes---whichever comes first.  Accordingly, we kept the same
-\texttt{A}=\texttt{R}=\texttt{S} as in \texttt{LNKD-SSD} but
-calculated \texttt{W} separately.
 
 \begin{table}
 \centering
@@ -1067,18 +1053,6 @@ calculated \texttt{W} separately.
 \end{table}
 
 
-Yammer provided distributions for a single configuration, denoted
-\texttt{YMMR}, but separated read and write latencies.  Under our IID
-assumptions, we fit single-node latency distributions to the provided
-data, again assuming symmetric \texttt{A}, \texttt{R}, and \texttt{S}.
-The data again fit a Pareto distribution with a long exponential tail.
-At the $98$th percentile, the write distribution takes a sharp turn.
-Fitting the data closely resulted in an extremely long tail, with
-$99.99+$th percentile writes requiring tens of seconds---much higher
-than Yammer specified.  Accordingly, we fit the $98$th percentile knee
-conservatively; without the $98$th percentile, the write fit N-RMSE is
-.104\%.
-
 
 \begin{figure*}[t!]
 \centering
@@ -1096,22 +1070,6 @@ conservatively; without the $98$th percentile, the write fit N-RMSE is
 \label{fig:latencies}
 \end{figure*}
 
-Finally, we considered a normal-case WAN replication scenario, denoted
-\texttt{WAN}.  Reads and writes are routed to random data centers,
-and, accordingly, one replica operation commits quickly while the
-others are routed remotely.  We delay remote operations and responses
-by 75ms and apply \texttt{LNKD-DISK} delays once the operation reaches
-its target data center, in accordance with a near-worst-case
-multi-continent WAN network delay~\cite{dean-keynote}.
-
-We show the parameters for each distribution in
-Table~\ref{table:fits}. We plot each fitted distribution in
-Figure~\ref{fig:latencies}.  Note that for $R$, $W$ of one,
-\texttt{LNKD-DISK} is not equivalent to \texttt{WAN}.  This is
-because, in \texttt{LNKD-DISK}, we only have to wait for the first of
-$N$ local reads (writes) to return, whereas, for \texttt{WAN}, there
-is only one local read (write) and all other read (write) requests
-are be delayed at least 150ms.
 
 \vspace{\subsectionskip}\subsection{Observed {\large$t$}-visibility}
 
@@ -1495,7 +1453,7 @@ Justin Sheehy
 }
 
 \vspace{\sectionskip}
-\section*{APPENDIX: LOAD AND PBS {\large$k$}-STALENESS}
+\section*{APPENDIX A: LOAD AND PBS {\large$k$}-STALENESS}
 Theory literature describes the \textit{load} of a quorum system as a
 metric for the frequency of accessing the busiest quorum
 member~\cite[Definition 3.2]{quorumsystems}.  Intuitively, the busiest
@@ -1536,7 +1494,52 @@ tolerance lowers the load of a quorum system, subsequently increasing
 its capacity.
 
 
+\section*{APPENDIX B: LATENCY MODEL FITTING}
 
+While insights from production data are invaluable, they are
+underspecified for \textit{WARS}.  First, the data we collected are
+summary statistics, but \textit{WARS} requires the underlying
+distributions.  More importantly, the operation latencies represent
+round-trip times, while \textit{WARS} requires the constituent one-way
+latencies for both reads and writes.  As we demonstrated in our
+Cassandra experiments, these latency distributions are easily
+collected.  However, because they are not currently collected in
+practice, we must do our best to fill in the gaps. Accordingly, to
+derive \texttt{W}, \texttt{A}, \texttt{R}, and \texttt{S} for each
+configuration, we made a series of assumptions, which we believe are
+justified given the advantage of production data over synthetic
+distributions.  Without additional data on the latency required to
+read multiple replicas, we assume that each latency distribution is
+independently, identically distributed.  In general, our distributions
+were bi-model, with separate body and tail distributions.
+
+LinkedIn provided two latency distributions, whose fits we denote
+\texttt{LNKD-SSD} and \texttt{LNKD-DISK} for the SSD and spinning
+disks, respectively.  As previously discussed, when running on SSDs,
+Voldemort is largely network and CPU bound.  Accordingly, we assumed
+that read and write operations took equivalent amounts of time and, to
+split the remaining time, we focused on the network-bound case and
+assumed that one-way trips were symmetric
+(\texttt{W}=\texttt{A}=\texttt{R}=\texttt{S}).  This allowed us to
+derive \texttt{LNKD-SSD}.  For \texttt{LNKD-DISK}, Feinberg mentioned
+that Voldemort performs at least one read before every write (average
+of 1 seek, between 1-3 seeks), and writes to the BerkeleyDB Java
+Edition backend are flushed every 30 seconds or 20
+megabytes---whichever comes first.  Accordingly, we kept the same
+\texttt{A}=\texttt{R}=\texttt{S} as in \texttt{LNKD-SSD} but
+calculated \texttt{W} separately.
+
+Yammer provided distributions for a single configuration, denoted
+\texttt{YMMR}, but separated read and write latencies.  Under our IID
+assumptions, we fit single-node latency distributions to the provided
+data, again assuming symmetric \texttt{A}, \texttt{R}, and \texttt{S}.
+The data again fit a Pareto distribution with a long exponential tail.
+At the $98$th percentile, the write distribution takes a sharp turn.
+Fitting the data closely resulted in an extremely long tail, with
+$99.99+$th percentile writes requiring tens of seconds---much higher
+than Yammer specified.  Accordingly, we fit the $98$th percentile knee
+conservatively; without the $98$th percentile, the write fit N-RMSE is
+.104\%.
 
 \end{document}
 
