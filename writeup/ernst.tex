@@ -3,15 +3,7 @@
 \usepackage{balance, url, amsfonts, verbatim, mathtools}
 \usepackage{draftwatermarktop, draftwatermarkbottom} 
 
-    \renewcommand{\topfraction}{1}	% max fraction of floats at top
-    \renewcommand{\bottomfraction}{1}	% max fraction of floats at bottom
-    %   Parameters for TEXT pages (not float pages):
-    \renewcommand{\dbltopfraction}{1}	% fit big float above 2-col. text
-    \renewcommand{\textfraction}{0.5}	% allow minimal text w. figs
-    %   Parameters for FLOAT pages (not text pages):
-    \renewcommand{\floatpagefraction}{0.7}	% require fuller float pages
-	% N.B.: floatpagefraction MUST be less than topfraction !!
-    \renewcommand{\dblfloatpagefraction}{0.7}	% require fuller float pages
+
 
   \renewcommand{\ttdefault}{cmtt}
 
@@ -53,7 +45,7 @@
 \maketitle
 
 
-%\noindent\textcolor{red}{Base revision~\GITAbrHash,~\GITAuthorDate\\\GITAuthorName.}
+\noindent\textcolor{red}{Base revision~\GITAbrHash,~\GITAuthorDate.\\[-2em]}
 
 \begin{quote}
 \textit{All good ideas arrive by chance.}---Max Ernst
@@ -768,18 +760,18 @@ Section~\ref{sec:practice}, anti-entropy decreases the probability of
 staleness by further propagating versions between members.
 Dynamo-style systems also support additional anti-entropic
 processes~\cite{nosql}.  One common process is called \textit{read
-  repair}~\cite{dynamo}.  When a read coordinator receives multiple
-versions of a data item from different replicas in response to a read
-request, it will attempt to (asynchronously) update the out-of-date
-replicas with the most recent version.  Read repair acts like an
+  repair}: when a read coordinator receives multiple versions of a
+data item from different replicas in response to a read request, it
+will attempt to (asynchronously) update the out-of-date replicas with
+the most recent version~\cite{dynamo}.  Read repair acts like an
 additional write for every read, except old values are re-written.
-Additionally, Dynamo described the use of Merkle trees to summarize
-and exchange data contents between replicas.  However, not all
-Dynamo-style data stores actively employ similar gossip-based
-anti-entropy.  For example, Cassandra only executes Merkle tree
+Additionally, Dynamo used Merkle trees to summarize and exchange data
+contents between replicas~\cite[Section 4.7]{dynamo}.  However, not
+all Dynamo-style data stores actively employ similar gossip-based
+anti-entropy.  For example, Cassandra only uses Merkle tree
 anti-entropy when it is manually requested (e.g., \texttt{nodetool
-  repair}), and chooses to rely primarily on quorum expansion and read
-repair repair~\cite{cassandra-merkle}.
+  repair}), choosing to rely primarily on quorum expansion and read
+repair~\cite{cassandra-merkle}.
 
 Both of these processes are rate dependent: read repair effects depend
 on the rate of reads, and Merkle tree exchange effects (and, more
@@ -847,15 +839,13 @@ Dynamo protocol but is feasible.
 
 As discussed in Section~\ref{sec:tvis}, PBS $t$-visibility depends on
 the propagation of reads and writes throughout a system.  We
-introduced the \textit{WARS}  model as a means of reasoning about
+introduced the \textit{WARS} model as a means of reasoning about
 inconsistency in Dynamo-style quorum systems, but quantitative metrics
-such as staleness observed in practice depend on each of \textit{WARS}'s
-latency distributions.  In this section, we perform an analysis of
-Dynamo-style $t$-visibility under several different assumptions.  We
-use a mix of real-world experiments and Monte Carlo analyses
-under distributions from production environments to better
-understand how frequently ``eventually consistent'' means
-``consistent'' and, more importantly, why.
+such as staleness observed in practice depend on each of
+\textit{WARS}'s latency distributions.  In this section, we perform an
+analysis of Dynamo-style $t$-visibility to better understand how
+frequently ``eventually consistent'' means ``consistent'' and, more
+importantly, why.
 
 PBS $k$-staleness is easily captured in closed form
 (Section~\ref{sec:kstale}).  It does not depend on write latency or
@@ -869,9 +859,9 @@ expectations for PBS $t$-visibility.  While we could improve the
 staleness results by considering additional anti-entropic processes
 (Section~\ref{sec:anti-entropy}), we make the bare minimum of
 assumptions required by the \textit{WARS} model.  Conservative
-analysis decreases the number of varibles in our experiments (which
-are supported by empirical observations from practitioners) and
-increases the applicability of our results.
+analysis decreases the number of experimental variables (supported by
+empirical observations from practitioners) and increases the
+applicability of our results.
 
 \vspace{\subsectionskip}\subsection{Monte Carlo Simulator}
 \label{sec:mcsim}
@@ -1041,7 +1031,7 @@ Mean Rate & 718.18 gets/s & 45.65 puts/s\\
 \end{tabular}
 \vspace{-4pt}
 \caption{Yammer Riak $N$$=$$3$, $R$$=$$2$, $W$$=$$2$ production latencies.}
-\vspace{-12pt}
+\vspace{-6pt}
 \label{table:yammer}
 \end{table}
 
@@ -1223,11 +1213,11 @@ $W$$=$$1$, allowing a $30\%$ ($.98$ ms) latency reduction with no
 observable staleness (even across $10M$ writes).  $R$$=$$W$$=$$1$
 reduced latency by $59.5\%$ ($1.94$ ms) with a corresponding
 $t$-visibility of $1.85$ ms.  Under \texttt{WAN}, $R > 1$ or $W > 1$
-results in waiting for non-local operations to complete and therefore
-large propagation time.  These results indicate that there are
-significant latency gains when to employing lower values of $R$ and
-$W$ and that $t$-visibility is can be low even when we require a high
-probability of consistent reads.
+results a large latency hit due to waiting for non-local operations to
+complete. These results indicate that lowering values of $R$ and $W$
+can significantly improve operation latency and that $t$-visibility
+can be low even when we require a high probability of consistent
+reads.
 
 \begin{table*}
 \centering
@@ -1422,7 +1412,7 @@ reordering leads to staleness under Dynamo.  To examine the effect of
 latency on $t$-staleness in practice, we used real-world traces from
 internet companies to drive a Monte Carlo analysis.  We find that
 eventually consistent quorum configurations are frequently consistent
-after several milliseconds while offering latency benefits, explaining
+after tens of milliseconds while offering latency benefits, explaining
 the prevalence of partial-quorum operation configurations in practice.
 We conclude that ``eventually consistent'' partial quorum replication
 schemes frequently deliver consistent semantics in practice due
@@ -1430,7 +1420,9 @@ largely to the resilience of Dynamo-style messaging.
 
 \section*{Interactive Demonstration}
 
-An interactive demonstration of Dynamo-style PBS is available online at \url{http://cs.berkeley.edu/~pbailis/pbs/}.  The username is \texttt{demo} and the password is \texttt{vldborbust}.
+An interactive demonstration of Dynamo-style PBS is available online
+at \url{http://cs.berkeley.edu/~pbailis/vldb-pbs/}.  The username is
+\texttt{demo} and the password is \texttt{vldb}.
 
 \section*{Acknowledgements}
 
