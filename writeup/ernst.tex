@@ -367,7 +367,7 @@ survey quorum configurations according to practitioner accounts.  Mny
 operators appear to use partial quorum configurations, frequently
 citing performance benefits and high availability.
 
-Cassandra defaults to $N$$=$$3$,
+Cassandra~\cite{cassandra,cassdandra-sigmod} defaults to $N$$=$$3$,
 $R$$=$$W$$=$$1$~\cite{cassandradefault}. The Apache Cassandra 1.0
 documentation claims that ``a majority of users do writes at
 consistency level [$W$$=$$1$]'', while the Cassandra Query Language
@@ -375,26 +375,26 @@ defaults to $R$$=$$W$$=$$1$ as well~\cite{cassandra-docs}.  Production
 Cassandra users report using $R$$=$$W$$=$$1$ in the ``general case''
 because it provides ``maximum performance''~\cite{maxperfblog}, which
 appears to be a commonly held belief~\cite{reddit, outbrain}.
-Cassandra has a ``minor'' patch for session
-guarantees~\cite{sessionguarantees}, but this has not yet been
-integrated into the mainline source~\cite{cassandra-session} as of
-version 1.0; according to our discussions with developers, this is due
-to lack of interest.
+Cassandra has a ``minor'' patch~\cite{cassandra-session} for session
+guarantees~\cite{sessionguarantees}, but this has not been
+integrated into the mainline source~\cite{cassandra-session-revert};
+according to our discussions with developers, this is due to lack of
+interest.
 
-Riak defaults to $N$$=$$3$, $R$$=$$W$$=$$2$~\cite{riakdefault-n,
+Riak~\cite{riak} defaults to $N$$=$$3$, $R$$=$$W$$=$$2$~\cite{riakdefault-n,
   riakdefault-rw}. Users suggest using $R$$=$$W$$=$$1$, $N$$=$$2$ for
-``low value'' data (and variants of strict quorums for ``web,''
+``low value'' data (and strict quorum variants for ``web,''
 ``mission critical,'' and ``financial'' data)~\cite{riaktalkone,
   riaktalktwo}.
 
- Finally, Voldemort does not provide sample configurations, but
- Voldemort's authors (and operators) at LinkedIn~\cite{feinbergpc}
- often choose $N$$=$$c$, $R$$=$$W$$=$$ \lceil c/2 \rceil$ for odd $c$.
- For applications requiring ``very low latency and high
- availability,'' LinkedIn deploys Voldemort with $N$$=$$3$,
- $R$$=$$W$$=$$1$.  For other applications, LinkedIn deployments
- Voldemort with $N$$=$$2$, $R$$=$$W$$=$$1$, providing ``some
- consistency,'' particularly when $N$$=$$3$ replication is not
+ Finally, Voldemort~\cite{voldemort, voldemortpub} does not provide
+ sample configurations, but Voldemort's authors (and operators) at
+ LinkedIn~\cite{feinbergpc} often choose $N$$=$$c$, $R$$=$$W$$=$$
+ \lceil c/2 \rceil$ for odd $c$.  For applications requiring ``very
+ low latency and high availability,'' LinkedIn deploys Voldemort with
+ $N$$=$$3$, $R$$=$$W$$=$$1$.  For other applications, LinkedIn
+ deployments Voldemort with $N$$=$$2$, $R$$=$$W$$=$$1$, providing
+ ``some consistency,'' particularly when $N$$=$$3$ replication is not
  required.  Additionally, Voldemort supports a concept of preferred
  reads and writes, meaning it will block until either the preferred
  number of replicas respond or a timeout occurs, at which point the
@@ -423,6 +423,12 @@ quorums, PBS $t$-visibility, which stochastically bounds the time
 before a committed version appears to readers, and PBS $\langle k,
 t \rangle$-staleness, a combination of the two prior models.
 
+We introduce $k$-staleness first because it is self-contained, with an
+easy-to-understand closed-form solution.  In comparison, $t$-staleness
+is more complex, with several variables that complicate analysis.
+Accordingly, this section proceeds in order of increasing difficulty,
+and the remainder of the paper largely addresses the nuances and
+complexities of $t$-staleness.
 
 Practical concerns guide the following theoretical contributions.  We
 begin by considering a model without quorum expansion or anti-entropy.
@@ -449,7 +455,7 @@ multiple independent write quorums to model the probable overlap of
 $k$ independent write sets.
 \begin{definition}
 A quorum system obeys \textit{PBS $k$-staleness consistency} if, with
-probability $1-p_{s}$, at least one value in any read quorum will
+probability $1-p_{sk}$, at least one value in any read quorum will
 have been committed within $k$ versions of the latest committed
 version when the read begins.
 \end{definition}
@@ -481,7 +487,7 @@ system, the probability of non-intersection is simply Equation
 \ref{eq:prob-strict} exponentiated by $k$:
 \begin{equation}
 \label{eq:k-consistency}
-p_{s} = \left(\frac{{N-W \choose R}}{{N \choose R}}\right)^k
+p_{sk} = \left(\frac{{N-W \choose R}}{{N \choose R}}\right)^k
 \end{equation}
 
 For the $N$$=$$3$, $R$$=$$W$$=$$1$ case, this means that the
@@ -500,15 +506,14 @@ in quorum system literature in Appendix A.
 
 \vspace{\subsectionskip}\subsection{PBS Monotonic Reads}
 
-With additional information, we can use PBS $k$-staleness to predict
-whether a client will ever read staler data than it has already read.
-This property, known as \textit{monotonic reads} consistency is a
-well-known session guarantee~\cite{sessionguarantees}.
+PBS $k$-staleness can predict whether a client will ever read staler
+data than it has already read, a well-known session guarantee called
+\textit{monotonic reads} consistency~\cite{sessionguarantees}.
 
 \begin{definition}
 \label{def:prob-mr}
 A quorum system obeys \textit{PBS monotonic reads consistency} if,
-with probability at least $1-p_{s}$, at least one value in any
+with probability at least $1-p_{sMR}$, at least one value in any
 read quorum returned to a client is the same version or a newer
 version than the last version that the client previously read.
 \end{definition}
@@ -529,11 +534,10 @@ we know these rates exactly, the number of versions between client
 reads is $\frac{\gamma_{gw}}{\gamma_{cr}}$, as shown in Figure
 \ref{fig:timelines}B.  We can calculate the probability of
 probabilistic monotonic reads as a special case of $k$-staleness where
-$k=1+\frac{\gamma_{gw}}{\gamma_{cr}}$.  For example, extending the
-example in Equation \ref{eq:k-consistency}:
+$k=1+\frac{\gamma_{gw}}{\gamma_{cr}}$.  For example, extending our running example from Equation \ref{eq:k-consistency}:
 \begin{equation}
 \label{eq:prob-mr}
-p_{s} = \left(\frac{{N-W \choose R}}{{N \choose R}}\right)^{1+\gamma_{gw}/\gamma_{cr}}
+p_{sMR} = \left(\frac{{N-W \choose R}}{{N \choose R}}\right)^{1+\gamma_{gw}/\gamma_{cr}}
 \end{equation}
 For strict monotonic reads, where we cannot read the version we have
 previously read (assuming there are newer versions in the database),
@@ -564,7 +568,7 @@ recent than the last committed version---as non-stale.
 
 \begin{definition}
 A quorum system obeys \textit{PBS $t$-visibility consistency} if, with
-probability $1-p_{s}$, any read quorum started at least $t$ units
+probability $1-p_{st}$, any read quorum started at least $t$ units
 of time after the last version committed returns at least one value
 that is at least as recent as the last committed version.
 \end{definition}
@@ -586,7 +590,7 @@ interval $t$ by summing the conditional probabilities of each possible
 $\mathcal{W}_r$:
 \begin{equation}
 \label{eq:tv-instantreads}
-p_{s} = \frac{{N-W \choose N}}{{N \choose R}}+\sum_{c\in(W, N]} \frac{{N-c \choose N}}{{N \choose R}}\cdot [P_w(c+1, t)-P_w(c,t)]
+p_{st} = \frac{{N-W \choose N}}{{N \choose R}}+\sum_{c\in(W, N]} \frac{{N-c \choose N}}{{N \choose R}}\cdot [P_w(c+1, t)-P_w(c,t)]
 \end{equation}
 However, the above equation assumes reads occur instantaneously and
 writes commit immediately after $W$ replicas have the version (i.e.,
@@ -614,14 +618,14 @@ will return a value no older than $k$ versions stale if the last write
 committed no sooner than $t$ seconds ago:
 \begin{definition}
 A quorum system obeys \textit{PBS $\langle k, t \rangle$-staleness
-  consistency} if, with probability $1-p_{s}$, at least one value in
+  consistency} if, with probability $1-p_{skt}$, at least one value in
 any read quorum will be within $k$ versions of the latest committed
 version when the read begins, provided the read begins $t$ units of
 time after the previous $k$ versions commit.
 \end{definition}
 The definition of $p_{s}$ follows from the prior definitions:
 \begin{equation}
-p_{s} = \left(\frac{{N-W \choose R}}{{N \choose R}}+\sum_{c\in[W, N)} \frac{{N-c \choose R}}{{N \choose R}} \cdot [P_w(c+1, t)-P_w(c,t)]\right)^k
+p_{skt} = (\frac{{N-W \choose R}}{{N \choose R}}+\sum_{c\in[W, N)} \frac{{N-c \choose R}}{{N \choose R}} \cdot [P_w(c+1, t)-P_w(c,t)])^k
 \end{equation}
 In this equation, in addition to (again) assuming instantaneous reads,
 we also assume the pathological case where the last $k$ writes all
@@ -702,17 +706,17 @@ value chosen from the distribution \texttt{S}.
 The read coordinator will return stale data if the first $R$ responses
 received reached their respective replicas before the replicas
 received the latest version (which was delayed by \texttt{W}).  When
-$R$$+$$W$$>$$N$, this is impossible.  However, under partial quorums
-(when $R$$+$$W$$\leq$$N$), this depends on the latency distributions.
-If we denote the commit time as $w_t$, to observe staleness, $r+w_t+t<
-w$ for $r$ chosen from \texttt{R} and $w$ chosen from \texttt{W}.
-Writes have time to propagate to additional replicas both while the
-coordinator waits for all required acknowledgments (\texttt{A}) and as
-read requests are subsequently sent (\texttt{R}).  Similarly, read
-responses are further delayed in transit (\texttt{S}) back to the read
-coordinator, inducing further possibility of reordering.
-Qualitatively, longer write tails and faster reads increase the chance
-of staleness due to the possibility of reordering.
+$R$$+$$W$$>$$N$, this is impossible.  However, under partial quorums,
+this depends on the latency distributions.  If we denote the commit
+time as $w_t$, to observe staleness, $r'+w_t+t< w'$ for $r'$ chosen
+from \texttt{R} and $w'$ chosen from \texttt{W}.  Writes have time to
+propagate to additional replicas both while the coordinator waits for
+all required acknowledgments (\texttt{A}) and as read requests are
+subsequently sent (\texttt{R}).  Similarly, read responses are further
+delayed in transit (\texttt{S}) back to the read coordinator, inducing
+further possibility of reordering.  Qualitatively, longer write tails
+and faster reads increase the chance of staleness due to the
+possibility of reordering.
 
 Depending on which coordinator a client contacts, some reads and
 writes may be served locally.  In this case, subject to local query
@@ -792,12 +796,11 @@ practice, versions may be fresher than predicted.\begin{comment}
 \vspace{\subsectionskip}\subsection{Asynchronous Staleness Detection}
 
 Even if a system provides an extremely high probability of
-consistency, it may be useful if applications can be notified when
-data returned is inconsistent, or staler than expected.  The Dynamo
-model is naturally equipped for staleness detection.  The following
-discussion is couched in the terms of strong consistency, but it is
-easily extended to PBS $k$-staleness and $\langle k, t
-\rangle$-staleness.
+consistency, applications may need to be notified when data returned
+is inconsistent or staler than expected.  The Dynamo model is
+naturally equipped for staleness detection.  The following discussion
+is couched in the terms of strong consistency, but it is easily
+extended to PBS $k$-staleness and $\langle k, t \rangle$-staleness.
 
 Knowing whether a response is stale at read time requires strong
 consistency.  By checking all possible values in the domain against a
@@ -962,9 +965,9 @@ Yammer is an online service providing private social networking to
 over 100,000 companies as of December 2011~\cite{yammer}.  Yammer uses
 Basho's Riak for some client data~\cite{riak}.  Coda Hale,
 infrastructure architect, and Ryan Kennedy, also of Yammer, presented
-on their use of Riak including surprisingly in-depth performance
-numbers in March 2011~\cite{riakyammer}.  Yammer provided us with more
-detailed performance numbers for their application~\cite{codapc}
+on their use of Riak including in-depth performance and configuration
+details in March 2011~\cite{riakyammer}.  Yammer provided us with more
+detailed performance statistics for their application~\cite{codapc}
 (Table~\ref{table:yammer}).  Hale noted that ``reads and writes have
 radically different expected latencies, especially for Riak.''  Writes
 are delayed ``until the fsync returns, so while reads are often $<$
@@ -1227,7 +1230,7 @@ when we require a high probability of consistent reads.
 \hline
 \end{tabular}
 \vspace{-4pt}
-\caption{$t$-visibility for $p_{s} = .001$ ($99.9\%$ probability
+\caption{$t$-visibility for $p_{st} = .001$ ($99.9\%$ probability
   of consistency for $50,000$ reads and writes) and $99.9\%$ read
   ($L_r$) and write latency ($L_w$) across $R$ and $W$, $N$$=$$3$
   ($1M$ reads and writes).}
