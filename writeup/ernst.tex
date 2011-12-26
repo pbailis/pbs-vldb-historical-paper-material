@@ -428,7 +428,7 @@ easy-to-understand closed-form solution.  In comparison, $t$-staleness
 is more complex, with several variables that complicate analysis.
 Accordingly, this section proceeds in order of increasing difficulty,
 and the remainder of the paper largely addresses the nuances and
-complexities of $t$-staleness.
+complexities of $t$-visibility.
 
 Practical concerns guide the following theoretical contributions.  We
 begin by considering a model without quorum expansion or anti-entropy.
@@ -506,9 +506,13 @@ in quorum system literature in Appendix A.
 
 \vspace{\subsectionskip}\subsection{PBS Monotonic Reads}
 
-PBS $k$-staleness can predict whether a client will ever read staler
-data than it has already read, a well-known session guarantee called
-\textit{monotonic reads} consistency~\cite{sessionguarantees}.
+PBS $k$-staleness can be used to predict whether a client will ever
+older staler data than it has already read, a well-known session
+guarantee called \textit{monotonic reads}
+consistency~\cite{sessionguarantees}.  This is particularly useful
+when clients do not need to see the most recent version of a data item
+but still require a notion of ``forward progress'' through versions,
+as in streaming changelogs or timelines.
 
 \begin{definition}
 \label{def:prob-mr}
