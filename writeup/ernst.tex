@@ -26,9 +26,9 @@
 
 \title{PBS: Probabilistically Bounded Staleness\\ and Practical Partial Quorum Systems}
 
-\author{Peter Bailis, Shivaram Venkataraman, Joseph M. Hellerstein, Ion Stoica, Michael J. Franklin\\
+\author{Peter Bailis, Shivaram Venkataraman, Michael J. Franklin, Joseph M. Hellerstein, Ion Stoica\\
 \affaddr{University of California, Berkeley}\\
-\affaddr{\{pbailis, shivaram, franklin, istoica, hellerstein\}@cs.berkeley.edu}}
+\affaddr{\{pbailis, shivaram, franklin, hellerstein, istoica\}@cs.berkeley.edu}}
 
 \newdef{definition}{Definition}
 
@@ -97,15 +97,15 @@ employ partial quorums~\cite{cassandra, cassandra-docs,
 partial quorums are often ``good enough'' for applications due to
 their latency benefits, which are especially important as latencies
 grow (e.g., a wide-area network scenario)~\cite{abadilatconsist,
-  feinbergpc}.  Given that many programs can handle staleness through
-the use of associative and commutative operations (e.g., timelines,
-logs, and notifications)~\cite{calm, helland}, these trade-offs are
-often justified.  However, it is unlikely that even staleness-tolerant
-applications are well-suited to \textit{unbounded} staleness.  The
-proliferation of partial quorum configurations suggests that either
-data store operators are simply na\"{\i}ve and misguided or that
-eventually consistent data stores provide a reasonable degree of
-consistency in practice.
+  feinbergpc}. Many programs are carefully designed to address
+staleness through design patterns such as compensation (e.g.,
+memories, guesses, and apologies)~\cite{helland} and associative and
+commutative operations (e.g., timelines, logs, and
+notifications)~\cite{calm}.  In general, however, unbounded staleness
+poses significant challenges and is undesirable in practice.  The
+proliferation of partial quorum configurations suggests that many
+applications can tolerate occasional cases of staleness, and that
+stale data tends to be ``fresh enough'' in most cases.
 
 While common practice suggests that weak eventual consistency is a
 viable solution in many cases, to date, this observation has been
@@ -113,14 +113,14 @@ mostly anecdotal. In this work, we quantify the degree to which
 eventual consistency is both eventual and consistent. Under worst-case
 conditions, eventual consistency results in an unbounded degree of
 data staleness, but, as we will show, the average case is often
-different.  Eventually consistent data stores cannot promise
-consistency, but they can describe what kind of consistency they are
-\textit{likely} to provide for varying degrees of certainty.  However,
-there is little prior work describing how to make these consistency
-and staleness predictions under practical conditions.  The current
-state-of-the-art requires that data system users make rough guesses or
-perform online profiling to determine the consistency provided by
-their data stores.
+different.  Eventually consistent data stores cannot promise immediate
+and perfect consistency but for varying degrees of certainty can offer
+staleness bounds with respect to time (``how eventual'') and version
+history (``how consistent'').  However, there is little prior work
+describing how to make these consistency and staleness predictions
+under practical conditions.  The current state of the art requires
+that data system users make rough guesses or perform online profiling
+to determine the consistency provided by their data stores.
 
 To do better, we need to know when and why eventually consistent
 systems return stale data and how to quantify the staleness of the
@@ -135,10 +135,10 @@ Probabilistically Bounded Staleness (PBS) for partial quorums. There
 are two common axes for measuring staleness in the literature:
 versions~\cite{aqua, frac} and wall clock time~\cite{vahdat-article,
   vahdat-bounded}.  PBS can be used to analyze both measures,
-describing the probability of reading one of the last $k$ versions of
-a data item ($k$-staleness, or ``how consistent is eventual
-consistency?''), of reading a data item $t$ seconds after it is
+describing the probability of reading a data item $t$ seconds after it is
 written ($t$-visibility, or ``how eventual is eventual
+consistency?''), of reading one of the last $k$ versions of
+a data item ($k$-staleness, or ``how consistent is eventual
 consistency?''), and of experiencing a combination of the two
 ($\langle k, t \rangle$-staleness). PBS does not propose new
 mechanisms to enforce deterministic staleness bounds~\cite{ aqua,
