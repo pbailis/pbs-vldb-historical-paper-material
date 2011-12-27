@@ -328,7 +328,7 @@ concurrent write requests.
 
 \begin{figure}
 \centering
-\includegraphics[width=.8\columnwidth]{figs/dynamo-quorum.pdf}
+\includegraphics[width=.85\columnwidth]{figs/dynamo-quorum.pdf}
 \vspace{-8pt}
 \caption{Diagram of control flow for client write to Dynamo-style
   quorum.  Here, $N=3$, $W=2$. The client write is handled by a
@@ -673,7 +673,7 @@ commits.  This $t$ corresponds to the $t$ in PBS $t$-visibility.
 
 \begin{figure}
 \centering
-\includegraphics[width=.7\columnwidth]{figs/dynamostale.pdf}
+\includegraphics[width=.8\columnwidth]{figs/dynamostale.pdf}
 \vspace{-8pt}
 \caption{The \textit{WARS} model for message ordering in Dynamo
   describes the message flow between a coordinator and a single
@@ -731,22 +731,23 @@ which eludes us.  As we discuss in Section~\ref{sec:mcsim}, we explore
 \textit{WARS} using Monte Carlo analysis, which is straightforward to
 understand and implement.
 
-\vspace{\subsectionskip}\subsection{{\large \textit{WARS}} Extensions}
+\vspace{\subsectionskip}\subsection{{\large \textit{WARS}} Extensions and Discussion}
 \label{sec:anti-entropy}
 
-\textbf{Proxying operations.} Depending on which coordinator a client contacts, some reads and
-writes may be served locally.  In this case, subject to local query
-processing delays, a read or write to $R$ or $W$ nodes behaves like
-a read or write to $R-1$ or $W-1$ nodes, respectively.  Although we do
-not do so, \textit{WARS} can be adopted to handle local reads and
-writes.  Determining whether requests will be proxied (and, if not,
-which replicas serve which requests) is data store and
-deployment-specific.  Dynamo forwards write requests to a designator
-coordinator solely for the purpose of establishing a version
-ordering~\cite[Section 6.4]{dynamo} (easily achievable through other
-mechanisms~\cite{zookeeper}).  Dynamo's authors observed a latency
-improvement by proxying all operations and having clients act as
-coordinators---Voldemort adopts this architecture~\cite{voldemortclient}.
+\textbf{Proxying operations.} Depending on which coordinator a client
+contacts, some reads and writes may be served locally.  In this case,
+subject to local query processing delays, a read or write to $R$ or
+$W$ nodes behaves like a read or write to $R-1$ or $W-1$ nodes,
+respectively.  Although we do not do so, \textit{WARS} can be adopted
+to handle local reads and writes.  Determining whether requests will
+be proxied (and, if not, which replicas serve which requests) is data
+store and deployment-specific.  Dynamo forwards write requests to a
+designator coordinator solely for the purpose of establishing a
+version ordering~\cite[Section 6.4]{dynamo} (easily achievable through
+other mechanisms~\cite{zookeeper}).  Dynamo's authors observed a
+latency improvement by proxying all operations and having clients act
+as coordinators---Voldemort adopts this
+architecture~\cite{voldemortclient}.
 
 \textbf{Client-side delays.} Many end-users will incur additional time
 between their respective reads and writes due to latency required to
@@ -793,12 +794,12 @@ practice, versions may be fresher than predicted.\begin{comment}
 
 \vspace{\subsectionskip}\subsection{Asynchronous Staleness Detection}
 
-Even if a system provides an extremely high probability of
-consistency, applications may need to be notified when data returned
-is inconsistent or staler than expected.  Here, as a side-note, we
-discuss how the Dynamo model is naturally equipped for staleness
-detection.  The following discussion is couched in the terms of strong
-consistency, but it is easily extended to PBS $k$-staleness and
+Even if a system provides a low probability of inconsistency,
+applications may need to be notified when data returned is
+inconsistent or staler than expected.  Here, as a side-note, we
+discuss how the Dynamo protocol is naturally equipped for staleness
+detection.  The following discussion is couched in the terms of PBS
+$t$-visibility but is easily extended to PBS $k$-staleness and
 $\langle k, t \rangle$-staleness.
 
 Knowing whether a response is stale at read time requires strong
@@ -911,32 +912,32 @@ Dynamo-style systems dictates that high one-way write variance
 (\texttt{W}) increases staleness.  To quantify these effects, we swept
 a range of exponentially distributed write distributions (changing
 parameter $\lambda$, which dictates the mean and tail of the
-distribution) while fixing \texttt{A}=\texttt{R}=\texttt{S}.  Our
-results, shown in Figure~\ref{fig:varydelay}, confirm that probability
-of consistency is highly influenced by the write variance.  When the
-variance of \texttt{W} is $0.0625$ ms ($\lambda=4$, mean $.25$ms,
-one-fourth the mean of \texttt{A}=\texttt{R}=\texttt{S}), we observe a
-$94\%$ chance of consistency immediately after the write and $99.9\%$
-chance after 1ms.  However, when the variance of \texttt{W} is $100$ms
-($\lambda=.1$, mean $10$ms, ten times the mean of
+distribution) while fixing \texttt{A}=\texttt{R}=\texttt{S}.
+
+Our results, shown in Figure~\ref{fig:varydelay}, confirm that
+probability of consistency is highly influenced by the write variance.
+When the variance of \texttt{W} is $0.0625$ ms ($\lambda=4$, mean
+$.25$ms, one-fourth the mean of \texttt{A}=\texttt{R}=\texttt{S}), we
+observe a $94\%$ chance of consistency immediately after the write and
+$99.9\%$ chance after 1ms.  However, when the variance of \texttt{W}
+is $100$ms ($\lambda=.1$, mean $10$ms, ten times the mean of
 \texttt{A}=\texttt{R}=\texttt{S}), we observe a $41\%$ chance of
 consistency immediately after write and a $99.9\%$ chance of
 consistency only after $65$ ms.  As the variance and mean increase, so
 does the probability of inconsistency.  Under distributions with fixed
 means and variable variances (uniform, normal), we observe that the
 mean of \texttt{W} is less important than its variance if the
-distribution of \texttt{W} is strictly greater than
-\texttt{A}=\texttt{R}=\texttt{S}.  The absolute values in \texttt{W}
-only matter to the extent that reads and writes overlap.
+\texttt{W} is strictly greater than \texttt{A}=\texttt{R}=\texttt{S}.
 
 Decreasing the mean and variance of \texttt{W} improves the
 probability of consistent reads.  This means that, as we will see,
 techniques that lower one-way write latency result in lower
 $t$-visibility.  Instead of increasing read and write quorum sizes,
 operators could chose to lower (relative) \texttt{W} latencies through
-additional hardware configurations or by introducing read delays.
-However, this latter option is potentially problematic for read-heavy
-workloads and introduces queuing effects for reads and writes.
+additional hardware configuration and specialization or by
+artificially delaying reads.  This latter option is potentially
+detrimental to performance for read-heavy workloads and may introduce
+undesirable queuing effects.
 
 \begin{figure}
 \centering
