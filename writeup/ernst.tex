@@ -1213,11 +1213,11 @@ $W$$=$$1$, allowing a $30\%$ ($.98$ ms) latency reduction with no
 observable staleness (even across $10M$ writes).  $R$$=$$W$$=$$1$
 reduced latency by $59.5\%$ ($1.94$ ms) with a corresponding
 $t$-visibility of $1.85$ ms.  Under \texttt{WAN}, $R > 1$ or $W > 1$
-results a large latency hit due to waiting for non-local operations to
-complete. These results indicate that lowering values of $R$ and $W$
-can significantly improve operation latency and that $t$-visibility
-can be low even when we require a high probability of consistent
-reads.
+results in a large latency increase because operations require
+remote messaging to complete. These results indicate that lowering
+values of $R$ and $W$ can significantly improve operation latency and
+that $t$-visibility can be low even when we require a high probability
+of consistent reads.
 
 \begin{table*}
 \centering
