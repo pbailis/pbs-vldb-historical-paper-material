@@ -1114,7 +1114,7 @@ the relative mean and variance of \texttt{W}.
 \texttt{LNKD-SSD} and \texttt{LNKD-DISK} demonstrate the importance of
 write latency in practice.  Immediately after write commit,
 \texttt{LNKD-SSD} had a $97.4\%$ probability of consistent reads,
-reaching over $99.999\%$ probability of consistency after five
+reaching over a $99.999\%$ probability of consistent reads after five
 milliseconds. \texttt{LNKD-SSD}'s reads briefly raced its writes
 immediately after commit, but, several millisecond after the write,
 the chance of a slightly delayed read round-trip time experiencing
