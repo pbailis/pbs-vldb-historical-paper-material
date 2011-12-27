@@ -1260,9 +1260,8 @@ of consistent reads.
 \vspace{\sectionskip}\section{Discussion and Future Work}
 \label{sec:discussion}
 
-PBS enables several enhancements to partial quorum systems that we
-have not yet addressed.  Here, we briefly discuss them along with
-improvements to our models.
+In this section, we discuss several enhancements to partial
+quorum systems that PBS enables along with future work for PBS.
 
 \textbf{Latency/Staleness SLAs.} Using PBS, we can automatically
 configure replication parameters by optimizing operation latency given
@@ -1331,20 +1330,19 @@ scheme.
 focused on normal operating conditions. However, unless failures are
 common-case, they affect tail staleness probabilities.  For example,
 if, as Jeff Dean of Google suggests~\cite{dean-keynote}, servers crash
-at least twice per year, assuming a worst-case ten hour downtime for
-machines, this roughly represents .23\% downtime per machine per year.
-If failures are correlated, this small percentage may be a
-problem. However, if they are independent, a replica set of $N$ failed
-nodes with $F$ failed nodes behaves like an $N-F$ replica set, and the
-probability of all $N$ nodes failing is $(.23)^N$\% (``five nines''
-reliability for $N$$=$$3$) and will likely be hidden in the
-probability tail.  Quantifying this impact more precisely
-would be beneficial but requires additional information about failure
-rates and their impact on latency distributions.  We have asserted
-that failures or latency spikes can be accommodated in \textit{WARS}
-by adjusting latency distributions to match failure probabilities, but
-modeling recovery semantics such as hinted handoff would also be
-fruitful.
+at least twice per year, given a ten hour downtime per failure, this
+roughly represents .23\% downtime per machine per year.  If failures
+are correlated, this small percentage may be a problem. However, if
+they are independent, a replica set of $N$ failed nodes with $F$
+failed nodes behaves like an $N-F$ replica set, and the probability of
+all $N$ nodes failing is $(.23)^N$\% (``five nines'' reliability for
+$N$$=$$3$) and will likely be hidden in the probability tail.
+Quantifying this impact more precisely would be beneficial but
+requires additional information about failure rates and their impact
+on latency distributions. Failures and latency spikes can be
+accommodated in \textit{WARS} by adjusting latency distributions to
+match failure probabilities; modeling recovery semantics such as
+hinted handoff would also be useful.
 
 \vspace{\sectionskip}\section{Related Work}
 \label{sec:relatedwork}
