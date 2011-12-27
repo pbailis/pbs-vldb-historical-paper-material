@@ -58,7 +58,7 @@
 	<array>
 		<dict>
 			<key>Bounds</key>
-			<string>{{169.47722, 94.561897}, {6, 14}}</string>
+			<string>{{171.22823, 94.558311}, {6, 14}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -84,7 +84,7 @@
 				<key>ID</key>
 				<integer>94</integer>
 				<key>Position</key>
-				<real>0.482220858335495</real>
+				<real>0.50239253044128418</real>
 				<key>RotationType</key>
 				<integer>0</integer>
 			</dict>
@@ -1849,7 +1849,7 @@ Version Timelines}</string>
 	<key>MasterSheets</key>
 	<array/>
 	<key>ModificationDate</key>
-	<string>2011-12-27 19:58:05 +0000</string>
+	<string>2011-12-27 20:42:56 +0000</string>
 	<key>Modifier</key>
 	<string>Peter Bailis</string>
 	<key>NotesVisible</key>

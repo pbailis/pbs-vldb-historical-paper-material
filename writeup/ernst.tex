@@ -11,9 +11,9 @@
 
 \newenvironment{myitemize}
 {
-   \vspace{-.5em}
+   \vspace{0em}
     \begin{list}{$\bullet$ }{}
-        \setlength{\topsep}{0pt}
+        \setlength{\topsep}{0em}
         \setlength{\parskip}{0pt}
         \setlength{\partopsep}{0pt}
         \setlength{\parsep}{0pt}         
@@ -90,22 +90,22 @@ Voldemort~\cite{voldemort} offer a choice between these two modes of
 quorum replication: overlapping quorums, providing strong consistency,
 and partial quorums, providing eventual consistency.
 
-Despite the weak guarantees eventual consistency
-provides~\cite{hamilton-cap, cops, walter}, operators frequently
+Despite the weak guarantees provided by eventual
+consistency~\cite{hamilton-cap, cops, walter}, operators frequently
 employ partial quorums~\cite{cassandra, cassandra-docs,
   cassandradefault,feinbergpc,reddit, outbrain, maxperfblog}.  These
-partial quorums are often ``good enough'' for applications due to
-their latency benefits, which are especially important as latencies
-grow (e.g., a wide-area network scenario)~\cite{abadilatconsist,
-  feinbergpc}. Many programs are carefully designed to address
-staleness through design patterns such as compensation (e.g.,
-memories, guesses, and apologies)~\cite{helland} and associative and
-commutative operations (e.g., timelines, logs, and
+partial quorums are often acceptable for operators due to their
+latency benefits, which are especially important as latencies grow
+(e.g., a wide-area network scenario)~\cite{abadilatconsist,
+  feinbergpc, hamilton-cap, helland}. Many programs are carefully
+designed to handle staleness through design patterns such as
+compensation (e.g., memories, guesses, and apologies)~\cite{helland}
+and associative and commutative operations (e.g., timelines, logs, and
 notifications)~\cite{calm}.  In general, however, unbounded staleness
 poses significant challenges and is undesirable in practice.  The
 proliferation of partial quorum configurations suggests that many
-applications can tolerate occasional cases of staleness, and that
-stale data tends to be ``fresh enough'' in most cases.
+applications can tolerate occasional cases of staleness and that stale
+data tends to be ``fresh enough'' in most cases.
 
 While common practice suggests that weak eventual consistency is a
 viable solution in many cases, to date, this observation has been
@@ -116,11 +116,11 @@ data staleness, but, as we will show, the average case is often
 different.  Eventually consistent data stores cannot promise immediate
 and perfect consistency but for varying degrees of certainty can offer
 staleness bounds with respect to time (``how eventual'') and version
-history (``how consistent'').  However, there is little prior work
-describing how to make these consistency and staleness predictions
-under practical conditions.  The current state of the art requires
-that data system users make rough guesses or perform online profiling
-to determine the consistency provided by their data stores.
+history (``how consistent'').  There is little prior work describing
+how to make these consistency and staleness predictions under
+practical conditions.  The current state of the art requires that data
+system users make rough guesses or perform online profiling to
+determine the consistency provided by their data stores.
 
 To do better, we need to know when and why eventually consistent
 systems return stale data and how to quantify the staleness of the
@@ -243,22 +243,16 @@ overlap.  There are two relevant variants of partial quorum systems in
 the literature: probabilistic quorum systems and k-quorums.
 
 \textit{Probabilistic quorum systems} provide probabilistic guarantees
-about whether data returned by a quorum read is consistent.  As the
-number of nodes in the system scales, we can achieve an arbitrarily
-high probability of consistency~\cite{prob-quorum}.  Intuitively, this
-is a consequence of the Birthday Paradox: as the number of replicas
-increases, the probability of non-intersection between any two quorums
-decreases.  Prior work has examined the effect of ``dynamic systems''
-in terms of quorum member churn (e.g., joining and leaving a
-distributed hash table)~\cite{prob-quorum-dynamic}, network-aware
-quorum placement~\cite{delay-quorum, quorum-placement}, and network
-partitions~\cite{partitionedquorum} but did not model write
-propagation. Additionally, and most importantly, to the best of our
-knowledge, probabilistic quorums have only been used to study the
-probability of strong consistency and have not been used to study
-bounded staleness, particularly in the presence of
+on quorum intersection.  By scaling the number of replicas, we can
+achieve an arbitrarily high probability of
+consistency~\cite{prob-quorum}.  Intuitively, this is a consequence of
+the Birthday Paradox: as the number of members increase, the
+probability of non-intersection between any two quorums decreases.  To
+the best of our knowledge, probabilistic quorums have only been used
+to study the probability of strong consistency and have not been used
+to study bounded staleness, particularly in the presence of
 anti-entropy~\cite{antientropy}.  Merideth and Reiter provide an
-overview of recent advances in quorum systems~\cite{quorum-overview}.
+overview of these systems~\cite{quorum-overview}.
 
 As an example of a probabilistic quorum system, given $N$ replicas and
 randomly chosen read and write quorums of sizes $R$ and $W$, we can
@@ -288,10 +282,14 @@ able to control are lost, and the best known algorithm for the
 pathological case results in a lower bound of $(2N-1)(k-1)+N$ versions
 staleness~\cite{multi-k-quorum}.
 
-This prior work makes two important assumptions: first, it treats
-quorum sizes as fixed, where the set of nodes with a version does not
-grow over time, and, second, it frequently assumes Byzantine failure.
-We revisit these assumptions at the end of the next section.
+This prior work makes two important assumptions. First, it typically
+models quorum sizes as fixed, where the set of nodes with a version
+does not grow over time.  Prior work explored ``dynamic systems'' in
+terms of quorum membership churn~\cite{prob-quorum-dynamic},
+network-aware quorum placement~\cite{delay-quorum, quorum-placement},
+and network partitions~\cite{partitionedquorum} but did not model
+write propagation. Second, it frequently assumes Byzantine failure.
+We revisit these assumptions in the next section.
 
 \vspace{\subsectionskip}\subsection{Quorum Foundations: Practice}
 \label{sec:practice}
@@ -337,26 +335,26 @@ concurrent write requests.
   coordinator node and sent to all replicas. The write succeeds when
   $W$ replicas respond.  Note that the coordinator is possibly a
   replica as well, invoking a local write.}
-\vspace{-12pt}
+\vspace{-14pt}
 \label{fig:dynamo-quorum}
 \end{figure}
 
-There are significant differences between data systems used in
-practice and the theory describing quorum operation.  First,
-replication factors for distributed data systems are relatively low.
-Typical replication factors are between one and
-three~\cite{cassandradefault, feinbergpc, codapc}.  Second, (in the
-absence of failure), in Dynamo-style partial quorums, the write quorum
-size increases even after the operation returns, growing via
-anti-entropy~\cite{antientropy}.  Moreover, requests are sent to all
-replicas, however only the first $R$ responses are considered.  As a
-matter of nomenclature (and to disambiguate against ``dynamic'' quorum
-membership protocols), we will refer to these systems as
-\textit{expanding partial quorum systems}. We discuss additional
-anti-entropy in Section~\ref{sec:anti-entropy}. Third, as in much of
-the practical literature, practitioners largely focus on fail-stop
-failure modes instead of Byzantine failure~\cite{birman-byzantine}.
-Following standard practice, we do not consider Byzantine failure.
+There are significant differences between quorum theory and data
+systems used in practice.  First, replication factors for distributed
+data systems are relatively low.  Typical replication factors are
+between one and three~\cite{cassandradefault, feinbergpc, codapc}.
+Second, (in the absence of failure), in Dynamo-style partial quorums,
+the write quorum size increases even after the operation returns,
+growing via anti-entropy~\cite{antientropy}.  Moreover, requests are
+sent to all replicas, however only the first $R$ responses are
+considered.  As a matter of nomenclature (and to disambiguate against
+``dynamic'' quorum membership protocols), we will refer to these
+systems as \textit{expanding partial quorum systems}. We discuss
+additional anti-entropy in Section~\ref{sec:anti-entropy}. Third, as
+in much of the practical literature, practitioners largely focus on
+fail-stop failure instead of Byzantine
+failure~\cite{birman-byzantine}.  Following standard practice, we do
+not consider Byzantine failure.
 
 \vspace{\subsectionskip}\subsection{Typical Quorum Configurations}
 
@@ -374,10 +372,9 @@ Cassandra users report using $R$$=$$W$$=$$1$ in the ``general case''
 because it provides ``maximum performance''~\cite{maxperfblog}, which
 appears to be a commonly held belief~\cite{reddit, outbrain}.
 Cassandra has a ``minor'' patch~\cite{cassandra-session} for session
-guarantees~\cite{sessionguarantees}, but this has not been
-integrated into the mainline source~\cite{cassandra-session-revert};
-according to our discussions with developers, this is due to lack of
-interest.
+guarantees~\cite{sessionguarantees} that is not currently
+used~\cite{cassandra-session-revert}; according to our
+discussions with developers, this is due to lack of interest.
 
 Riak defaults to $N$$=$$3$, $R$$=$$W$$=$$2$~\cite{riakdefault-n,
   riakdefault-rw}. Users suggest using $R$$=$$W$$=$$1$, $N$$=$$2$ for
@@ -385,48 +382,46 @@ Riak defaults to $N$$=$$3$, $R$$=$$W$$=$$2$~\cite{riakdefault-n,
 ``mission critical,'' and ``financial'' data)~\cite{riaktalkone,
   riaktalktwo}.
 
- Finally, Voldemort does not provide
- sample configurations, but Voldemort's authors (and operators) at
- LinkedIn~\cite{feinbergpc} often choose $N$$=$$c$, $R$$=$$W$$=$$
- \lceil c/2 \rceil$ for odd $c$.  For applications requiring ``very
- low latency and high availability,'' LinkedIn deploys Voldemort with
- $N$$=$$3$, $R$$=$$W$$=$$1$.  For other applications, LinkedIn
- deployments Voldemort with $N$$=$$2$, $R$$=$$W$$=$$1$, providing
- ``some consistency,'' particularly when $N$$=$$3$ replication is not
+ Finally, Voldemort does not provide sample configurations, but
+ Voldemort's authors (and operators) at LinkedIn~\cite{feinbergpc}
+ often choose $N$$=$$c$, $R$$=$$W$$=$$ \lceil c/2 \rceil$ for odd $c$.
+ For applications requiring ``very low latency and high
+ availability,'' LinkedIn deploys Voldemort with $N$$=$$3$,
+ $R$$=$$W$$=$$1$.  For other applications, LinkedIn deployments
+ Voldemort with $N$$=$$2$, $R$$=$$W$$=$$1$, providing ``some
+ consistency,'' particularly when $N$$=$$3$ replication is not
  required.  Additionally, Voldemort supports a concept of preferred
  reads and writes, meaning it will block until either the preferred
  number of replicas respond or a timeout occurs, at which point the
  request succeeds.  In the low latency case, preferred reads is either
  two or is disabled.  In the $N$$=$$2$ case, preferred reads and
- preferred writes are set to two.  Voldemort also slightly differs
- from Dynamo in that it sends read requests to $R$ of $N$ replicas
- (not $N$ of $N$)~\cite{voldemortpub}; this decreases load per replica
- and network traffic at the expense of read latency and potential
- availability.  However, provided the per-request staleness
- probabilities are independent, this does not affect staleness
- because, even when sending reads to $N$ of $N$ replicas, coordinators
- still only wait for $R$ responses.
+ preferred writes are set to two.  Voldemort also differs from Dynamo
+ in that it sends read requests to $R$ of $N$ replicas (not $N$ of
+ $N$)~\cite{voldemortpub}; this decreases load per replica and network
+ traffic at the expense of read latency and potential availability.
+ Provided the per-request staleness probabilities are independent,
+ this does not affect staleness: even when sending reads to
+ $N$ replicas, coordinators only wait for $R$ responses.
 
 
 \vspace{\sectionskip}\section{Probabilistically Bounded\\Staleness}
 \label{sec:pbs}
 
-In this section, we introduce the theory of Probabilistically Bounded
-Staleness to describe the consistency provided by existing eventually
-consistent data stores.  PBS extends prior work on probabilistic
-quorums by accounting for staleness of both versions and real-time.
-We introduce the notions of PBS $k$-staleness, which stochastically
-bounds the staleness of versions returned by read quorums, PBS
-$t$-visibility, which stochastically bounds the time before a
-committed version appears to readers, and PBS $\langle k, t
-\rangle$-staleness, a combination of the two prior models.
+In this section, we introduce Probabilistically Bounded Staleness,
+which describes the consistency provided by existing eventually
+consistent data stores.  We introduce the notions of PBS
+$k$-staleness, which stochastically bounds the staleness of versions
+returned by read quorums, PBS $t$-visibility, which stochastically
+bounds the time before a committed version appears to readers, and PBS
+$\langle k, t \rangle$-staleness, a combination of the two prior
+models.
 
-We introduce $k$-staleness first because it is self-contained, with an
-easy-to-understand closed-form solution.  In comparison, $t$-staleness
-is more complex, with several variables that complicate analysis.
+We first introduce $k$-staleness because it is self-contained, with a
+simple closed-form solution.  In comparison, $t$-staleness is more
+complex, with several variables that complicate analysis.
 Accordingly, this section proceeds in order of increasing difficulty,
-and the remainder of the paper largely addresses the nuances and
-complexities of $t$-visibility.
+and the remainder of the paper largely addresses the nuances of
+$t$-visibility.
 
 Practical concerns guide the following theoretical contributions.  We
 begin by considering a model without quorum expansion or anti-entropy.
@@ -544,10 +539,9 @@ previously read (assuming there are newer versions in the database), we
 exponentiate with $k=\frac{\gamma_{gw}}{\gamma_{cr}}$.
 
 In practice, we may not know these exact rates, but, by measuring
-their distribution, we can calculate an expected ratio that we can
-integrate into these calculations.  By performing appropriate
-admission control, operators can control these rates to achieve
-monotonic reads guarantees.
+their distribution, we can calculate an expected value.  By performing
+appropriate admission control, operators can control these rates to
+achieve monotonic reads guarantees.
 
 \vspace{\subsectionskip}\subsection{PBS $t$-visibility}
 \label{sec:tvis}
@@ -633,8 +627,8 @@ occurred at the same time.  If we can determine the time since commit
 for the last $k$ writes, we can improve this bound by considering each
 quorum's $p_{skt}$ separately (individual $t$).  However, predicting
 (and enforcing) write arrival rates is challenging and may introduce
-inaccuracy, so this equation provides a conservative upper bound on
-$p_{s}$.
+inaccuracy, so this equation is a conservative upper bound on
+$p_{skt}$.
 
 Note that the prior definitions of consistency are encapsulated by PBS
 $\langle k, t \rangle$-staleness consistency. Probabilistic $k$-quorum
@@ -734,8 +728,8 @@ statistics if one makes independence assumptions about the
 \textit{WARS} distributions.  Dynamo is straightforward to reason
 about and program but is difficult to analyze in a simple closed form,
 which eludes us.  As we discuss in Section~\ref{sec:mcsim}, we explore
-\textit{WARS} using Monte Carlo analysis, which is both
-straightforward to implement and easy to understand.
+\textit{WARS} using Monte Carlo analysis, which is straightforward to
+understand and implement.
 
 \vspace{\subsectionskip}\subsection{{\large \textit{WARS}} Extensions}
 \label{sec:anti-entropy}
