@@ -24,7 +24,7 @@
     \vspace{-.5em}
 }
 
-\title{PBS: Probabilistically Bounded Staleness\\ and Practical Partial Quorum Replication}
+\title{Probabilistically Bounded Staleness\\ for Practical Partial Quorums}
 
 \author{Peter Bailis, Shivaram Venkataraman, Michael J. Franklin, Joseph M. Hellerstein, Ion Stoica\\
 \affaddr{University of California, Berkeley}\\
@@ -41,7 +41,6 @@
 \hyphenation{prob-a-bil-is-tic-ally}
 
 \maketitle
-
 
 \textcolor{red}{Base revision~\GITAbrHash,~\GITAuthorDate.\\[-2em]}
 
@@ -90,8 +89,8 @@ Voldemort~\cite{voldemort} offer a choice between these two modes of
 quorum replication: overlapping quorums, providing strong consistency,
 and partial quorums, providing eventual consistency.
 
-Despite the weak guarantees provided by eventual
-consistency~\cite{hamilton-cap, cops, walter}, operators frequently
+Despite the weak guarantees eventual consistency
+provides~\cite{hamilton-cap, cops, walter}, operators frequently
 employ partial quorums~\cite{cassandra, cassandra-docs,
   cassandradefault,feinbergpc,reddit, outbrain, maxperfblog}.  These
 partial quorums are often acceptable for operators due to their
@@ -417,11 +416,10 @@ $\langle k, t \rangle$-staleness, a combination of the two prior
 models.
 
 We first introduce $k$-staleness because it is self-contained, with a
-simple closed-form solution.  In comparison, $t$-staleness is more
-complex, with several variables that complicate analysis.
-Accordingly, this section proceeds in order of increasing difficulty,
-and the remainder of the paper largely addresses the nuances of
-$t$-visibility.
+simple closed-form solution.  In comparison, $t$-visibility is more
+difficult, involving several additional variables.  Accordingly, this
+section proceeds in order of increasing difficulty, and the remainder
+of the paper largely addresses the complexities of $t$-visibility.
 
 Practical concerns guide the following theoretical contributions.  We
 begin by considering a model without quorum expansion or anti-entropy.
@@ -473,9 +471,9 @@ The probability of returning a version of a key within the last $k$
 versions committed is equivalent to intersecting one of $k$
 independent write quorums.  Given a probability of intersecting with a
 single write quorum $p$, the probability of intersecting one of $k$
-independent quorums is $p^k$.  Accordingly, in our example quorum
-system, the probability of non-intersection is simply Equation
-\ref{eq:prob-strict} exponentiated by $k$:
+independent quorums is $p^k$.  In our example quorum system, the
+probability of non-intersection is Equation \ref{eq:prob-strict}
+exponentiated by $k$:
 \begin{equation}
 \label{eq:k-consistency}
 p_{sk} = \left(\frac{{N-W \choose R}}{{N \choose R}}\right)^k
@@ -654,7 +652,7 @@ of Dynamo-style data storage systems.  We describe how to model the
 probability of staleness in these systems and how to asynchronously
 detect staleness.
 
-\vspace{\subsectionskip}\subsection{Inconsistency in Dynamo: WARS Model}
+\vspace{\subsectionskip}\subsection{Inconsistency in Dynamo: {\large \textit{WARS}} Model}
 \label{sec:wars}
 
 Dynamo-style quorum systems are inconsistent as a result of read and
@@ -870,16 +868,19 @@ applicability of our results.
 \vspace{\subsectionskip}\subsection{Monte Carlo Simulation}
 \label{sec:mcsim}
 
-We implemented \textit{WARS} in an event-driven simulator.
-Calculating $t$-visibility for a given value of $t$ is rather
-straightforward: draw $N$ samples from \texttt{W}, \texttt{A},
-\texttt{R}, and \texttt{S} at time $t$ (denote index $i$ as $[i]$),
-compute $w_t = $ the $W$th smallest value of the respective
-$\texttt{W}+\texttt{A}$ values, and check whether the first $R$
-samples of \texttt{R}, ordered by $\texttt{R}[i]+\texttt{S}[i]$ obey
-$w_t+\texttt{R}[i] + t\leq \texttt{W}[i]$.  This requires only a few
-lines of code.  Implementing $\langle k, t \rangle$-staleness requires
-remembering write ordering and history but is not difficult.
+In light of the complicated analytical formulation discussed in
+Section~\ref{sec:wars}, we implemented \textit{WARS} in an
+event-driven simulator for use in Monte Carlo analysis.  Calculating
+$t$-visibility for a given value of $t$ is straightforward: draw $N$
+samples from \texttt{W}, \texttt{A}, \texttt{R}, and \texttt{S} at
+time $t$ (denote index $i$ as $[i]$), compute $w_t = $ the $W$th
+smallest value of the respective $\texttt{W}+\texttt{A}$ values, and
+check whether the first $R$ samples of \texttt{R}, ordered by
+$\texttt{R}[i]+\texttt{S}[i]$ obey $w_t+\texttt{R}[i] + t\leq
+\texttt{W}[i]$.  This requires only a few lines of code.  Extending
+this formulation to analyze $\langle k, t \rangle$-staleness given a
+distribution of write arrival times requires accounting for multiple
+writes across time but is not difficult.
 
 \vspace{\subsectionskip}\subsection{Model Validation}
 
@@ -1061,7 +1062,7 @@ Figure~\ref{fig:latencies}.  Note that for $R$, $W$ of one,
 because, in \texttt{LNKD-DISK}, we only have to wait for the first of
 $N$ local reads (writes) to return, whereas, for \texttt{WAN}, there
 is only one local read (write) and all other read (write) requests are
-be delayed at least 150ms.
+delayed at least 150ms.
 
 
 \begin{table}
@@ -1234,15 +1235,15 @@ of consistent reads.
 & \multicolumn{3}{|c|}{\texttt{YMMR}} & \multicolumn{3}{|c|}{\texttt{WAN}} & \multicolumn{3}{|c|}{\texttt{LNKD-SSD}} & \multicolumn{3}{|c|}{\texttt{LNKD-DISK}}\\
 &\multicolumn{1}{|c}{$L_r$}  & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{$L_r$} & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{$L_r$} & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{$L_r$} & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} \\\hline
 \multicolumn{1}{|c|}{$R$$=$$1$, $W$$=$$1$}
-& 5.58 & 10.83 & 1364.0 & 3.4 & 55.12 & 113.0 & 0.66 & 0.66 & 1.85 & 0.66 & 10.99 & 45.5 \\
+& 5.58 & 10.83 & 1364.0 & \textbf{3.4} & \textbf{55.12} & \textbf{113.0} & \textbf{0.66} & \textbf{0.66} & \textbf{1.85} & 0.66 & 10.99 & 45.5 \\
 \multicolumn{1}{|c|}{$R$$=$$1$, $W$$=$$2$}
 & 5.61 & 427.12 & 1352.0 & 3.4 & 167.64 & 0 & 0.66 & 1.63 & 1.79 & 0.65 & 20.97 & 43.3 \\
 \multicolumn{1}{|c|}{$R$$=$$2$, $W$$=$$1$}
-& 32.6 & 10.73 & 202.0 & 151.3 & 56.36 & 30.2 & 1.63 & 0.65 & 0 & 1.63 & 10.9 & 13.6 \\
+& \textbf{32.6} & \textbf{10.73} & \textbf{202.0} & 151.3 & 56.36 & 30.2 & \textbf{1.63} & \textbf{0.65} & \textbf{0} & \textbf{1.63} & \textbf{10.9} & \textbf{13.6} \\
 \multicolumn{1}{|c|}{$R$$=$$2$, $W$$=$$2$}
-& 33.18 & 428.11 & 0 & 151.31 & 167.72 & 0 & 1.62 & 1.64 & 0 & 1.64 & 20.96 & 0 \\
+& 33.18 & 428.11 & 0 & 151.31 & 167.72 & 0 & \textbf{1.62} & \textbf{1.64} & \textbf{0} & 1.64 & 20.96 & 0 \\
 \multicolumn{1}{|c|}{$R$$=$$3$, $W$$=$$1$}
-& 219.27 & 10.79 & 0 & 153.86 & 55.19 & 0 & 4.14 & 0.65 & 0 & 4.12 & 10.89 & 0 \\
+& \textbf{219.27} & \textbf{10.79} & \textbf{0} & \textbf{153.86} & \textbf{55.19} & \textbf{0} & 4.14 & 0.65 & 0 & \textbf{4.12} & \textbf{10.89} & \textbf{0} \\
 \multicolumn{1}{|c|}{$R$$=$$1$, $W$$=$$3$}
 & 5.63 & 1870.86 & 0 & 3.44 & 241.55 & 0 & 0.65 & 4.09 & 0 & 0.65 & 112.65 & 0 \\
 \hline
@@ -1256,7 +1257,7 @@ of consistent reads.
 \label{table:lat-stale}
 \end{table*}
 
-
+\vspace{1em}
 \vspace{\sectionskip}\section{Discussion and Future Work}
 \label{sec:discussion}
 
@@ -1267,18 +1268,17 @@ quorum systems that PBS enables along with future work for PBS.
 configure replication parameters by optimizing operation latency given
 constraints on staleness and minimum durability.  Data store operators
 can subsequently provide service level agreements to applications and
-provide quantitative trade-offs to developers, allowing them to reason
-about staleness versus end-user latency.  Operators can determine
-configurations analytically and revise them given online feedback.
-PBS provides a quantitative lens for analyzing consistency guarantees
-that were previously unknown.  This optimization formulation is likely
-non-convex, but the state space for configurations is small
-($O(N^2)$).  This optimization also allows disentanglement of
-replication for reasons of durability from replication for reasons of
-low latency and higher capacity.  For example, operators can specify a
-minimum replication factor for durability and availability but may
-want to automatically increase $N$, which decreases tail latency for
-fixed $R$ and $W$.
+quantitatively describe latency/staleness trade-offs to developers.
+Operators can dynamically configure replication using online latency
+measurements.  PBS provides a quantitative lens for analyzing
+consistency guarantees that were previously unknown.  This
+optimization formulation is likely non-convex, but the state space for
+configurations is small ($O(N^2)$).  This optimization also allows
+disentanglement of replication for reasons of durability from
+replication for reasons of low latency and higher capacity.  For
+example, operators can specify a minimum replication factor for
+durability and availability but may want to automatically increase
+$N$, decreasing tail latency for fixed $R$ and $W$.
 
 \textbf{Variable configurations.} We have assumed the use of a single
 replica configuration ($N$, $R$, and $W$) across all operations.
@@ -1327,21 +1327,20 @@ implementation, complicating what is otherwise a simple replication
 scheme.
 
 \textbf{Failure modes.} In our evaluation of $t$-visibility, we
-focused on normal operating conditions. However, unless failures are
-common-case, they affect tail staleness probabilities.  For example,
-if, as Jeff Dean of Google suggests~\cite{dean-keynote}, servers crash
-at least twice per year, given a ten hour downtime per failure, this
-roughly represents .23\% downtime per machine per year.  If failures
-are correlated, this small percentage may be a problem. However, if
-they are independent, a replica set of $N$ failed nodes with $F$
-failed nodes behaves like an $N-F$ replica set, and the probability of
-all $N$ nodes failing is $(.23)^N$\% (``five nines'' reliability for
-$N$$=$$3$) and will likely be hidden in the probability tail.
-Quantifying this impact more precisely would be beneficial but
-requires additional information about failure rates and their impact
-on latency distributions. Failures and latency spikes can be
-accommodated in \textit{WARS} by adjusting latency distributions to
-match failure probabilities; modeling recovery semantics such as
+focused on normal operating conditions. Unless failures are
+common-case, they affect tail staleness probabilities (which appear as
+latency spikes in \textit{WARS}).  For example, if, as Jeff Dean of
+Google suggests~\cite{dean-keynote}, servers crash at least twice per
+year, given a ten hour downtime per failure, this roughly represents
+.23\% downtime per machine per year.  If failures are correlated, this
+small percentage may be a problem. However, if they are independent, a
+replica set of $N$ failed nodes with $F$ failed nodes behaves like an
+$N-F$ replica set, and the probability of all $N$ nodes failing is
+$(.23)^N$\% (``five nines'' reliability for $N$$=$$3$) and will likely
+be hidden in the probability tail.  Quantifying this impact more
+precisely would be beneficial but requires additional information
+about failure rates and their impact on latency
+distributions. Additionally, modeling recovery semantics such as
 hinted handoff would also be useful.
 
 \vspace{\sectionskip}\section{Related Work}
@@ -1432,8 +1431,9 @@ at \url{http://cs.berkeley.edu/~pbailis/vldb-pbs/}.  The username is
 \section*{Acknowledgements}
 
 The authors would like to thank Alex Feinberg and Coda Hale for their
-cooperation in providing real-world distributions for experiments and for
-exemplifying positive industrial-academic relations through their conduct.
+cooperation in providing real-world distributions for experiments and
+for exemplifying positive industrial-academic relations through their
+conduct and feedback.
 
 The authors would also like to thank the following individuals whose
 discussions and feedback improved this work: Marcos Aguilera, Peter
