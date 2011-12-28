@@ -417,11 +417,10 @@ $\langle k, t \rangle$-staleness, a combination of the two prior
 models.
 
 We first introduce $k$-staleness because it is self-contained, with a
-simple closed-form solution.  In comparison, $t$-staleness is more
-complex, with several variables that complicate analysis.
-Accordingly, this section proceeds in order of increasing difficulty,
-and the remainder of the paper largely addresses the nuances of
-$t$-visibility.
+simple closed-form solution.  In comparison, $t$-visibility is more
+difficult, involving several additional variables.  Accordingly, this
+section proceeds in order of increasing difficulty, and the remainder
+of the paper largely addresses the complexities of $t$-visibility.
 
 Practical concerns guide the following theoretical contributions.  We
 begin by considering a model without quorum expansion or anti-entropy.
@@ -473,9 +472,9 @@ The probability of returning a version of a key within the last $k$
 versions committed is equivalent to intersecting one of $k$
 independent write quorums.  Given a probability of intersecting with a
 single write quorum $p$, the probability of intersecting one of $k$
-independent quorums is $p^k$.  Accordingly, in our example quorum
-system, the probability of non-intersection is simply Equation
-\ref{eq:prob-strict} exponentiated by $k$:
+independent quorums is $p^k$.  In our example quorum system, the
+probability of non-intersection is Equation \ref{eq:prob-strict}
+exponentiated by $k$:
 \begin{equation}
 \label{eq:k-consistency}
 p_{sk} = \left(\frac{{N-W \choose R}}{{N \choose R}}\right)^k
@@ -870,16 +869,19 @@ applicability of our results.
 \vspace{\subsectionskip}\subsection{Monte Carlo Simulation}
 \label{sec:mcsim}
 
-We implemented \textit{WARS} in an event-driven simulator.
-Calculating $t$-visibility for a given value of $t$ is rather
-straightforward: draw $N$ samples from \texttt{W}, \texttt{A},
-\texttt{R}, and \texttt{S} at time $t$ (denote index $i$ as $[i]$),
-compute $w_t = $ the $W$th smallest value of the respective
-$\texttt{W}+\texttt{A}$ values, and check whether the first $R$
-samples of \texttt{R}, ordered by $\texttt{R}[i]+\texttt{S}[i]$ obey
-$w_t+\texttt{R}[i] + t\leq \texttt{W}[i]$.  This requires only a few
-lines of code.  Implementing $\langle k, t \rangle$-staleness requires
-remembering write ordering and history but is not difficult.
+In light of the complicated analytical formulation discussed in
+Section~\ref{sec:wars}, we implemented \textit{WARS} in an
+event-driven simulator for use in Monte Carlo analysis.  Calculating
+$t$-visibility for a given value of $t$ is straightforward: draw $N$
+samples from \texttt{W}, \texttt{A}, \texttt{R}, and \texttt{S} at
+time $t$ (denote index $i$ as $[i]$), compute $w_t = $ the $W$th
+smallest value of the respective $\texttt{W}+\texttt{A}$ values, and
+check whether the first $R$ samples of \texttt{R}, ordered by
+$\texttt{R}[i]+\texttt{S}[i]$ obey $w_t+\texttt{R}[i] + t\leq
+\texttt{W}[i]$.  This requires only a few lines of code.  Extending
+this formulation to analyze $\langle k, t \rangle$-staleness given a
+distribution of write arrival times requires accounting for multiple
+writes across time but is not difficult.
 
 \vspace{\subsectionskip}\subsection{Model Validation}
 
@@ -1432,8 +1434,9 @@ at \url{http://cs.berkeley.edu/~pbailis/vldb-pbs/}.  The username is
 \section*{Acknowledgements}
 
 The authors would like to thank Alex Feinberg and Coda Hale for their
-cooperation in providing real-world distributions for experiments and for
-exemplifying positive industrial-academic relations through their conduct.
+cooperation in providing real-world distributions for experiments and
+for exemplifying positive industrial-academic relations through their
+conduct and feedback.
 
 The authors would also like to thank the following individuals whose
 discussions and feedback improved this work: Marcos Aguilera, Peter
