@@ -42,7 +42,6 @@
 
 \maketitle
 
-
 \textcolor{red}{Base revision~\GITAbrHash,~\GITAuthorDate.\\[-2em]}
 
 \begin{quote}
@@ -1258,7 +1257,7 @@ of consistent reads.
 \label{table:lat-stale}
 \end{table*}
 
-
+\vspace{1em}
 \vspace{\sectionskip}\section{Discussion and Future Work}
 \label{sec:discussion}
 
@@ -1269,18 +1268,17 @@ quorum systems that PBS enables along with future work for PBS.
 configure replication parameters by optimizing operation latency given
 constraints on staleness and minimum durability.  Data store operators
 can subsequently provide service level agreements to applications and
-provide quantitative trade-offs to developers, allowing them to reason
-about staleness versus end-user latency.  Operators can determine
-configurations analytically and revise them given online feedback.
-PBS provides a quantitative lens for analyzing consistency guarantees
-that were previously unknown.  This optimization formulation is likely
-non-convex, but the state space for configurations is small
-($O(N^2)$).  This optimization also allows disentanglement of
-replication for reasons of durability from replication for reasons of
-low latency and higher capacity.  For example, operators can specify a
-minimum replication factor for durability and availability but may
-want to automatically increase $N$, which decreases tail latency for
-fixed $R$ and $W$.
+quantitatively describe latency/staleness trade-offs to developers.
+Operators can dynamically configure replication using online latency
+measurements.  PBS provides a quantitative lens for analyzing
+consistency guarantees that were previously unknown.  This
+optimization formulation is likely non-convex, but the state space for
+configurations is small ($O(N^2)$).  This optimization also allows
+disentanglement of replication for reasons of durability from
+replication for reasons of low latency and higher capacity.  For
+example, operators can specify a minimum replication factor for
+durability and availability but may want to automatically increase
+$N$, decreasing tail latency for fixed $R$ and $W$.
 
 \textbf{Variable configurations.} We have assumed the use of a single
 replica configuration ($N$, $R$, and $W$) across all operations.
