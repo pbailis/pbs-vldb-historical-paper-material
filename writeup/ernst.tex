@@ -24,7 +24,7 @@
     \vspace{-.5em}
 }
 
-\title{PBS: Probabilistically Bounded Staleness\\ and Practical Partial Quorum Replication}
+\title{Probabilistically Bounded Staleness for Partial Quorums}
 
 \author{Peter Bailis, Shivaram Venkataraman, Michael J. Franklin, Joseph M. Hellerstein, Ion Stoica\\
 \affaddr{University of California, Berkeley}\\
@@ -90,8 +90,8 @@ Voldemort~\cite{voldemort} offer a choice between these two modes of
 quorum replication: overlapping quorums, providing strong consistency,
 and partial quorums, providing eventual consistency.
 
-Despite the weak guarantees provided by eventual
-consistency~\cite{hamilton-cap, cops, walter}, operators frequently
+Despite the weak guarantees eventual consistency
+provides~\cite{hamilton-cap, cops, walter}, operators frequently
 employ partial quorums~\cite{cassandra, cassandra-docs,
   cassandradefault,feinbergpc,reddit, outbrain, maxperfblog}.  These
 partial quorums are often acceptable for operators due to their
@@ -653,7 +653,7 @@ of Dynamo-style data storage systems.  We describe how to model the
 probability of staleness in these systems and how to asynchronously
 detect staleness.
 
-\vspace{\subsectionskip}\subsection{Inconsistency in Dynamo: WARS Model}
+\vspace{\subsectionskip}\subsection{Inconsistency in Dynamo: {\large \textit{WARS}} Model}
 \label{sec:wars}
 
 Dynamo-style quorum systems are inconsistent as a result of read and
@@ -1063,7 +1063,7 @@ Figure~\ref{fig:latencies}.  Note that for $R$, $W$ of one,
 because, in \texttt{LNKD-DISK}, we only have to wait for the first of
 $N$ local reads (writes) to return, whereas, for \texttt{WAN}, there
 is only one local read (write) and all other read (write) requests are
-be delayed at least 150ms.
+delayed at least 150ms.
 
 
 \begin{table}
@@ -1329,21 +1329,20 @@ implementation, complicating what is otherwise a simple replication
 scheme.
 
 \textbf{Failure modes.} In our evaluation of $t$-visibility, we
-focused on normal operating conditions. However, unless failures are
-common-case, they affect tail staleness probabilities.  For example,
-if, as Jeff Dean of Google suggests~\cite{dean-keynote}, servers crash
-at least twice per year, given a ten hour downtime per failure, this
-roughly represents .23\% downtime per machine per year.  If failures
-are correlated, this small percentage may be a problem. However, if
-they are independent, a replica set of $N$ failed nodes with $F$
-failed nodes behaves like an $N-F$ replica set, and the probability of
-all $N$ nodes failing is $(.23)^N$\% (``five nines'' reliability for
-$N$$=$$3$) and will likely be hidden in the probability tail.
-Quantifying this impact more precisely would be beneficial but
-requires additional information about failure rates and their impact
-on latency distributions. Failures and latency spikes can be
-accommodated in \textit{WARS} by adjusting latency distributions to
-match failure probabilities; modeling recovery semantics such as
+focused on normal operating conditions. Unless failures are
+common-case, they affect tail staleness probabilities (which appear as
+latency spikes in \textit{WARS}).  For example, if, as Jeff Dean of
+Google suggests~\cite{dean-keynote}, servers crash at least twice per
+year, given a ten hour downtime per failure, this roughly represents
+.23\% downtime per machine per year.  If failures are correlated, this
+small percentage may be a problem. However, if they are independent, a
+replica set of $N$ failed nodes with $F$ failed nodes behaves like an
+$N-F$ replica set, and the probability of all $N$ nodes failing is
+$(.23)^N$\% (``five nines'' reliability for $N$$=$$3$) and will likely
+be hidden in the probability tail.  Quantifying this impact more
+precisely would be beneficial but requires additional information
+about failure rates and their impact on latency
+distributions. Additionally, modeling recovery semantics such as
 hinted handoff would also be useful.
 
 \vspace{\sectionskip}\section{Related Work}
