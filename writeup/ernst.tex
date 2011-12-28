@@ -24,7 +24,7 @@
     \vspace{-.5em}
 }
 
-\title{Probabilistically Bounded Staleness for Partial Quorums}
+\title{Probabilistically Bounded Staleness\\ for Practical Partial Quorums}
 
 \author{Peter Bailis, Shivaram Venkataraman, Michael J. Franklin, Joseph M. Hellerstein, Ion Stoica\\
 \affaddr{University of California, Berkeley}\\
@@ -1235,15 +1235,15 @@ of consistent reads.
 & \multicolumn{3}{|c|}{\texttt{YMMR}} & \multicolumn{3}{|c|}{\texttt{WAN}} & \multicolumn{3}{|c|}{\texttt{LNKD-SSD}} & \multicolumn{3}{|c|}{\texttt{LNKD-DISK}}\\
 &\multicolumn{1}{|c}{$L_r$}  & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{$L_r$} & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{$L_r$} & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{$L_r$} & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} \\\hline
 \multicolumn{1}{|c|}{$R$$=$$1$, $W$$=$$1$}
-& 5.58 & 10.83 & 1364.0 & 3.4 & 55.12 & 113.0 & 0.66 & 0.66 & 1.85 & 0.66 & 10.99 & 45.5 \\
+& 5.58 & 10.83 & 1364.0 & \textbf{3.4} & \textbf{55.12} & \textbf{113.0} & \textbf{0.66} & \textbf{0.66} & \textbf{1.85} & 0.66 & 10.99 & 45.5 \\
 \multicolumn{1}{|c|}{$R$$=$$1$, $W$$=$$2$}
 & 5.61 & 427.12 & 1352.0 & 3.4 & 167.64 & 0 & 0.66 & 1.63 & 1.79 & 0.65 & 20.97 & 43.3 \\
 \multicolumn{1}{|c|}{$R$$=$$2$, $W$$=$$1$}
-& 32.6 & 10.73 & 202.0 & 151.3 & 56.36 & 30.2 & 1.63 & 0.65 & 0 & 1.63 & 10.9 & 13.6 \\
+& \textbf{32.6} & \textbf{10.73} & \textbf{202.0} & 151.3 & 56.36 & 30.2 & \textbf{1.63} & \textbf{0.65} & \textbf{0} & \textbf{1.63} & \textbf{10.9} & \textbf{13.6} \\
 \multicolumn{1}{|c|}{$R$$=$$2$, $W$$=$$2$}
-& 33.18 & 428.11 & 0 & 151.31 & 167.72 & 0 & 1.62 & 1.64 & 0 & 1.64 & 20.96 & 0 \\
+& 33.18 & 428.11 & 0 & 151.31 & 167.72 & 0 & \textbf{1.62} & \textbf{1.64} & \textbf{0} & 1.64 & 20.96 & 0 \\
 \multicolumn{1}{|c|}{$R$$=$$3$, $W$$=$$1$}
-& 219.27 & 10.79 & 0 & 153.86 & 55.19 & 0 & 4.14 & 0.65 & 0 & 4.12 & 10.89 & 0 \\
+& \textbf{219.27} & \textbf{10.79} & \textbf{0} & \textbf{153.86} & \textbf{55.19} & \textbf{0} & 4.14 & 0.65 & 0 & \textbf{4.12} & \textbf{10.89} & \textbf{0} \\
 \multicolumn{1}{|c|}{$R$$=$$1$, $W$$=$$3$}
 & 5.63 & 1870.86 & 0 & 3.44 & 241.55 & 0 & 0.65 & 4.09 & 0 & 0.65 & 112.65 & 0 \\
 \hline
