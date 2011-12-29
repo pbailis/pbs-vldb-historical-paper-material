@@ -134,7 +134,7 @@ Probabilistically Bounded Staleness (PBS) for partial quorums. There
 are two common axes for measuring staleness in the literature:
 versions~\cite{aqua, frac} and wall clock time~\cite{vahdat-article,
   vahdat-bounded}.  PBS can be used to analyze both measures,
-describing the probability of reading a data item $t$ seconds after it is
+describing the probability of reading a stale data item $t$ seconds after it is
 written ($t$-visibility, or ``how eventual is eventual
 consistency?''), of reading one of the last $k$ versions of
 a data item ($k$-staleness, or ``how consistent is eventual
@@ -898,11 +898,16 @@ millisecond.  To demonstrate a range of delays, we injected additional
 latency into both the request and response sending modules in
 Cassandra (we discuss a range in Section~\ref{sec:latencies}).
 
-Our observations matched the \textit{WARS} predictions.  Using each
-configuration's measured \textit{WARS} distributions as input, our
-simulation had average RMSE=0.0023 (std. dev. FOO, maximum BAR) for
-$t$-visibility for $t\in\{1,\cdots,199\}$ ms and distributions XX YY
-ZZ.  This validates our Monte Carlo simulator.
+Our observations matched the \textit{WARS} predictions. Using
+exponential distributions for reads and writes, we tried a range of 
+latencies setting $\lambda$ as $0.05$, $0.1$, $0.2$ (mean $20$ms,
+$10$ms and $5$ms respectively).  With each configuration's measured 
+\textit{WARS} distributions as input, we predicted the $t$-visibility
+and latency. Our predicted probability of staleness had an average 
+RMSE of $0.28\%$ (std. dev. $0.05\%$, max. $0.38\%$) for $t$-visibility 
+$\in\{1,\cdots,199\}$ ms. The predicted latency had an average NRMSE of
+$0.59\%$ (std. dev. $0.18\%$, max. $0.89\%$).  This validates our 
+Monte Carlo simulator. 
 
 
 \vspace{\subsectionskip}\subsection{Write Latency Distribution Effects}
@@ -960,7 +965,8 @@ what represent ``reasonable'' distributions, we gathered production
 statistics from two internet-scale companies.
 
 LinkedIn is an online professional social network with over 135
-million members as of November 2011~\cite{linkedin}. To provide highly
+million members as of November 2011\footnote{LinkedIn:
+http://www.linkedin.com}. To provide highly
 available, low latency data storage, engineers at LinkedIn built
 Voldemort~\cite{voldemort, voldemortpub}.  Alex Feinberg, a lead
 engineer on Voldemort, graciously provided us with latency
@@ -1002,7 +1008,8 @@ Average & 0.58 \\
 \end{table}
 
 Yammer is an online service providing private social networking to
-over 100,000 companies as of December 2011~\cite{yammer}.  Yammer uses
+over 100,000 companies as of December 2011\footnote{Yammer:
+http://www.yammer.com}.  Yammer uses
 Basho's Riak for some client data~\cite{riak}.  Coda Hale,
 infrastructure architect, and Ryan Kennedy, also of Yammer, presented
 on their use of Riak including in-depth performance and configuration
@@ -1422,8 +1429,7 @@ We conclude that ``eventually consistent'' partial quorum replication
 schemes frequently deliver consistent semantics in practice due
 largely to the resilience of Dynamo-style messaging.
 
-\section*{Interactive Demonstration}
-
+\vspace{\sectionskip}\section*{Interactive Demonstration}
 An interactive demonstration of Dynamo-style PBS is available online
 at \url{http://cs.berkeley.edu/~pbailis/vldb-pbs/}.  The username is
 \texttt{demo} and the password is \texttt{vldb}.
