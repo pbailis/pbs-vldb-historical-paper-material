@@ -11,7 +11,7 @@ def run_sim_settings(N, R, W, k, iters, writespacing, readsperwrite,
 def run_sim_lat(N, R, W, k, iters, writespacing, readsperwrite,
     send_latency_file, ack_latency_file, read_latency_file,
     response_latency_file, outfile):
-    simsettings="LATS" 
+    simsettings="LATSCDF" 
     run_sim_settings(N, R, W, k, iters, writespacing, readsperwrite, send_latency_file, ack_latency_file, read_latency_file, response_latency_file, outfile, simsettings)
 
 def run_sim(N, R, W, k, iters, writespacing, readsperwrite,
