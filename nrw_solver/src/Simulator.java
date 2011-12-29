@@ -251,24 +251,29 @@ class LinkedDiskDelay implements DelayModel
     }
 }
 
-
 class EmpiricalDelayModel implements DelayModel
 {
     LatencyModel ackLatencyModel;
     LatencyModel sendLatencyModel;
+    LatencyModel readLatencyModel;
+    LatencyModel responseLatencyModel;
 
     Random rand;
 
     //empirical distribution
-    public EmpiricalDelayModel(String sendF, String writeF)
+    public EmpiricalDelayModel(String sendF, String ackF, String readF, String responseF)
     {
       rand = new Random();
 
       try{
         sendLatencyModel = new FileLatencyModel(sendF);
-        ackLatencyModel = new FileLatencyModel(writeF);
+        ackLatencyModel = new FileLatencyModel(ackF);
+        readLatencyModel = new FileLatencyModel(readF);
+        responseLatencyModel = new FileLatencyModel(responseF);
         LatencyModelValidator.ValidateModel(sendLatencyModel);
         LatencyModelValidator.ValidateModel(ackLatencyModel);
+        LatencyModelValidator.ValidateModel(readLatencyModel);
+        LatencyModelValidator.ValidateModel(responseLatencyModel);
        }
        catch (Exception e)
        {
@@ -283,14 +288,20 @@ class EmpiricalDelayModel implements DelayModel
               rand.nextDouble());
     }
 
-    public double getReadSendDelay() { return getWriteAckDelay(); };
+    public double getReadSendDelay() { 
+      return ((FileLatencyModel)readLatencyModel).getInverseCDF(1,
+              rand.nextDouble());
+    }
 
     public double getWriteAckDelay() {
       return ((FileLatencyModel)ackLatencyModel).getInverseCDF(1,
               rand.nextDouble());
     }
 
-    public double getReadAckDelay() { return getWriteAckDelay(); };
+    public double getReadAckDelay() { 
+      return ((FileLatencyModel)responseLatencyModel).getInverseCDF(1,
+              rand.nextDouble());
+    }
 }
 
 class ReadResult
@@ -417,8 +428,10 @@ public class Simulator {
           {
               String sendDelayFile = args[8];
               String ackDelayFile = args[9];
+              String readDelayFile = args[10];
+              String responseDelayFile = args[11];
 
-              delaymodel = new EmpiricalDelayModel(sendDelayFile, ackDelayFile);
+              delaymodel = new EmpiricalDelayModel(sendDelayFile, ackDelayFile, readDelayFile, responseDelayFile);
           }
           else if(args[7].equals("PARETO") || args[7].equals("MULTIDC"))
           {
@@ -465,7 +478,7 @@ public class Simulator {
                      "Usage: Simulator <N> <R> <W> <k> <iters> <write spacing> <readsperwrite> PARETO <W-min> <W-alpha> <ARS-min> <ARS-alpha> OPT\n" +
                      "Usage: Simulator <N> <R> <W> <k> <iters> <write spacing> <readsperwrite> EXPONENTIAL <W-lambda> <ARS-lambda> OPT\n" +
                      "Usage: Simulator <N> <R> <W> <k> <iters> <write spacing> <readsperwrite> MULTIDC <W-min> <W-alpha> <ARS-min> <ARS-alpha> <DC-delay> OPT\n" +
-                     "OPT= O <SWEEP|LATS|BESTCASE|WORSTCASE>");
+                     "OPT= O <SWEEP|LATS|BESTCASE|WORSTCASE|LATSCDF>");
           System.exit(1);
       }
 
@@ -476,7 +489,7 @@ public class Simulator {
           if(args[i].equals("O"))
           {
               optsinput = args[i+1];
-              assert optsinput.equals("SWEEP") || optsinput.equals("LATS") || optsinput.equals("BESTCASE")||optsinput.equals("WORSTCASE");
+              assert optsinput.equals("SWEEP") || optsinput.equals("LATS") || optsinput.equals("BESTCASE")||optsinput.equals("WORSTCASE") || optsinput.equals("LATSCDF");
               break;
           }
       }
@@ -547,8 +560,8 @@ public class Simulator {
               System.out.printf("%f %f\n", lastp, writes.get(index));
           }
 
-          System.out.println("READ");
           Collections.sort(reads);
+          System.out.println("READ");
           for(double p = 0; p < 1; p += .01)
           {
               int index = (int)Math.round(p*reads.size());
@@ -565,6 +578,38 @@ public class Simulator {
               if(index >= reads.size())
                   break;
               System.out.printf("%f %f\n", lastp, reads.get(index));
+          }
+      } 
+      
+      else if(optsinput.equals("LATSCDF")) 
+      {
+          Vector<Double> reads = new Vector<Double>();
+          Vector<Double> writes = new Vector<Double>();
+          for(int i = 0; i < ITERATIONS; ++i)
+          {
+              ReadResult r = StaleCalc.calc_stale(N, R, W, delaymodel,  0, multidc, dcdelay, rand);
+              reads.add(r.getRlat());
+              writes.add(r.getWlat());
+          }
+
+          System.out.println("WRITE");
+          Collections.sort(writes);
+          Double prevWrite = 0.0;
+          for (int i = 0; i < writes.size(); ++i) {
+            if (!prevWrite.equals(writes.get(i))) {
+              prevWrite = writes.get(i);
+              System.out.println((double)i/(double)writes.size() + " " + writes.get(i));
+            }
+          }
+
+          Collections.sort(reads);
+          System.out.println("READ");
+          Double prevRead = 0.0;
+          for (int i = 0; i < reads.size(); ++i) {
+            if (!(reads.get(i).equals(prevRead))) {
+              prevRead = reads.get(i);
+              System.out.println((double)i/(double)reads.size() + " " + reads.get(i));
+            }
           }
       }
 
