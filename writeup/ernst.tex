@@ -887,15 +887,16 @@ writes across time but is not difficult.
 To validate \textit{WARS} (and our subsequent analyses), we compared
 our predicted $t$-visibility and latency with measured values observed
 in a commercially available, open source Dynamo-style key-value store.
-We modified Cassandra to provide latency measurements and disabled
-read repair as it is external to \textit{WARS}.  We ran Cassandra on a
-cluster of four nodes with 2.2GHz AMD Opteron 2214 dual-core SMT
+We modified Cassandra to provide latency measurements, disabled read
+repair (as it is external to \textit{WARS}), and, for reads, only
+considered the first $R$ responses (often more than $R$ messages had
+arrived by processing time, decreasing staleness).  We ran Cassandra
+on a cluster of four nodes with 2.2GHz AMD Opteron 2214 dual-core SMT
 processors with 4GB of 667MHz DDR2 memory serving in-memory data.  To
 measure staleness, we inserted monotonically increasing versions of a
-key while concurrent processes read values, measuring the probability
-of staleness at every millisecond.  Solely for the purpose of
-validation across multiple scenarios, we injected latency into
-Cassandra's messaging subsystem.
+key while concurrent processes read values.  Solely for the purpose of
+validation across several conditions, we injected additional latency
+into Cassandra's messaging.
 
 Our observations matched the \textit{WARS} predictions. We injected
 each combination of $\texttt{W}=\lambda \in \{0.05,$ $0.1,$ $0.2\}$
@@ -1004,17 +1005,17 @@ Average & 0.58 \\
 \label{table:linkedin}
 \end{table}
 
-Yammer is an online service providing private social networking to
-over 100,000 companies as of December 2011~\cite{yammer}.  Yammer uses
-Basho's Riak for some client data~\cite{riak}.  Coda Hale,
-infrastructure architect, and Ryan Kennedy, also of Yammer, presented
-on their use of Riak including in-depth performance and configuration
-details in March 2011~\cite{riakyammer}.  Yammer provided us with more
-detailed performance statistics for their application~\cite{codapc}
-(Table~\ref{table:yammer}).  Hale noted that ``reads and writes have
-radically different expected latencies, especially for Riak.''  Writes
-are delayed ``until the fsync returns, so while reads are often $<$
-1ms, writes rarely are.''  As we will see, this has important
+Yammer is an online, private social networking to over
+100,000 companies as of December 2011~\cite{yammer} that uses Basho's
+Riak for some client data~\cite{riak}.  Coda Hale, infrastructure
+architect, and Ryan Kennedy, also of Yammer, presented in-depth
+performance and configuration details for their Riak usage in March
+2011~\cite{riakyammer}.  Hale provided us with more detailed
+performance statistics for their application~\cite{codapc}
+(Table~\ref{table:yammer}).  He also noted that ``reads and writes
+have radically different expected latencies, especially for Riak.''
+Writes are delayed ``until the fsync returns, so while reads are often
+$<$ 1ms, writes rarely are.''  As we will see, this has important
 consequences for \textit{WARS}.  Although we do not model this
 explicitly, Hale also notes that the size of values is important,
 claiming ``a big performance improvement by adding LZF compression to
@@ -1142,15 +1143,15 @@ immediately after write commit, and only a $92.5\%$ probability ten
 millseconds later.  This suggests that SSDs may drastically improve
 consistency in practice due to reducing replica write time.
 
-We experienced similar effects with our other distributions.
+We experienced similar effects with the other distributions.
 Immediately after commit, \texttt{YMMR} had a $89.3\%$ chance of
 consistency due to its tall body.  However, \texttt{YMMR}'s long tail
-hampered its $t$-visibility increase, and only reached $99.9\%$
-consistency 1364 ms after commit.  As expected, \texttt{WAN} observed
-poor chances of consistency until after the 75 milliseconds passed
-($33\%$ after commit); unless a reader read from the same datacenter
-in which the last write committed, it had to wait for the long
-propagation to observe the most recent value.
+hampered its $t$-visibility increase and reached a $99.9\%$
+probability of consistency 1364 ms after commit.  As expected,
+\texttt{WAN} observed poor chances of consistency until after the 75
+milliseconds passed ($33\%$ after commit); unless a reader read from
+the same datacenter in which the last write committed, it had to wait
+for the long propagation to observe the most recent value.
 
 \begin{figure*}
 \centering
