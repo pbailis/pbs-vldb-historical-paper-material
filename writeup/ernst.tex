@@ -887,28 +887,26 @@ writes across time but is not difficult.
 To validate \textit{WARS} (and our subsequent analyses), we compared
 our predicted $t$-visibility and latency with measured values observed
 in a commercially available, open source Dynamo-style key-value store.
-We modified Cassandra to provide latency measurements and measure
-$t$-visibility.  We disabled read repair because it is external to
-\textit{WARS}.  We ran Cassandra on a cluster of four nodes with
-2.2GHz AMD Opteron 2214 dual-core SMT processors with 4GB of 667MHz
-DDR2 memory serving in-memory data.  To measure staleness, we inserted
-monotonically increasing versions of a key, while concurrent processes
-read values measured the probability of staleness at every
-millisecond.  To demonstrate a range of delays, we injected additional
-latency into both the request and response sending modules in
-Cassandra (we discuss a range in Section~\ref{sec:latencies}).
+We modified Cassandra to provide latency measurements and disabled
+read repair as it is external to \textit{WARS}.  We ran Cassandra on a
+cluster of four nodes with 2.2GHz AMD Opteron 2214 dual-core SMT
+processors with 4GB of 667MHz DDR2 memory serving in-memory data.  To
+measure staleness, we inserted monotonically increasing versions of a
+key while concurrent processes read values, measuring the probability
+of staleness at every millisecond.  Solely for the purpose of
+validation across multiple scenarios, we injected latency into
+Cassandra's messaging subsystem.
 
 Our observations matched the \textit{WARS} predictions. We injected
 each combination of $\texttt{W}=\lambda \in \{0.05,$ $0.1,$ $0.2\}$
 and $\texttt{A}=\texttt{R}=\texttt{S}=\lambda \in \{0.05,$ $0.1,$
-$0.2\}$ (respective means $20$ ms, $10$ ms and $5$ ms).  Given each
-empirically measured \textit{WARS} distribution, we predicted
-$t$-visibility and latency. Our $t$-visibility average RMSE was
-$0.28\%$ (std. dev. $0.05\%$, max. $0.38\%$) for
+$0.2\}$ (respective means $20$ ms, $10$ ms and $5$ ms) across 50,000
+writes.  After empirically measuring the \textit{WARS} distributions,
+we predicted $t$-visibility and latency. Our average $t$-visibility
+RMSE was $0.28\%$ (std. dev. $0.05\%$, max. $0.38\%$) for
 $t\in\{1,\cdots,199\}$ ms. Our predicted latency had an average N-RMSE
 of $0.59\%$ (std. dev. $0.18\%$, max. $0.89\%$).  This validates our
 Monte Carlo simulator.
-
 
 \vspace{\subsectionskip}\subsection{Write Latency Distribution Effects}
 \label{sec:synthetic}
