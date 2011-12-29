@@ -11,7 +11,23 @@ from pylab import *
 #resultsfile = "../../ernst-cassandra/bench/results/2011-12-20-22_52_44"
 #resultsfile = "../results/2011-12-19-12_44_45"
 #resultsfile = "../results/2011-12-08-23_32_27"
-resultsfile = "../../ernst-cassandra/bench/results/2011-12-22-14_58_26"
+#resultsfile = "../../ernst-cassandra/bench/results/2011-12-22-14_58_26"
+#resultsfile = "../../ernst-cassandra/bench/results/2011-12-22-22_46_12"
+#resultsfile = "../../ernst-cassandra/results/2011-12-23-15_50_15"
+#resultsfile = "../../ernst-cassandra/bench/results/2011-12-26-17_33_43"
+#resultsfile = "../../ernst-cassandra/bench/results/2011-12-26-23_05_43"
+
+#resultsfile = "../../ernst-cassandra/results/2011-12-23-20_35_54"
+#resultsfile = "../../ernst-cassandra/bench/results/2011-12-27-10_28_52"
+
+# RR FIX 10K
+#resultsfile = "../../ernst-cassandra/bench/results/2011-12-27-13_37_28"
+
+# RR FIX 50K
+#resultsfile = "../../ernst-cassandra/bench/results/2011-12-27-14_28_29"
+
+# 5-done
+resultsfile = "../../ernst-cassandra/bench/results/2011-12-27-18_14_30"
 
 NS_PER_MS = 1000000.0
 
@@ -113,6 +129,7 @@ def parse_file(config, f):
             write_commit_index += 1
         elif line.find("RS") != -1:
             read_start = int(line.split()[4])/NS_PER_MS
+            #read_start_clock = 0
             read_start_clock = int(line.split()[5])
 
             #find the corresponding write
@@ -136,9 +153,12 @@ def parse_file(config, f):
             if search_index == 0:
                 last_committed_version_at_read_start = -1
                 last_committed_version_time_at_read_start = -1
+                last_committed_clock_at_read_start = -1
             else:
                 last_committed_version_at_read_start = last_write.version
                 last_committed_version_time_at_read_start = last_write.endtime
+                last_committed_clock_at_read_start = last_write.endclock
+                last_committed_version_start_at_read_start = last_write.startclock
                 assert read_start >= last_committed_version_time_at_read_start
 
             if search_index != 0 and search_index != len(writes)-1:
@@ -173,7 +193,9 @@ def parse_file(config, f):
                       #latency
                       (read_end - read_start),
                       #read start clock time
-                      read_)
+                      read_start_clock,
+                      read_end_clock,
+                      last_committed_clock_at_read_start)
 
               assert res.latency > 0
 
@@ -280,10 +302,16 @@ def get_t_staleness_windows(result):
     print "num writes " + str(len(result.writes))
     print "num reads " + str(len(result.reads))
     for r in result.reads:
+      if r.last_committed_time_at_read_start == -1:
+        continue
       # read for this write
       is_stale = (r.version < r.last_committed_version_at_read_start)
       #print "is_stale " + str(is_stale)
-      timestep = int(math.ceil(r.starttime - r.last_committed_time_at_read_start))
+      #timestep = int((r.starttime - r.last_committed_time_at_read_start))
+      timestep = int((r.startclock - r.last_committed_clock_at_read_start))
+      #if timestep == 0:
+        #print "start " + str(r.startclock) + " last_committed " + str(r.last_committed_clock_at_read_start) + " ver " + str(r.version) + " last_committed_version " + str(r.last_committed_version_at_read_start)
+      #  timestep = 1
       if timestep >= 600:
         #print "r.starttime %d r.last_committed_time_at_read_start %d r.version %d r.last_committed_version_at_read_start %d" % (r.starttime, r.last_committed_time_at_read_start, r.version, r.last_committed_version_at_read_start) 
         continue
@@ -303,7 +331,7 @@ def get_t_staleness_windows(result):
         #print "t:%d stales:%d currents: %d, p %f" % (t, stales[t], currents[t], 1-(float(stales[t])/float(stales[t]+currents[t])) )
         tstales.append(t)
         percentiles.append(1-(float(stales[t])/float(stales[t]+currents[t])))
-        stales_count.append(stales[t])
+        stales_count.append(stales[t]+currents[t])
 
     return tstales, percentiles, stales_count 
 

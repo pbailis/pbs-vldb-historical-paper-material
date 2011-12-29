@@ -8,13 +8,15 @@ from pylab import *
 
 k=0
 iters=50000
-writespacing=300
+writespacing=200
 readsperwrite=5000
 
 results = []
+rmses = []
 
 # Extract latency profiles first
 #system("python ./latency_profiles_for_simulator.py")
+#exit(0)
 
 lmbdas = get_lmbdas(resultsfile)
 results = fetch_results(resultsfile)
@@ -27,16 +29,13 @@ results = fetch_results(resultsfile)
 
 #results.sort(key=lambda result: result.config.wlmbda)
 
-def chunkBins(seq, num):
-  avg = len(seq) / float(num)
-  out = []
-  last = 0.0
-
-  while last < len(seq):
-    out.append(seq[int(last):int(last + avg)])
-    last += avg
-
-  return out
+def stdev(inputs):
+  sum_inputs = 0
+  sumsq_inputs = 0
+  for i in inputs:
+    sum_inputs += i 
+    sumsq_inputs += i*i 
+  return math.sqrt(sumsq_inputs/len(inputs) - pow(sum_inputs/len(inputs), 2))
 
 #cla()
 for result in results:
@@ -45,10 +44,15 @@ for result in results:
     print result.config.wlmbda, result.config.rlmbda
     id_name = "R"+str(result.config.R)+"W"+str(result.config.W)+"-"+str(result.config.rlmbda)+str(result.config.wlmbda)
 
-    plot(tstales, percentiles, 'o-', label="R="+str(result.config.R)+",W="+str(result.config.W))
+    plot(tstales, percentiles, 'o-', label="obs-"+id_name)
 #
     # Run simulator for this config
-    run_sim(result.config.N, result.config.R, result.config.W, k, iters, writespacing, readsperwrite, "analyzedir-cd-"+id_name+"/onewaywrite.dist", "analyzedir-cd-"+id_name+"/onewayack.dist", "sim-results-"+id_name)
+    run_sim(result.config.N, result.config.R, result.config.W, k, iters,
+        writespacing, readsperwrite,
+        "analyzedir-cd-"+id_name+"/onewaywrite.dist",
+        "analyzedir-cd-"+id_name+"/onewayack.dist",
+        "analyzedir-cd-"+id_name+"/onewayread.dist", 
+        "analyzedir-cd-"+id_name+"/onewayresponse.dist", "sim-results-"+id_name)
     # Parse simulator results, calculate RMSE etc.
     
     t = []
@@ -60,18 +64,19 @@ for result in results:
       t_map[float(line[1])] = float(line[0])
       stale.append(float(line[0]))
  
-    plot(t, stale, 's-', label=str("sim"), color="red")
+    plot(t, stale, 's-', label=str("sim-"+id_name), color="red")
  
     # Calculate RMSE
     sum_sq = 0
     for i in xrange(0, len(tstales), 1):
       if tstales[i] in t_map:
-        print i, tstales[i], percentiles[i], t_map[tstales[i]], stales[i]
+        #print i, tstales[i], percentiles[i], t_map[tstales[i]], stales[i]
         obs = percentiles[i]
         exp = t_map[tstales[i]]
         sum_sq = sum_sq + pow((obs - exp), 2)
  
     rmse = math.sqrt(sum_sq / len(tstales))
+    rmses.append(rmse)
     print "RMSE " + id_name + " is " + str(rmse)
 
 ax = gca()
@@ -80,11 +85,14 @@ ax = gca()
 xlabel("Time After Commit (ms)")
 ylabel("1-pstaler")
 
-#legend(loc="lower right", title="Simulator-Comparison")
+legend(loc="lower right", title="Simulator-Comparison")
 
 ax.set_xscale('symlog')
 
 savefig("t-cdf.pdf")
 
+print "Mean RMSE " + str(math.fsum(rmses)/len(rmses))
+print "Max RMSE " + str(max(rmses))
+print "Std. dev RMSE " + str(stdev(rmses))
+
 #show()
-        
