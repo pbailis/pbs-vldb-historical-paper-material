@@ -726,7 +726,7 @@ we discuss in Section~\ref{sec:mcsim}, we explore \textit{WARS} using
 Monte Carlo methods, which are straightforward to understand and
 implement.
 
-\vspace{\subsectionskip}\subsection{{\large \textit{WARS}} Extensions and Discussion}
+\vspace{\subsectionskip}\subsection{{\large \textit{WARS}} Scope}
 \label{sec:anti-entropy}
 
 \textbf{Proxying operations.} Depending on which coordinator a client
@@ -898,15 +898,17 @@ injected additional latency into Cassandra's messaging.
 
 Our observations matched the \textit{WARS} predictions. We injected
 each combination of $\texttt{W}=\lambda \in \{0.05,$ $0.1,$ $0.2\}$
-and $\texttt{A}$$=$$\texttt{R}$$=$$\texttt{S}=\lambda \in \{0.1,$
-$0.2,$ $0.5\}$ (respective means $20$ms, $10$ms and $5$ms) across
-50,000 writes.  After empirically measuring the \textit{WARS}
-distributions, consistency, and latency, we predicted $t$-visibility and
-latency. Our average $t$-visibility RMSE was $0.28\%$
-(std. dev. $0.05\%$, max. $0.38\%$) for $t\in\{1,\cdots,199\}$ms. Our
-predicted latency had an average N-RMSE of $0.59\%$
-(std. dev. $0.18\%$, max. $0.89\%$).  This validates our Monte Carlo
-simulator.
+(respective means $20$ms, $10$ms and $5$ms) and
+$\texttt{A}$$=$$\texttt{R}$$=$$\texttt{S}=\lambda \in \{0.1,$ $0.2,$
+$0.5\}$ (respective means $10$ms, $5$ms and $2$ms) across 50,000
+writes.  After empirically measuring the \textit{WARS} distributions,
+consistency, and latency, we predicted $t$-visibility and latency. Our
+average $t$-visibility prediction RMSE was $0.28\%$
+(std. dev. $0.05\%$, max. $0.38\%$) for each
+$t\in$$\{1,$$\dots,$$199\}$ ms. Our predicted latency (for each of the
+$\{1.0, \dots, 99.9$th$\}$ percentiles for each configuration) had an
+average N-RMSE of $0.59\%$ (std. dev. $0.18\%$, max. $0.89\%$).  This
+validates our Monte Carlo simulator.
 
 \vspace{\subsectionskip}\subsection{Write Latency Distribution Effects}
 \label{sec:synthetic}
@@ -1216,7 +1218,7 @@ $R$$=$$W$$=$$1$ results in low latency reads and writes ($16.4$ms) but
 high $t$-visibility ($1364$ms). However, by setting $R$$=$$2$ and
 $W$$=$$1$, we reduce $t$-visibility to $202$ms and the combined read
 and write latencies are $81.1\%$ ($186.7$ms) lower than the fastest
-strict quorum ($W$$=$$1$, $R$$=$$3$).  Similarly, \texttt{LNKD-DISK}
+strict quorum ($W$$=$$1$, $R$$=$$3$).  \texttt{LNKD-DISK}
 read and write latencies can be reduced by $16.5\%$ ($2.48$ms) with
 $t$-visibility of $13.6$ms.  The write tail of \texttt{LNKD-SSD} was
 such that we never observed message reordering for $R$$=$$2$,
@@ -1284,14 +1286,14 @@ $N$, decreasing tail latency for fixed $R$ and $W$.
 \textbf{Variable configurations.} We have assumed the use of a single
 replica configuration ($N$, $R$, and $W$) across all operations.
 However, one could consider varying these operations over time and
-across keys, and many data stores such as Cassandra and Riak allow the use of
-per-operation consistency settings.  By specifying an \textit{average}
-operation latency, one could periodically modify $R$ and $W$ to more
-efficiently guarantee a desired bound on staleness.  Similarly, under
-scenarios with unexpectedly heavy load, one might consider increasing
-the number of replicas and scaling $R$ and $W$ accordingly, requiring
-additional refinements to our model and essentially revisiting prior work
-on fluid replication~\cite{fluidreplication}.
+across keys, and many data stores such as Cassandra and Riak allow the
+use of per-operation consistency settings.  By specifying an
+\textit{average} operation latency, one could periodically modify $R$
+and $W$ to more efficiently guarantee a desired bound on staleness.
+Similarly, varying load, one could change the the
+number of replicas and scale $R$ and $W$, requiring additional
+refinements to our model and essentially revisiting prior work on fluid
+replication~\cite{fluidreplication}.
 
 \textbf{Stronger guarantees.} We have focused on probabilistic
 staleness analysis, but there is a range of stronger models (such as
