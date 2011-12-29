@@ -100,14 +100,14 @@ latency benefits, which are especially important as latencies grow
 designed to handle staleness through design patterns such as
 compensation (e.g., memories, guesses, and apologies)~\cite{helland}
 and associative and commutative operations (e.g., timelines, logs, and
-notifications)~\cite{calm}.  In general, however, unbounded staleness
-poses significant challenges and is undesirable in practice.  The
-proliferation of partial quorum configurations suggests that many
+notifications)~\cite{calm}.  In general, however, \textit{unbounded}
+staleness poses significant challenges and is undesirable in practice.
+The proliferation of partial quorum configurations suggests that many
 applications can tolerate occasional cases of staleness and that stale
 data tends to be ``fresh enough'' in most cases.
 
 While common practice suggests that weak eventual consistency is a
-viable solution in many cases, to date, this observation has been
+viable solution for many operators, to date, this observation has been
 mostly anecdotal. In this work, we quantify the degree to which
 eventual consistency is both eventual and consistent. Under worst-case
 conditions, eventual consistency results in an unbounded degree of
@@ -117,9 +117,9 @@ and perfect consistency but for varying degrees of certainty can offer
 staleness bounds with respect to time (``how eventual'') and version
 history (``how consistent'').  There is little prior work describing
 how to make these consistency and staleness predictions under
-practical conditions.  The current state of the art requires that data
-system users make rough guesses or perform online profiling to
-determine the consistency provided by their data stores.
+practical conditions.  The current state of the art requires that
+users make rough guesses or perform online profiling to determine the
+consistency provided by their data stores.
 
 To do better, we need to know when and why eventually consistent
 systems return stale data and how to quantify the staleness of the
@@ -1250,9 +1250,9 @@ of consistent reads.
 \end{tabular}
 \vspace{-4pt}
 \caption{$t$-visibility for $p_{st} = .001$ ($99.9\%$ probability
-  of consistency for $50,000$ reads and writes) and $99.9\%$ read
-  ($L_r$) and write latency ($L_w$) across $R$ and $W$, $N$$=$$3$
-  ($1M$ reads and writes).}
+  of consistency for $50,000$ reads and writes) and $99.9$th percentile read
+  ($L_r$) and write latencies ($L_w$) across $R$ and $W$, $N$$=$$3$
+  ($1M$ reads and writes). Significant latency-staleness trade-offs are bolded.}
 \vspace{-12pt}
 \label{table:lat-stale}
 \end{table*}
