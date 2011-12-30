@@ -208,7 +208,7 @@ the data item\footnote{This total ordering can be achieved using
   ordering provided by mechanisms such as vector
   clocks~\cite{vectorclock} with commutative merge
   functions~\cite{cops}}, can return the most recent value (or all
-values recieved, if desired).  For each operation, read and write
+values received, if desired).  For each operation, read and write
 quorums are chosen from a set of sets of replicas, known as a
 \textit{quorum system}, with one system per data item.  There are many
 ways to configure quorum systems, but one simple solution is to use
@@ -315,7 +315,7 @@ write and read quorums chosen for a request depend on which nodes
 respond to the request first.  In Dynamo terminology, the quorum size,
 or replication factor, is defined as $N$, the number of replica
 responses required for a successful read is defined as $R$, and the
-number of replica acknowledgements required for a successful write is
+number of replica acknowledgments required for a successful write is
 defined as $W$. Dynamo-style systems are guaranteed to be consistent
 when $R+W > N$.  Setting $W>\lceil N/2 \rceil$ ensures that a majority
 of replicas will will receive a write in the presence of multiple
@@ -486,7 +486,7 @@ $R$$=$$2$, $W$$=$$1$), these probabilities increase: $k$$=$$1
 $k$$=$$5 \rightarrow > .995$.
 
 This closed form solution holds for quorums that do not change size
-over time.  For expanding partial quourm systems, this solution is an
+over time.  For expanding partial quorum systems, this solution is an
 upper bound on the probability of staleness.  We discuss the
 \textit{load} improvements offered by PBS $k$-staleness as discussed
 in the quorum system literature in Appendix A.
@@ -693,7 +693,7 @@ For a read, the coordinator sends $N$ messages, one to each replica.
 The message from coordinator to replica containing the read request is
 delayed by a value chosen from distribution \texttt{R}.  The
 coordinator waits for $R$ responses from the replicas before returning
-the most recent value it recieves.  The read response from each
+the most recent value it receives.  The read response from each
 replica is delayed by a value chosen from the distribution \texttt{S}.
 
 The read coordinator will return stale data if the first $R$ responses
@@ -1140,7 +1140,7 @@ writes take significantly longer (median $1.50$ms) and have a longer
 tail ($99.9$th percentile $10.47$ ms).  This difference is reflected
 in its $t$-visibility: \texttt{LNKD-DISK} had only a $43.9\%$
 probability of consistent reads immediately after write commit and
-only a $92.5\%$ probability ten millseconds later.  This suggests that
+only a $92.5\%$ probability ten milliseconds later.  This suggests that
 SSDs may drastically improve consistency in practice due to reducing
 replica write time.
 
@@ -1188,14 +1188,14 @@ These results imply that even if we choose to maintain a large number
 of replicas for availability or better performance, the $t$-visibility
 staleness will still converge relatively quickly for larger $t$.
 However, increasing $N$ will have a larger impact on the consistency
-immmediately after writing.  In practice, the relative write
+immediately after writing.  In practice, the relative write
 distribution tail length (describing replica convergence speed) will
 again dictate whether this trade-off is appropriate.
 
 \begin{figure*}
 \centering
 \subfigure{\includegraphics[width=\columnwidth]{figs/nlegend.pdf}}\\[-1mm]
-\subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-lnkd-disk.pdf}}
+\subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-LNKD-DISK.pdf}}
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-LNKD-SSD.pdf}}
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-WAN.pdf}}
 \vspace{-14pt}
@@ -1236,27 +1236,27 @@ probability of consistent reads.
 \centering
 \begin{tabular}{c|c|c|c|c|c|c|c|c|c|c|c|c|}
 \cline{2-13}
-& \multicolumn{3}{|c|}{\texttt{YMMR}} & \multicolumn{3}{|c|}{\texttt{WAN}} & \multicolumn{3}{|c|}{\texttt{LNKD-SSD}} & \multicolumn{3}{|c|}{\texttt{LNKD-DISK}}\\
+ & \multicolumn{3}{|c|}{\texttt{LNKD-SSD}} & \multicolumn{3}{|c|}{\texttt{LNKD-DISK}} & \multicolumn{3}{|c|}{\texttt{YMMR}} & \multicolumn{3}{|c|}{\texttt{WAN}}\\
 &\multicolumn{1}{|c}{$L_r$}  & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{$L_r$} & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{$L_r$} & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} &  \multicolumn{1}{|c}{$L_r$} & \multicolumn{1}{c}{$L_w$} & \multicolumn{1}{c|}{$t$} \\\hline
 \multicolumn{1}{|c|}{$R$$=$$1$, $W$$=$$1$}
-& 5.58 & 10.83 & 1364.0 & \textbf{3.4} & \textbf{55.12} & \textbf{113.0} & \textbf{0.66} & \textbf{0.66} & \textbf{1.85} & 0.66 & 10.99 & 45.5 \\
+&  \textbf{0.66} & \textbf{0.66} & \textbf{1.85} & 0.66 & 10.99 & 45.5 & 5.58 & 10.83 & 1364.0 & \textbf{3.4} & \textbf{55.12} & \textbf{113.0} \\
 \multicolumn{1}{|c|}{$R$$=$$1$, $W$$=$$2$}
-& 5.61 & 427.12 & 1352.0 & 3.4 & 167.64 & 0 & 0.66 & 1.63 & 1.79 & 0.65 & 20.97 & 43.3 \\
+&  0.66 & 1.63 & 1.79 & 0.65 & 20.97 & 43.3 & 5.61 & 427.12 & 1352.0 & 3.4 & 167.64 & 0 \\
 \multicolumn{1}{|c|}{$R$$=$$2$, $W$$=$$1$}
-& \textbf{32.6} & \textbf{10.73} & \textbf{202.0} & 151.3 & 56.36 & 30.2 & \textbf{1.63} & \textbf{0.65} & \textbf{0} & \textbf{1.63} & \textbf{10.9} & \textbf{13.6} \\
+& \textbf{1.63} & \textbf{0.65} & \textbf{0} & \textbf{1.63} & \textbf{10.9} & \textbf{13.6}& \textbf{32.6} & \textbf{10.73} & \textbf{202.0} & 151.3 & 56.36 & 30.2 \\
 \multicolumn{1}{|c|}{$R$$=$$2$, $W$$=$$2$}
-& 33.18 & 428.11 & 0 & 151.31 & 167.72 & 0 & \textbf{1.62} & \textbf{1.64} & \textbf{0} & 1.64 & 20.96 & 0 \\
+&  \textbf{1.62} & \textbf{1.64} & \textbf{0} & 1.64 & 20.96 & 0& 33.18 & 428.11 & 0 & 151.31 & 167.72 & 0 \\
 \multicolumn{1}{|c|}{$R$$=$$3$, $W$$=$$1$}
-& \textbf{219.27} & \textbf{10.79} & \textbf{0} & \textbf{153.86} & \textbf{55.19} & \textbf{0} & 4.14 & 0.65 & 0 & \textbf{4.12} & \textbf{10.89} & \textbf{0} \\
+&  4.14 & 0.65 & 0 & \textbf{4.12} & \textbf{10.89} & \textbf{0} & \textbf{219.27} & \textbf{10.79} & \textbf{0} & \textbf{153.86} & \textbf{55.19} & \textbf{0} \\
 \multicolumn{1}{|c|}{$R$$=$$1$, $W$$=$$3$}
-& 5.63 & 1870.86 & 0 & 3.44 & 241.55 & 0 & 0.65 & 4.09 & 0 & 0.65 & 112.65 & 0 \\
+& 0.65 & 4.09 & 0 & 0.65 & 112.65 & 0& 5.63 & 1870.86 & 0 & 3.44 & 241.55 & 0 \\
 \hline
 \end{tabular}
 \vspace{-4pt}
 \caption{$t$-visibility for $p_{st} = .001$ ($99.9\%$ probability
   of consistency for $50,000$ reads and writes) and $99.9$th percentile read
   ($L_r$) and write latencies ($L_w$) across $R$ and $W$, $N$$=$$3$
-  ($1M$ reads and writes). Significant latency-staleness trade-offs are bolded.}
+  ($1M$ reads and writes). Significant latency-staleness trade-offs are in bold.}
 \vspace{-12pt}
 \label{table:lat-stale}
 \end{table*}
@@ -1371,7 +1371,7 @@ face of partitions~\cite{consistency-partitioning, vogels-defs}.
 Real-time consistency (RTC) is the strongest consistency model
 achievable in an available, one-way convergent (eventually consistent)
 system~\cite{rtc-proof}, however there is a plethora of alternative
-consistency models offering various performance tradeoffs, from
+consistency models offering various performance trade-offs, from
 session guarantees~\cite{sessionguarantees} to causal+
 consistency~\cite{cops} and parallel snapshot isolation~\cite{walter}.
 Instead of proposing a new consistency model and building a system
@@ -1386,12 +1386,12 @@ asynchronously propagates updates from a designated master to replicas
 that in turn serve reads with bounded staleness.  AQuA actively
 selects which replicas to contact depending on response time
 predictions and a guaranteed staleness bound.  TRAPP~\cite{trapp}
-provides tradeoffs between precision and performance for continuously
+provides trade-offs between precision and performance for continuously
 evolving numerical data.  TACT~\cite{vahdat-article, vahdat-bounded}
 models consistency along three axes: numerical error, order error, and
 staleness.  TACT bounds staleness by ensuring that each replica
 (transitively) contacts all other replicas in the system within a
-given time window.  Finally, PIQL~\cite{piql} bounds the number of
+given time window.  Finally, POL~\cite{piql} bounds the number of
 operations performed per query, trading operation latency at scale
 with the amount of data a particular query can access, impacting
 accuracy.
@@ -1429,7 +1429,7 @@ An interactive demonstration of Dynamo-style PBS is available online
 at \url{http://cs.berkeley.edu/~pbailis/vldb-pbs/}.  The username is
 \texttt{demo} and the password is \texttt{vldb}.
 
-\section*{Acknowledgements}
+\section*{Acknowledgments}
 
 The authors would like to thank Alex Feinberg and Coda Hale for their
 cooperation in providing real-world distributions for experiments and
@@ -1515,7 +1515,7 @@ its capacity.
 \section*{APPENDIX B: LATENCY MODEL FITTING}
 
 While the provided production figures are invaluable, they are
-underspecified for \textit{WARS}.  First, the data are summary
+under-specified for \textit{WARS}.  First, the data are summary
 statistics, but \textit{WARS} requires distributions.  More
 importantly, the operation latencies represent round-trip times, while
 \textit{WARS} requires the constituent one-way latencies for both
