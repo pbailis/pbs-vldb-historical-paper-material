@@ -902,13 +902,13 @@ each combination of $\texttt{W}=\lambda \in \{0.05,$ $0.1,$ $0.2\}$
 $\texttt{A}$$=$$\texttt{R}$$=$$\texttt{S}=\lambda \in \{0.1,$ $0.2,$
 $0.5\}$ (respective means $10$ms, $5$ms and $2$ms) across 50,000
 writes.  After empirically measuring the \textit{WARS} distributions,
-consistency, and latency, we predicted $t$-visibility and latency. Our
-average $t$-visibility prediction RMSE was $0.28\%$
-(std. dev. $0.05\%$, max. $0.38\%$) for each
-$t\in$$\{1,$$\dots,$$199\}$ ms. Our predicted latency (for each of the
-$\{1.0, \dots, 99.9$th$\}$ percentiles for each configuration) had an
-average N-RMSE of $0.59\%$ (std. dev. $0.18\%$, max. $0.89\%$).  This
-validates our Monte Carlo simulator.
+consistency, and latency for each partial quorum configuration, we
+predicted $t$-visibility and latency. Our average $t$-visibility
+prediction RMSE was $0.28\%$ (std. dev. $0.05\%$, max. $0.53\%$) for
+each $t\in$$\{1,$$\dots,$$199\}$ ms. Our predicted latency (for each
+of the $\{1.0, \dots, 99.9$th$\}$ percentiles for each configuration)
+had an average N-RMSE of $0.48\%$ (std. dev. $0.18\%$, max. $0.90\%$).
+This validates our Monte Carlo simulator.
 
 \vspace{\subsectionskip}\subsection{Write Latency Distribution Effects}
 \label{sec:synthetic}
