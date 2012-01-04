@@ -29,19 +29,11 @@ The rest is pretty nasty.
 
 
 
-<title>Probabilistic Bounded Staleness</title>
+<title>Probabilistically Bounded Staleness</title>
 <link rel=StyleSheet href="bootstrap.min.css" type="text/css">
 <link rel=StyleSheet href="consistency.css" type="text/css">
 
-<script type="text/javascript">
-var _gaq = _gaq || []; _gaq.push(['_setAccount', 'UA-27366179-1']);
-  _gaq.push(['_trackPageview']); (function() { var ga =
-  document.createElement('script'); ga.type = 'text/javascript';
-  ga.async = true; ga.src = ('https:' == document.location.protocol ?
-  'https://ssl' : 'http://www') + '.google-analytics.com/ga.js'; var s
-  = document.getElementsByTagName('script')[0];
-  s.parentNode.insertBefore(ga, s); })();
-</script>
+<script type="text/javascript"> var _gaq = _gaq || []; _gaq.push(['_setAccount', 'UA-27366179-1']); _gaq.push(['_trackPageview']); (function() { var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true; ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s); })();</script>
 
 </head>
 
@@ -91,12 +83,13 @@ var _gaq = _gaq || []; _gaq.push(['_setAccount', 'UA-27366179-1']);
     <small>Max Ernst</small>
 </blockquote>
 
-<p>Probabilistically Bounded Staleness (PBS) predicts the consistency
-provided by eventually consistent data stores.  Eventual consistency
-makes almost no guarantees regarding the recency of data returned
-(unbounded staleness of versions).  However, in practice, and in the
-average case, the consistency provided is much better.  Using PBS
-predictions, we can optimize the
+<p>Eventually consistent semantics provide almost no guarantees
+regarding the recency of data returned (unbounded staleness of
+versions).  However, we can predict the expected consistency of an
+eventually consistent data store using models that we call
+Probabilistically Bounded Staleness.  In practice, and in the average
+case, eventually consistent data stores often deliver consistent data.
+Using PBS predictions, we can optimize the
 <a href="http://dbmsmusings.blogspot.com/2011/12/replication-and-latency-consistency.html">trade-off
 between latency and consistency</a> and better understand why so many
 data store users opt for eventual consistency. </p>
@@ -164,11 +157,11 @@ Data stores aren't black boxes.  We know how they're built, and,
 accordingly, should be able to predict how they operate in practice.
 While eventually consistent data stores make no <em>guarantees</em>
 about the recency of data they return, we can model their operation to
-predict what consistency they provide.  We call this Probabilistic
+predict what consistency they provide.  We call this Probabilistically
 Bounded Staleness, or PBS.
 </p>
 
-<p>PBS models staleness according to two axes: versions and time.
+<p>PBS models staleness according to two metrics: versions and time.
 <ul>
 <li><b>PBS <it>t</it>-visibility</b> models the probability that we will read a value <it>t</it> seconds after its write completes.  This answers the question: how eventual is eventual consistency?</li>
 <li><b>PBS <it>k</it>-staleness</b> models the probability that we will read a value that is no more than <it>k</it> versions older than the last written version.  This answer the question: how consistent is eventual consistency?</li>
@@ -182,7 +175,7 @@ consistent.
 </p>
 
 Interested in more detail? <a href="#" id="gorydetail-toggle">Click here</a>
-or read our <a href="trlink">technical report</a>.
+or read our <a href="http://www.eecs.berkeley.edu/Pubs/TechRpts/2012/EECS-2012-4.pdf">technical report</a>.
 
 <div id="gorydetail" style="display:none;">
 <h3>PBS in (Some More) Detail: Quorums and Dynamo</h3>
@@ -679,9 +672,7 @@ you're interested, we should talk.  We have some real-world latency
 distributions in our paper, but you can use whatever you like with
 PBS.</p>
 
-<p><b>Should I use an eventually consistent data store?</b> <br/>The
-debate is still on regarding the best distributed data store, which
-also varies from application to application.  PBS is intended as a
+<p><b>Should I use an eventually consistent data store?</b> <br/>Consistency requirements vary from application to application.  PBS is intended as a
 descriptive tool for determining the consistency provided by
 eventually consistent data stores but may strengthen the case for using
 eventual consistency in practice.</p>
@@ -722,7 +713,7 @@ upon request.</p>
 // but please credit me and/or link to my site
 
 emailE=('pbailis@' + 'cs.berkeley.edu')
-document.write('<A href="mailto:' + emailE + '">' + emailE + '</a>')
+document.write('<A href="mailto:' + emailE +'">' + emailE +'</a>')
 
 </script>
 
@@ -737,7 +728,7 @@ your organization want to talk, let us know. Bay Area travel is easy.</p>
 </section>
 
 <section id="thanks">
-<div class="page-header"> <h1>Acknowledgments <small>Wu-Tang is for the children</small></h1> </div>
+<div class="page-header"> <h1>Acknowledgments <small>Wu-tang is for the children</small></h1></div>
 
 <div id="acks">
 <p>Many kind folks provided useful feedback on our work, including

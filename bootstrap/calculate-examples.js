@@ -66,8 +66,8 @@ function calc_prob_stale(N,R,W,W_lambda, A_lambda, R_lambda, S_lambda, t, k)
 	//the write takes as long as the Wth response
 	var w_t = sortfloats(writelats)[W-1];
 
-	//slice(0) copies the readlats array--probably a better way
-	var sortedreads = sortfloats(readlats.slice(0));
+	//slice() copies the readlats array
+	var sortedreads = sortfloats(readlats.slice());
 
 	for(rep = 0; rep < R; ++rep)
 	{
