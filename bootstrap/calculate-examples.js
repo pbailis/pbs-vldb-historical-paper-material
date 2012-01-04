@@ -110,7 +110,7 @@ function calculate_read_latency(N, R, R_lambda, S_lambda, pctile)
 
 function calculate_operation_latency(N, waitfor, lambda1, lambda2, pctile)
 {
-    var ITERATIONS = Math.max(20000.0, 1/(1-pctile))
+    var ITERATIONS = Math.max(10000.0, 1/(1-pctile))
     var i = 0;
     lats = 0;
     var latencies = []
