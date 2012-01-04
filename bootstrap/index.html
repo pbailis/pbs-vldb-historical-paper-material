@@ -85,18 +85,26 @@ The rest is pretty nasty.
 
 <p>Eventually consistent semantics provide almost no guarantees
 regarding the recency of data returned (unbounded staleness of
-versions).  However, we can predict the expected consistency of an
-eventually consistent data store using models that we call
-Probabilistically Bounded Staleness.  In practice, and in the average
-case, eventually consistent data stores often deliver consistent data.
-Using PBS predictions, we can optimize the
+versions).  Despite these weak
+guarantees, <a href="http://www.datastax.com/docs/1.0/dml/data_consistency">many</a> <a href="http://ria101.wordpress.com/2010/02/24/hbase-vs-cassandra-why-we-moved./">data</a> <a href="http://www.reddit.com/r/programming/comments/bcqhi/reddits_now_running_on_cassandra/c0m3wh6">store</a>
+<a href="http://www.slideshare.net/Jkirkell/breaking-a-riak-cluster">users</a> <a href="http://www.slideshare.net/johnthethird/rolling-with-riak">opt</a>
+for eventual consistency in practice--why?  It's often faster to
+contact fewer replicas, and it's also more available.  Instead of
+relying on anecdotal evidence, we need to quantify why eventual
+consistency is "good enough" for many users.  We can predict the
+expected consistency of an eventually consistent data store using
+models we've developed, called Probabilistically Bounded Staleness.
+It turns out that, in practice, and in the average case, eventually
+consistent data stores often deliver consistent data.  Using PBS
+predictions, we can optimize the
 <a href="http://dbmsmusings.blogspot.com/2011/12/replication-and-latency-consistency.html">trade-off
 between latency and consistency</a> and better understand why so many
-data store users opt for eventual consistency. </p>
+data store users choose eventual consistency. </p>
 
 <p>If you're a savvy reader or an academic, you're better off reading 
-our (fairly readable) <a href="http://www.eecs.berkeley.edu/Pubs/TechRpts/2012/EECS-2012-4.pdf">technical report</a>.  If
-you're bored, skip to our cool <a href="#demo">demo</a>.</p>
+our (fairly readable) <a href="http://www.eecs.berkeley.edu/Pubs/TechRpts/2012/EECS-2012-4.pdf">technical report</a> (currently under peer review).</p>
+
+<p>If you're bored, skip to our cool <a href="#demo">demo</a>.</p>
 
 If you don't know what eventual consistency means, <a href="#" id="ecbackground-toggle">click here</a>.
 
@@ -225,6 +233,11 @@ dependent on the latency distributions of the Dynamo protocol, shown
 above (W,A,R, and S)</b>
 </center>
 </p>
+
+<p>In Dynamo, the number of replicas with a given value expands over
+time in a process known as anti-entropy.  By modeling anti-entropy, we
+can predict the likelihood of a read request reaching a replica with
+an appropriate version over time.</p>
 
 </div>
 
@@ -647,9 +660,7 @@ function editSLambda(slambda)
 <p>Most of your questions about the simulation will probably be answered in the <a href="#instructions">instructions</a> section.</p>
 
 <p>If you're interested in tons more technical detail, read
-our <a href="http://www.eecs.berkeley.edu/Pubs/TechRpts/2012/EECS-2012-4.pdf">technical report</a>.  It's not possible to
-cover as much detail on a single site without regurgitating the paper,
-plus paper reading is good for you.</p>
+our <a href="http://www.eecs.berkeley.edu/Pubs/TechRpts/2012/EECS-2012-4.pdf">technical report</a>. </p>
 
 <p><b>How can I use PBS with my data store?</b> <br/> PBS requires
 modeling read and write propagation to and from replicas. If you can
