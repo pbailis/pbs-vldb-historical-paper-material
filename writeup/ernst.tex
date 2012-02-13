@@ -351,7 +351,7 @@ fail-stop failure instead of Byzantine
 failure~\cite{birman-byzantine}.  Following standard practice, we do
 not consider Byzantine failure.
 
-\vspace{2em}
+%\vspace{2em}
 
 \vspace{\subsectionskip}\subsection{Typical Quorum Configurations}
 
@@ -1391,7 +1391,7 @@ evolving numerical data.  TACT~\cite{vahdat-article, vahdat-bounded}
 models consistency along three axes: numerical error, order error, and
 staleness.  TACT bounds staleness by ensuring that each replica
 (transitively) contacts all other replicas in the system within a
-given time window.  Finally, POL~\cite{piql} bounds the number of
+given time window.  Finally, PIQL~\cite{piql} bounds the number of
 operations performed per query, trading operation latency at scale
 with the amount of data a particular query can access, impacting
 accuracy.
@@ -1426,8 +1426,7 @@ largely to the resilience of Dynamo-style messaging.
 
 \vspace{\sectionskip}\section*{Interactive Demonstration}
 An interactive demonstration of Dynamo-style PBS is available online
-at \url{http://cs.berkeley.edu/~pbailis/vldb-pbs/}.  The username is
-\texttt{demo} and the password is \texttt{vldb}.
+at \url{http://cs.berkeley.edu/~pbailis/projects/pbs/}.
 
 \section*{Acknowledgments}
 
