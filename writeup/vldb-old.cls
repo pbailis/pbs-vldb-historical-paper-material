@@ -4,7 +4,7 @@
 % SIG-ALTERNATE.CLS - VERSION 1.8
 % "COMPATIBLE" WITH THE "ACM_PROC_ARTICLE-SP.CLS" V2.7SP
 % Gerald Murray July 26th. 2005
-% 
+%
 % ---- Start of 'updates'  ----
 %
 % Allowance made to switch default fonts between those systems using
@@ -23,17 +23,12 @@
 %
 % Footnotes inside table cells using \minipage (Oct. 2002)
 %
-% Enforced 'US letter' page size and updated PVLDB copyright  (UR, Oct 2010)
-%
-% Made the file template-able, so vol/no information can be dynmacally generated. (AhmetSacan, Sep 2012)
-%
-% Added widow line penalties. (AhmetSacan, Sep 2012)
 % ---- End of 'updates' ----
 %
 \def\fileversion{v1.8c}         % for VLDB's and ACM's tracking purposes
 \def\filedate{July 26, 2005}    % Gerry Murray's tracking data
 \def\docdate {Tuesday 26th. July 2005} % Gerry Murray (with deltas to doc}
-\usepackage[pdftex,letterpaper]{geometry} % fixed to US letter size for output (since version 1.8c - UR 2010)
+\usepackage[pdftex,letterpaper]{geometry} % fixed to US letter size for output (since version 1.8c)
 \usepackage{epsfig}
 \usepackage{amssymb}
 \usepackage{amsmath}
@@ -193,14 +188,6 @@
 \@beginparpenalty -\@lowpenalty % Before a list or paragraph environment.
 \@endparpenalty   -\@lowpenalty % After a list or paragraph environment.
 \@itempenalty     -\@lowpenalty % Between list items.
-
-% Try to prevent widow lines.
-\clubpenalty=9996
-\widowpenalty=9999
-\brokenpenalty=4991
-\predisplaypenalty=10000
-\postdisplaypenalty=1549
-\displaywidowpenalty=1602
 
 \@namedef{ds@10pt}{\@latexerr{The `10pt' option is not allowed in the `acmconf'
   document style.}\@eha}
@@ -546,6 +533,7 @@
 
 \@ifundefined{figure}{\newcounter {figure}} % this is for LaTeX2e
 
+
 \def\fps@figure{tbp}
 \def\ftype@figure{1}
 \def\ext@figure{lof}
@@ -593,7 +581,7 @@
 
 \if@ll
   \NeedsTeXFormat{LaTeX2e}
-  \ProvidesClass{vldb} [2010/10/19 - V1.8b - based on sig-alternate V1.8 - based on acmproc.cls V1.3 <Nov. 30 '99>]
+  \ProvidesClass{vldb} [2010/10/31 - V1.8c - based on sig-alternate V1.8 - based on acmproc.cls V1.3 <Nov. 30 '99>]
   \RequirePackage{latexsym}% QUERY: are these two really needed?
   \let\dooptions\ProcessOptions
 \else
@@ -1255,7 +1243,7 @@
 \def\thebibliography#1{% 
 \ifnum\addauflag=0\addauthorsection\global\addauflag=1\fi
      \section[References]{%    <=== OPTIONAL ARGUMENT ADDED HERE
-        {References} % was uppercased but this affects pdf bookmarks (SP/GM October 2004)
+        {References}\vspace{2mm} % was uppercased but this affects pdf bookmarks (SP/GM October 2004)
           \vskip -9pt  % GM July 2000 (for tighter spacing)
          \@mkboth{{\refname}}{{\refname}}%
      }%
@@ -1382,19 +1370,16 @@
 %\newtoks\copyrightetc
 %\global\copyrightetc{Copyright \the\copyrtyr\ ACM \the\acmcopyr\ ...\$5.00}
 
-\global\boilerplate={Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. To copy otherwise, to republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee.  Articles from this volume were invited to present their results at The 38th International Conference on Very Large Data Bases, August 27th - 31st 2012, Istanbul, Turkey. }
-
+\global\boilerplate={
+Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. To copy otherwise, to republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee. 
+ Articles from this volume were invited to present their results at The xth International Conference on Very Large Data Bases.}
 \global\conf{Proceedings of the VLDB Endowment,}
-\global\confinfo{Vol. 5, No. 5}
+\global\confinfo{Vol. X, No. Y}
 \newtoks\copyrightetc
-\global\copyrightetc{Copyright 2012 VLDB Endowment 2150-8097/12/01... \$ 10.00}
-		
-%ahmetsacan, 20111024: disabled showing conference name and Vol/Issue/Month. We now stamp this on the papers ourselves.
-%\toappear{\the\boilerplate\par
-%{\confname{\the\conf}} \the\confinfo\par \the\copyrightetc.
-%}
+\global\copyrightetc{Copyright 20xy VLDB Endowment 2150-8097/11/XX... \$ 10.00}
+
+\toappear{\the\boilerplate\par
+{\confname{\the\conf}} \the\confinfo\par \the\copyrightetc.}
 %
-%% End of vldb.cls -- V1.8c - 05/15/2011 --
-%% Ahmet Sacan  -- January 2012 (volume, issue, and dates are dynamically updated)
-%% Uwe Roehm    -- Oct-Dec 2010 & Jan-Apr 2011
+%% End of vldb.cls -- V1.8c - 7/26/2005 --
 %% Gerry Murray -- Wednesday July 26th. 2005
