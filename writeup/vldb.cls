@@ -1385,9 +1385,9 @@
 \global\boilerplate={Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. To copy otherwise, to republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee.  Articles from this volume were invited to present their results at The 38th International Conference on Very Large Data Bases, August 27th - 31st 2012, Istanbul, Turkey. }
 
 \global\conf{Proceedings of the VLDB Endowment,}
-\global\confinfo{Vol. 5, No. 5}
+\global\confinfo{Vol. 5, No. 3}
 \newtoks\copyrightetc
-\global\copyrightetc{Copyright 2012 VLDB Endowment 2150-8097/12/01... \$ 10.00}
+\global\copyrightetc{Copyright 2011 VLDB Endowment 2150-8097/11/11... \$ 10.00}
 		
 %ahmetsacan, 20111024: disabled showing conference name and Vol/Issue/Month. We now stamp this on the papers ourselves.
 %\toappear{\the\boilerplate\par
@@ -1395,6 +1395,6 @@
 %}
 %
 %% End of vldb.cls -- V1.8c - 05/15/2011 --
-%% Ahmet Sacan  -- January 2012 (volume, issue, and dates are dynamically updated)
+%% Ahmet Sacan  -- December 2011 (volume, issue, and dates are dynamically updated)
 %% Uwe Roehm    -- Oct-Dec 2010 & Jan-Apr 2011
 %% Gerry Murray -- Wednesday July 26th. 2005
