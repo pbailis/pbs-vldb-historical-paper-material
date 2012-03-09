@@ -490,9 +490,7 @@ $k$$=$$5 \rightarrow > .995$.
 
 This closed form solution holds for quorums that do not change size
 over time.  For expanding partial quorum systems, this solution is an
-upper bound on the probability of staleness.  We discuss the
-\textit{load} improvements offered by PBS $k$-staleness as discussed
-in the quorum system literature i
+upper bound on the probability of staleness.
 
 \vspace{\subsectionskip}\subsection{PBS Monotonic Reads}
 
@@ -597,10 +595,9 @@ will discuss generic anti-entropy. However, we explicitly model the
 Dynamo-style anti-entropy mechanisms in Section \ref{sec:dynamo}.
 
 PBS $t$-visibility models the probability of inconsistency for
-expanding quorums.  Intuitively, PBS $t$-visibility captures the
-possibility that a reader will observe a write $t$ seconds after it
-commits. This captures the expected length of a ``window of
-inconsistency'' resulting from partial quorum operation.  Recall that
+expanding quorums.  PBS $t$-visibility captures the possibility that a
+reader will observe a write $t$ seconds after it commits, reflecting
+the expected length of the ``window of inconsistency.''  Recall that
 we consider in-flight writes---which are more recent than the last
 committed version---as non-stale.
 
@@ -802,7 +799,7 @@ may be large.
 
 \textbf{Additional anti-entropy.} As we discussed in
 Section~\ref{sec:practice}, anti-entropy decreases the probability of
-staleness by further propagating versions between members.
+staleness by propagating writes between replicas.
 Dynamo-style systems also support additional anti-entropy
 processes~\cite{nosql}.  One common process is called \textit{read
   repair}: when a read coordinator receives multiple versions of a
@@ -814,8 +811,8 @@ re-written.  Additionally, Dynamo used Merkle trees to summarize and
 exchange data contents between replicas~\cite[Section 4.7]{dynamo}.
 However, not all Dynamo-style data stores actively employ similar
 gossip-based anti-entropy.  For example, Cassandra uses Merkle tree
-anti-entropy only when it is manually requested (e.g., \texttt{nodetool
-  repair}), choosing to rely primarily on quorum expansion and read
+anti-entropy only when manually requested (e.g., \texttt{nodetool
+  repair}), instead relying primarily on quorum expansion and read
 repair~\cite{cassandra-merkle}.
 
 These processes are rate-dependent: read repair's efficiency depends
@@ -937,10 +934,7 @@ reads, only considered the first $R$ responses (often, more than $R$
 messages would arrive by the processing stage, decreasing staleness).
 We ran Cassandra on three servers with 2.2GHz AMD Opteron 2214
 dual-core SMT processors and 4GB of 667MHz DDR2 memory, serving
-in-memory data.  To measure staleness, we inserted monotonically
-increasing versions of a key while concurrently issuing read requests.
-Solely for the purpose of validation across several conditions, we
-injected latencies into Cassandra's messaging.
+in-memory data.  To measure staleness, we inserted increasing versions of a key while concurrently issuing read requests.
 
 Our observations matched the \textit{WARS} predictions. We injected
 each combination of exponentially distributed $\texttt{W}=\lambda \in
@@ -1142,10 +1136,10 @@ conservatively; without the $98$th percentile, the write fit N-RMSE is
 
 We also considered a wide-area network replication scenario, denoted
 \texttt{WAN}.  Reads and writes originate in a random datacenter, and,
-accordingly, one replica command completes quickly while the others
-are routed remotely.  We delay remote operations and responses by 75ms
-and apply \texttt{LNKD-DISK} delays once the command reaches a remote
-data center, representing multi-continent WAN network
+accordingly, one replica command completes quickly and the others are
+routed remotely.  We delay remote messages by 75ms and
+apply \texttt{LNKD-DISK} delays once the command reaches a remote data
+center, reflecting multi-continent WAN network
 delay~\cite{dean-keynote}
 
 We show the parameters for each distribution in
@@ -1290,6 +1284,7 @@ $t$-visibility staleness will still converge quickly.
 \label{fig:varyn}
 \end{figure*}
 
+\vspace{1em}
 \vspace{\subsectionskip}\subsection{Latency vs. {\large $t$}-visibility}
 
 Choosing a value for $R$ and $W$ is a trade-off between operation
@@ -1297,25 +1292,22 @@ latency and $t$-visibility. To measure the obtainable latency gains,
 we compared $t$-visibility required for a $99.9\%$ probability of
 consistent reads to the $99.9$th percentile read and write latencies.
 
-Partial quorums can have a large impact on latency at a variable cost
-to $t$-visibility (Table~\ref{table:lat-stale}).  For \texttt{YMMR},
-$R$$=$$W$$=$$1$ results in low latency reads and writes ($16.4$ms) but
-high $t$-visibility ($1364$ms). However, by setting $R$$=$$2$ and
-$W$$=$$1$, we reduce $t$-visibility to $202$ms and the combined read
-and write latencies are $81.1\%$ ($186.7$ms) lower than the fastest
-strict quorum ($W$$=$$1$, $R$$=$$3$).  \texttt{LNKD-DISK} read and
-write latencies can be reduced by $16.5\%$ ($2.48$ms) with
-$t$-visibility of $13.6$ms.  The write tail of \texttt{LNKD-SSD} was
-such that we never observed message reordering for $R$$=$$2$,
-$W$$=$$1$, allowing a $30\%$ ($.98$ms) latency reduction with no
-observable staleness (even across $10M$ writes, ``seven nines'').
+Partial quorums often exhibit favorable latency-consistency trade-offs
+(Table~\ref{table:lat-stale}).  For \texttt{YMMR}, $R$$=$$W$$=$$1$
+results in low latency reads and writes ($16.4$ms) but high
+$t$-visibility ($1364$ms). However, setting $R$$=$$2$ and $W$$=$$1$
+reduces $t$-visibility to $202$ms and the combined read and write
+latencies are $81.1\%$ ($186.7$ms) lower than the fastest strict
+quorum ($W$$=$$1$, $R$$=$$3$).  \texttt{LNKD-DISK} read and write
+latencies can be reduced by $16.5\%$ ($2.48$ms) with $t$-visibility of
+$13.6$ms.  For \texttt{LNKD-SSD}, across $10M$ writes (``seven
+nines''), we did not observe staleness $R$$=$$2$, $W$$=$$1$.
 $R$$=$$W$$=$$1$ reduced latency by $59.5\%$ ($1.94$ms) with a
 corresponding $t$-visibility of $1.85$ms.  Under \texttt{WAN}, $R > 1$
 or $W > 1$ results in a large latency increase because this requires
-WAN messages. These results indicate that lowering values of $R$ and
-$W$ can significantly improve operation latency and that
-$t$-visibility can be low even when we require a high probability of
-consistent reads.
+WAN messages. Lowering values of $R$ and $W$ can significantly improve
+operation latency and that $t$-visibility can be low even when a high
+probability of consistent reads is required.
 
 \begin{table*}
 \centering
@@ -1529,13 +1521,15 @@ would especially like to thank Bryan Kate for his extensive feedback
 and Ali Ghodsi, who, in addition to providing feedback, originally
 piqued our interest in theoretical quorum systems.
 
-This work was supported in part by gifts from Google, SAP,
-Amazon Web Services, Blue Goji, Cloudera, Ericsson, General Electric, 
-Hewlett Packard, Huawei, IBM, Intel, MarkLogic, Microsoft, NEC Labs, 
-NetApp, Oracle, Quanta, Splunk, and VMware and by DARPA 
-(contract \#FA8650-11-C-7136).  This material is based upon
-work supported by the National Science Foundation Graduate Research
-Fellowship under Grant DGE 1106400.
+This work was supported by gifts from Google, SAP, Amazon Web
+Services, Blue Goji, Cloudera, Ericsson, General Electric, Hewlett
+Packard, Huawei, IBM, Intel, MarkLogic, Microsoft, NEC Labs, NetApp,
+Oracle, Quanta, Splunk, and VMware.  This material is based upon work
+supported by the National Science Foundation Graduate Research
+Fellowship under Grant DGE 1106400, National Science Foundation Grants
+IIS-0713661, CNS-0722077 and IIS-0803690, the Air Force Office of
+Scientific Research Grant FA95500810352, and by DARPA contract
+FA865011C7136.
 
 
 {\small
