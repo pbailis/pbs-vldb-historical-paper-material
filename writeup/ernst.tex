@@ -63,42 +63,55 @@ staleness (recency in terms of versions written) of data items
 returned except that the system will ``eventually'' return the most
 recent version in the absence of new writes~\cite{vogels-defs}.
 
-Distributed quorums can be used to ensure strong consistency across
-multiple replicas of a data item by overlapping read and write replica
-sets. However, waiting for responses from the potentially large
-resulting quorum sizes increases operation latency, an important
-consideration for service operators~\cite{perf-impact}. For example,
-at Amazon, 100 ms of additional latency resulted in a 1\% drop in
+The latency-consistency trade-off inherent in distributed data stores
+has a large impact on application and service
+design~\cite{abadilatconsist}. For many applications, low latency is
+critical ~\cite{perf-impact}. For example, at Amazon, 100 ms of
+additional latency resulted in a 1\% drop in
 sales~\cite{amazon-latency}, while 500 ms of additional latency in
 Google's search resulted in a corresponding 20\% decrease in
-traffic~\cite{google-talk}.  At scale, increased latencies correspond to
-large amounts of lost revenue.
+traffic~\cite{google-talk}.  At scale, increased latencies correspond
+to large amounts of lost revenue.  However, this latency has a
+consistency cost: contacting fewer replicas for each request typically
+weakens the guarantees we can make about the data that is returned
+returned. Many programs can be carefully designed to tolerate weak
+consistency through design patterns such as compensation (e.g.,
+memories, guesses, and apologies)~\cite{helland} and associative and
+commutative operations (e.g., timelines, logs, and
+notifications)~\cite{calm}.  In general, however, potentially
+\textit{unbounded} staleness (as under eventual consistency) poses
+significant challenges and is undesirable in practice.
 
-Employing \textit{partial} (or non-strict) quorums lowers latency in
-quorum replication.  With partial quorums, sets of replicas written to
+In this work, we examine this trade-off in the context of
+quorum-replicated distributed data stores. Quorum systems ensure
+strong consistency across reads and writes to replicas by ensuring
+that read and write replica sets overlap. However, waiting for
+responses from the potentially large resulting quorum sizes increases
+operation latency. Employing \textit{partial} (or non-strict) quorums
+can lower latency.  With partial quorums, sets of replicas written to
 and read from are not guaranteed to overlap: given $N$ replicas and
 read and write quorum sizes $R$ and $W,$ partial quorums imply
-$R$$+$$W$$\leq$$N$.  Modern quorum-based data systems such as
-Dynamo~\cite{dynamo} and its open source descendants Apache
-Cassandra~\cite{cassandra-sigmod}, Basho Riak~\cite{riak}, and Project
-Voldemort~\cite{voldemortpub} offer a choice between these two modes
-of replication: strict quorums, providing strong
-consistency, and partial quorums, providing eventual consistency.
+$R$$+$$W$$\leq$$N$.
 
-In light of this fundamental latency-consistency trade-off, operators
-frequently employ partial quorums~\cite{cassandra-docs,
-  cassandradefault,feinbergpc,reddit, outbrain, maxperfblog} despite
-the weak guarantees provided by eventual consistency---a controversial
-decision~\cite{hamilton-cap, cops, walter, urbanmyths}.  Partial quorums are often acceptable to operators given their latency benefits, which are especially important as latencies grow (e.g., wide-area network deployments)~\cite{abadilatconsist, feinbergpc,
-  hamilton-cap, helland}. Moreover, many programs can be carefully
-designed to handle staleness through design patterns such as
-compensation (e.g., memories, guesses, and apologies)~\cite{helland}
-and associative and commutative operations (e.g., timelines, logs, and
-notifications)~\cite{calm}.  In general, however, \textit{unbounded}
-staleness poses significant challenges and is undesirable in practice.
-The proliferation of partial quorum configurations suggests that many
-applications can tolerate occasional cases of staleness and that stale
-data tends to be ``fresh enough'' in most cases.
+Users of quorum-replicated data systems have a choice: lower latency
+and weakened consistency, or increased consistency and higher
+latency. Data stores such as Dynamo~\cite{dynamo} and its open source
+descendants Apache Cassandra~\cite{cassandra-sigmod}, Basho
+Riak~\cite{riak}, and Project Voldemort~\cite{voldemortpub} data
+systems offer a choice between these two modes of operation: strict
+quorums, providing strong consistency, and partial quorums, providing
+eventual consistency. Despite the weak guarantees provided by eventual
+consistency, users frequently employ partial
+quorums~\cite{cassandra-docs, cassandradefault,feinbergpc,reddit,
+  outbrain, maxperfblog}---a controversial
+decision~\cite{hamilton-cap, cops, walter, urbanmyths}.  Given the
+latency benefits, which are especially important as latencies grow
+(e.g., wide-area network deployments)~\cite{abadilatconsist,
+  feinbergpc, hamilton-cap, helland}, partial quorums are often
+acceptable.  The proliferation of partial quorum configurations
+suggests that many applications can tolerate occasional cases of
+staleness and that stale data tends to be ``fresh enough'' in most
+cases.
 
 While common practice suggests that weak eventual consistency is a
 viable solution for many operators, to date, this observation has been
@@ -115,10 +128,10 @@ There is little prior work describing how to make these consistency
 and staleness predictions under practical conditions.  The current
 state of the art requires that users make rough guesses or perform
 online profiling to determine the consistency provided by their data
-stores. Moreover, users have even less guidance regarding how to chose
-an appropriate replication configuration or how to predict the
-behavior of partial quorums in production
-environments.
+stores~\cite{measure-consistency, podc-hpl, consistency-cidr}. Users
+have even less guidance regarding how to chose an appropriate
+replication configuration or how to predict the behavior of partial
+quorums in production environments.
 
 To do better, we need to know when and why eventually consistent
 systems return stale data and how to quantify the staleness of the
@@ -1517,19 +1530,19 @@ Alvaro, Eric Brewer, Neil Conway, Greg Durrett, Jonathan Ellis, Andy
 Gross, Hariyadi Gunawi, Sam Madden, Bill Marczak, Kay Ousterhout, Vern
 Paxson, Mark Phillips, Christopher R\'e, Justin Sheehy, Scott Shenker,
 Sriram Srinivasan, Doug Terry, Greg Valiant, and Patrick Wendell.  We
-would especially like to thank Bryan Kate for his extensive feedback
+would especially like to thank Bryan Kate for his extensive comments
 and Ali Ghodsi, who, in addition to providing feedback, originally
 piqued our interest in theoretical quorum systems.
 
 This work was supported by gifts from Google, SAP, Amazon Web
 Services, Blue Goji, Cloudera, Ericsson, General Electric, Hewlett
 Packard, Huawei, IBM, Intel, MarkLogic, Microsoft, NEC Labs, NetApp,
-Oracle, Quanta, Splunk, and VMware.  This material is based upon work
-supported by the National Science Foundation Graduate Research
-Fellowship under Grant DGE 1106400, National Science Foundation Grants
-IIS-0713661, CNS-0722077 and IIS-0803690, the Air Force Office of
-Scientific Research Grant FA95500810352, and by DARPA contract
-FA865011C7136.
+NTT Multimedia Communications Laboratories, Oracle, Quanta, Splunk,
+and VMware.  This material is based upon work supported by the
+National Science Foundation Graduate Research Fellowship under Grant
+DGE 1106400, National Science Foundation Grants IIS-0713661,
+CNS-0722077 and IIS-0803690, the Air Force Office of Scientific
+Research Grant FA95500810352, and by DARPA contract FA865011C7136.
 
 
 {\small
