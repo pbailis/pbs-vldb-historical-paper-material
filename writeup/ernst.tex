@@ -137,7 +137,7 @@ propagation)~\cite{antientropy}, and message dissemination protocols
 as used in today's systems.  More precisely, we present algorithms and
 models for predicting the staleness of partial quorums, called
 Probabilistically Bounded Staleness (PBS) for partial quorums. There
-are two common axes for measuring staleness in the literature:
+are two common metrics for measuring staleness in the literature:
 versions~\cite{podc-hpl, aqua, frac} and wall clock
 time~\cite{podc-hpl, vahdat-article, vahdat-bounded}.  PBS can be used
 to analyze both measures, describing the probability of reading a
@@ -176,8 +176,8 @@ We make the following contributions in this paper:
 \item We develop the theory of Probabilistically Bounded Staleness
   (PBS) for partial quorums. PBS describes the probability of
   staleness across both versions ($k$-staleness) and time
-  ($t$-visibility) as well as the probability of monotonic reads
-  consistency.
+  ($t$-visibility) as well as the probability of session-based
+  monotonic reads consistency.
 
 \item We provide a closed-form analysis of $k$-staleness demonstrating
   how the probability of receiving data $k$ versions stale is
@@ -416,14 +416,13 @@ Riak defaults to $N$$=$$3$, $R$$=$$W$$=$$2$~\cite{riakdefault-n,
 
 In this section, we introduce Probabilistically Bounded Staleness,
 which describes the consistency provided by existing eventually
-consistent data stores.  We introduce the notions of PBS
-$k$-staleness, which probabilistically bounds the staleness of versions
-returned by read quorums, PBS $t$-visibility, which probabilistically
-bounds the time before a committed version appears to readers, and PBS
-$\langle k, t \rangle$-staleness, a combination of the two prior
-models.
+consistent data stores.  We present PBS $k$-staleness, which
+probabilistically bounds the staleness of versions returned by read
+quorums, PBS $t$-visibility, which probabilistically bounds the time
+before a committed version appears to readers, and PBS $\langle k, t
+\rangle$-staleness, a combination of the two prior models.
 
-We first introduce $k$-staleness because it is self-contained, with a
+We introduce $k$-staleness first because it is self-contained, with a
 simple closed-form solution.  In comparison, $t$-visibility is more
 difficult, involving several additional variables.  Accordingly, this
 section proceeds in order of increasing difficulty, and the remainder
@@ -1507,7 +1506,7 @@ significant latency benefits.
 
 \vspace{\sectionskip}\section*{Interactive Demonstration} An
 interactive demonstration of Dynamo-style PBS is available at
-\url{http://bailis.org/projects/pbs/}.
+\url{http://bailis.org/projects/pbs/#demo}.
 
 \section*{Acknowledgments}
 
