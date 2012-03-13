@@ -10,13 +10,13 @@
 
 \newenvironment{myitemize}
 {
-   \vspace{-2mm}
+   \vspace{0mm}
     \begin{list}{$\bullet$ }{}
         \setlength{\topsep}{0em}
         \setlength{\parskip}{0pt}
         \setlength{\partopsep}{0pt}
         \setlength{\parsep}{0pt}         
-        \setlength{\itemsep}{.25em} 
+        \setlength{\itemsep}{2.5mm} 
 }
 {
     \end{list} 
@@ -46,68 +46,70 @@
 
 \vspace{\sectionskip}\section{Introduction}
 
-Modern distributed data stores need to be scalable, highly
-available, and fast.  These systems typically replicate data across
-different machines and often across datacenters for two reasons:
-first, to provide high availability when components fail and, second,
-to provide improved performance by serving requests from multiple
-replicas.  In order to provide predictably low read and write latency,
-systems often eschew protocols guaranteeing consistency of
-reads\footnote{Note that this distributed replica consistency is
-  differs from transactional consistency provided by ACID
-  semantics~\cite{nosql, urbanmyths}\vspace{-2em}.} and instead opt
-for eventually consistent protocols~\cite{cassandradefault,
-  abadilatconsist, dynamo, feinbergpc, reddit, riaktalkone, outbrain}.
-However, weak eventually consistent systems make no guarantees on the
-staleness (recency in terms of versions written) of data items
-returned except that the system will ``eventually'' return the most
-recent version in the absence of new writes~\cite{vogels-defs}.
+Modern distributed data stores need to be scalable, highly available,
+and fast.  These systems typically replicate data across different
+machines and often across datacenters for two reasons: first, to
+provide high availability when components fail and, second, to provide
+improved performance by serving requests from multiple replicas.  In
+order to provide predictably low read and write latency, systems often
+eschew protocols guaranteeing consistency of reads\footnote{Note that
+  this distributed replica consistency differs from transactional
+  consistency provided by ACID semantics~\cite{nosql,
+    urbanmyths}\vspace{-2em}.} and instead opt for eventually
+consistent protocols~\cite{cassandradefault, abadilatconsist, dynamo,
+  feinbergpc, reddit, riaktalkone, outbrain}.  However, eventually
+consistent systems make no guarantees on the staleness (recency in
+terms of versions written) of data items returned except that the
+system will ``eventually'' return the most recent version in the
+absence of new writes~\cite{vogels-defs}.
 
 This latency-consistency trade-off inherent in distributed data stores
-has many consequences for application design~\cite{abadilatconsist}. For
-many applications, low latency is critical ~\cite{perf-impact}. For
-example, at Amazon, 100 ms of additional latency resulted in a 1\%
-drop in sales~\cite{amazon-latency}, while 500 ms of additional
-latency in Google's search resulted in a corresponding 20\% decrease
-in traffic~\cite{google-talk}.  At scale, increased latencies
-correspond to large amounts of lost revenue.  However, decreasing
-latency has a consistency cost: contacting fewer replicas for each
-request typically weakens the guarantees on returned data. Many
-programs tolerate weak consistency through careful design patterns
-such as compensation (e.g., memories, guesses, and
-apologies)~\cite{helland} and the use of associative and commutative
-operations (e.g., timelines, logs, and notifications)~\cite{calm}.
-However, potentially \textit{unbounded} staleness (as in eventual
-consistency) poses significant challenges and is undesirable in
-practice.
+has significant consequences for application
+design~\cite{abadilatconsist}. For many applications, low latency is
+critical ~\cite{perf-impact}. For example, at Amazon, 100 ms of
+additional latency resulted in a 1\% drop in
+sales~\cite{amazon-latency}, while 500 ms of additional latency in
+Google's search resulted in a corresponding 20\% decrease in
+traffic~\cite{google-talk}.  At scale, increased latencies correspond
+to large amounts of lost revenue.  However, lowering latency has a
+consistency cost: contacting fewer replicas for each request typically
+weakens the guarantees on returned data. Many programs tolerate weak
+consistency by employing careful design patterns such as compensation (e.g.,
+memories, guesses, and apologies)~\cite{helland} and by using
+associative and commutative operations (e.g., timelines, logs, and
+notifications)~\cite{calm}.  However, potentially \textit{unbounded}
+staleness (as in eventual consistency) poses significant challenges
+and is undesirable in practice.
 
-In this work, we examine this trade-off in the context of
-quorum-replicated distributed data stores. Quorum systems ensure
+\subsection{Practical Partial Quorums}
+
+In this work, we examine the latency-consistency trade-off in the context of
+quorum-replicated data stores. Quorum systems ensure
 strong consistency across reads and writes to replicas by ensuring
 that read and write replica sets overlap. However, employing
-\textit{partial} (or non-strict) quorums can lower latency.  With
-partial quorums, sets of replicas written to and read from are not
-guaranteed to overlap: given $N$ replicas and read and write quorum
-sizes $R$ and $W,$ partial quorums imply $R$$+$$W$$\leq$$N$.
+\textit{partial} (or non-strict) quorums can lower latency by
+requiring fewer replicas to respond.  With partial quorums, sets of
+replicas written to and read from need not overlap: given $N$ replicas
+and read and write quorum sizes $R$ and $W,$ partial quorums imply
+$R$$+$$W$$\leq$$N$.
 
 Quorum-replicated data stores such as Dynamo~\cite{dynamo} and its
 open source descendants Apache Cassandra~\cite{cassandra-sigmod},
 Basho Riak~\cite{riak}, and Project Voldemort~\cite{voldemortpub}
-offer a choice between two modes of operation: strict quorums and
-strong consistency or partial quorums and eventual
-consistency. Despite eventual consistency's weak guarantees, users
+offer a choice between two modes of operation: strict quorums with
+strong consistency or partial quorums with eventual
+consistency. Despite eventual consistency's weak guarantees, operators
 frequently employ partial quorums~\cite{cassandra-docs,
   cassandradefault,feinbergpc,reddit, outbrain, maxperfblog}---a
 controversial decision~\cite{hamilton-cap, cops, walter, urbanmyths}.
-Given their latency benefits, which are especially important as
-latencies grow (e.g., wide-area network
-deployments)~\cite{abadilatconsist, feinbergpc, hamilton-cap,
-  helland}, partial quorums are often acceptable.  The proliferation
-of partial quorum configurations suggests that many applications can
+Given their performance benefits, which are especially important as
+latencies grow~\cite{abadilatconsist, feinbergpc, hamilton-cap,
+  helland}, partial quorums are often considered acceptable.  The proliferation
+of partial quorum deployments suggests that many applications can
 tolerate occasional cases of staleness and that data tends to be
 ``fresh enough'' in most cases.
 
-While common practice suggests that weak eventual consistency is a
+While common practice suggests that eventual consistency is a
 viable solution for many operators, to date, this observation has been
 mostly anecdotal. In this work, we quantify the degree to which
 eventual consistency is both eventual and consistent and explain
@@ -127,29 +129,29 @@ have little to no guidance on how to chose an appropriate
 replication configuration or how to predict the behavior of partial
 quorums in production environments.
 
-To do better, we need to know when and why eventually consistent
-systems return stale data and how to quantify the staleness of the
-data they return.  In this paper, we answer these questions by
+\subsection{PBS Predictions and Contributions}
+
+To predict consistency, we need to know when and why eventually
+consistent systems return stale data and how to quantify the staleness
+of the data they return.  In this paper, we answer these questions by
 expanding prior work on \textit{probabilistic
   quorums}~\cite{prob-quorum, quorum-overview} to account for
-multi-version staleness, anti-entropy (asynchronous write
-propagation)~\cite{antientropy}, and message dissemination protocols
-as used in today's systems.  More precisely, we present algorithms and
-models for predicting the staleness of partial quorums, called
-Probabilistically Bounded Staleness (PBS) for partial quorums. There
-are two common metrics for measuring staleness in the literature:
-versions~\cite{podc-hpl, aqua, frac} and wall clock
-time~\cite{podc-hpl, vahdat-article, vahdat-bounded}.  PBS can be used
-to analyze both measures, describing the probability of reading a
-version $t$ seconds after it is written ($t$-visibility, or ``how
-eventual is eventual consistency?''), of reading one of the last $k$
-versions of a data item ($k$-staleness, or ``how consistent is
-eventual consistency?''), and of experiencing a combination of the two
-($\langle k, t \rangle$-staleness). PBS does not propose new
-mechanisms to enforce deterministic staleness bounds~\cite{ aqua,
-  trapp,vahdat-article, vahdat-bounded, frac}; instead, our goal is to
-provide a lens for analyzing, improving, and predicting the behavior
-of \textit{existing}, widely-deployed systems.
+multi-version staleness and message dissemination protocols as used in
+today's systems. More precisely, we present algorithms and models for
+predicting the staleness of partial quorums, called Probabilistically
+Bounded Staleness (PBS). There are two common metrics for measuring
+staleness in the literature: wall clock time~\cite{podc-hpl,
+  vahdat-article, vahdat-bounded} and versions~\cite{podc-hpl, aqua,
+  frac}.  PBS can be used to analyze both measures, describing the
+probability of reading a version $t$ seconds after it is written
+($t$-visibility, or ``how eventual is eventual consistency?''), of
+reading one of the last $k$ versions of a data item ($k$-staleness, or
+``how consistent is eventual consistency?''), and of experiencing a
+combination of the two ($\langle k, t \rangle$-staleness). PBS does
+not propose new mechanisms to enforce deterministic staleness
+bounds~\cite{ aqua, trapp,vahdat-article, vahdat-bounded, frac};
+instead, our goal is to provide a lens for analyzing, improving, and
+predicting the behavior of \textit{existing}, widely-deployed systems.
 
 We provide closed-form solutions for PBS $k$-staleness and use Monte
 Carlo methods to explore the trade-off between latency and
@@ -163,11 +165,11 @@ versus $45.5$ms wait time for a $99.9$\% probability of consistent
 reads) due to decreased write latency mean and variance.  We also make
 quantitative observations of the latency-consistency trade-offs
 offered by partial quorums.  For example, in another production
-environment, we observe an $81.1\%$ latency improvement at the
-$99.9$th percentile ($230$ to $43.3$ms) for a $202$ms window of
-inconsistency ($99.9\%$ probability consistent reads). This analysis
-demonstrates many of the performance benefits that lead many operators
-to choose weak consistency for their applications.
+environment, we observe an $81.1\%$ combined read and write latency
+improvement at the $99.9$th percentile ($230$ to $43.3$ms) for a
+$202$ms window of inconsistency ($99.9\%$ probability consistent
+reads). This analysis demonstrates the performance benefits that lead
+many operators to choose eventual consistency.
 
 We make the following contributions in this paper:
 
@@ -180,28 +182,30 @@ We make the following contributions in this paper:
   monotonic reads consistency.
 
 \item We provide a closed-form analysis of $k$-staleness demonstrating
-  how the probability of receiving data $k$ versions stale is
+  how the probability of receiving data $k$ versions old is
   exponentially reduced by $k$.  As a corollary, $k$-staleness tolerance also
   exponentially lowers quorum system \textit{load}.
 
 \item We describe the \textit{WARS} model for $t$-visibility in
-  Dynamo-style partial quorum systems and show how staleness message
-  reordering leads to staleness.  We evaluate the $t$-visibility of
-  Dynamo-style systems using a combination of synthetic and production
-  latency models.
+  Dynamo-style partial quorum systems and show how message reordering
+  leads to staleness.  We evaluate the $t$-visibility of Dynamo-style
+  systems using a combination of synthetic and production latency
+  models.
 
 \end{myitemize}
+
+\vspace{2em}
 
 \vspace{\sectionskip}\section{Background}
 \label{sec:background}
 
-In this section, we provide background regarding quorum systems both
-in theoretical academic literature and in practice.  We begin by
+In this section, we provide background on quorum systems both
+in the theoretical academic literature and in practice.  We begin by
 introducing prior work on traditional and probabilistic quorum
 systems.  We next discuss Dynamo-style quorums, currently the most
-widely deployed protocol for data stores employing quorum
-replication.  Finally, we survey reports of practitioner usage of
-partial quorums for three Dynamo-style data stores.
+widely deployed protocol for data stores employing quorum replication.
+Finally, we survey reports of practitioner usage of partial quorums
+for three Dynamo-style data stores.
 
 \vspace{\subsectionskip}\subsection{Quorum Foundations: Theory}
 
@@ -250,18 +254,17 @@ achieve an arbitrarily high probability of
 consistency~\cite{prob-quorum}.  Intuitively, this is a consequence of
 the Birthday Paradox: as the number of replicas increases, the
 probability of non-intersection between any two quorums decreases.
-Probabilistic quorums are typically used to study the probability of
+Probabilistic quorums are typically used to predict the probability of
 strong consistency but not (multi-version) bounded staleness.
 Merideth and Reiter provide an overview of these
 systems~\cite{quorum-overview}.
 
-As an example of a probabilistic quorum system, given $N$ replicas and
-randomly chosen read and write quorums of sizes $R$ and $W$, we can
-calculate the probability that the read quorum does not contain the
-last written version.  This probability of inconsistency is the number
-of quorums of size $R$ composed of nodes that were not written to in
-the write quorum divided by the number of possible quorums of size
-$R$:
+As an example of a probabilistic quorum system, consider $N$ replicas
+with randomly chosen read and write quorums of sizes $R$ and $W$. We
+can calculate the probability that the read quorum does not contain
+the last written version. This probability is the number of quorums of
+size $R$ composed of nodes that were not written to in the write
+quorum divided by the number of possible read quorums:
 \begin{equation}
 \label{eq:prob-strict}
 p_{s}=\frac{{N-W \choose R}}{{N \choose R}}
@@ -269,12 +272,12 @@ p_{s}=\frac{{N-W \choose R}}{{N \choose R}}
 The probability of inconsistency is high except for large $N$.  With
 $N=100$, $R=W=30$, $p_{s} = 1.88 \times
 10^{-6}$~\cite{non-strict}.  However, with $N=3$, $R=W=1$, $p_{s}
-= .\overline{6}$.  The asymptotics of these systems are
+= 0.\overline{6}$.  The asymptotics of these systems are
 excellent---but only asymptotically.
 
 \textit{$k$-quorum systems} provide \textit{deterministic} guarantees
 that a partial quorum system will return values that are within $k$
-versions of the most recent write~\cite{non-strict}.  In the single
+versions of the most recent write~\cite{non-strict}.  In a single
 writer scenario, a round-robin write scheduling scheme where each
 write is sent to $\lceil\frac{N}{k}\rceil$ replicas ensures that any
 replica is no more than $k$ versions out-of-date.  However, with
@@ -322,14 +325,13 @@ responses from a pre-determined number of replicas (typically set
 per-operation).  Accordingly, without message loss, all replicas
 eventually receive all writes.  This means that the write and read
 quorums chosen for a request depend on which nodes respond to the
-request first.  In Dynamo terminology, the quorum size, or replication
-factor, is defined as $N$, the number of replica responses required
-for a successful read is defined as $R$, and the number of replica
-acknowledgments required for a successful write is defined as
-$W$. Dynamo-style systems are guaranteed to be consistent when $R+W >
-N$.  Setting $W>\lceil N/2 \rceil$ ensures that a majority of replicas
-will will receive a write in the presence of multiple concurrent write
-requests.
+request first.  In Dynamo terminology the replication factor is
+denoted $N$, the number of replica responses required for a successful
+read is denoted $R$, and the number of replica acknowledgments
+required for a successful write is denoted $W$. Under normal
+operation, Dynamo-style systems guarantee consistency when
+$R$$+$$W$$>$$N$.  Setting $W$$>$$\lceil$$N/2$$\rceil$ ensures
+consistency in the presence of concurrent writes.
 
 \begin{figure}
 \centering
@@ -397,19 +399,14 @@ Riak defaults to $N$$=$$3$, $R$$=$$W$$=$$2$~\cite{riakdefault-n,
  availability,'' LinkedIn deploys Voldemort with $N$$=$$3$,
  $R$$=$$W$$=$$1$.  For other applications, LinkedIn deployments
  Voldemort with $N$$=$$2$, $R$$=$$W$$=$$1$, providing ``some
- consistency,'' particularly when $N$$=$$3$ replication is not
- required.  Additionally, Voldemort supports a concept of preferred
- reads and writes, meaning it will block until either the preferred
- number of replicas respond or a timeout occurs, at which point the
- request succeeds. Preferred reads is often set to two or disabled.  Voldemort
- also differs from Dynamo in that it sends read requests to $R$ of $N$
+ consistency,'' particularly when three-way replication is not
+ required.  Unlike Dynamo, Voldemort sends read requests to $R$ of $N$
  replicas (not $N$ of $N$)~\cite{voldemortpub}; this decreases load
  per replica and network traffic at the expense of read latency and
- potential availability.  Provided the per-request staleness
- probabilities are independent, this does not affect staleness: even
+ potential availability.  Provided staleness probabilities are
+ independent across requests, this does not affect staleness: even
  when sending reads to $N$ replicas, coordinators only wait for $R$
  responses.
-
 
 \vspace{\sectionskip}\section{Probabilistically Bounded\\Staleness}
 \label{sec:pbs}
@@ -485,12 +482,12 @@ p_{sk} = \left(\frac{{N-W \choose R}}{{N \choose R}}\right)^k
 \end{equation}
 
 When $N$$=$$3$, $R$$=$$W$$=$$1$, this means that the probability of
-returning a version within $2$ versions is $.\overline{5}$, within $3$
-versions, $.\overline{703}$, $5$ versions, $> .868$, and $10$
-versions, $>.98$.  When $N$$=$$3$, $R$$=$$1$, $W$$=$$2$ (equivalently,
+returning a version within $2$ versions is $0.\overline{5}$, within $3$
+versions, $0.\overline{703}$, $5$ versions, $> 0.868$, and $10$
+versions, $>0.98$.  When $N$$=$$3$, $R$$=$$1$, $W$$=$$2$ (or, equivalently,
 $R$$=$$2$, $W$$=$$1$), these probabilities increase: $k$$=$$1
-\rightarrow .\overline{6}$, $k$$=$$2 \rightarrow .\overline{8}$, and
-$k$$=$$5 \rightarrow > .995$.
+\rightarrow 0.\overline{6}$, $k$$=$$2 \rightarrow 0.\overline{8}$, and
+$k$$=$$5 \rightarrow > 0.995$.
 
 This closed form solution holds for quorums that do not change size
 over time.  For expanding partial quorum systems, this solution is an
@@ -499,7 +496,7 @@ upper bound on the probability of staleness.
 \vspace{\subsectionskip}\subsection{PBS Monotonic Reads}
 
 PBS $k$-staleness can be used to predict whether a client will ever
-older staler data than it has already read, a well-known session
+read older data than it has previously read, a well-known session
 guarantee called \textit{monotonic reads}
 consistency~\cite{sessionguarantees}.  This is particularly useful
 when clients do not need to see the most recent version of a data item
@@ -749,7 +746,7 @@ received reached their respective replicas before the replicas
 received the latest version (delayed by \texttt{W}).  When
 $R$$+$$W$$>$$N$, this is impossible.  However, under partial quorums,
 the frequency of this occurrence depends on the latency distributions.
-If we denote the commit time (when the coordinator has recieved $W$
+If we denote the commit time (when the coordinator has received $W$
 acknowledgments) as $w_t$, a single replica's response is stale if
 $r'+w_t+t< w'$ for $r'$ drawn from \texttt{R} and $w'$ drawn from
 \texttt{W}.  Writes have time to propagate to additional replicas both
@@ -830,7 +827,7 @@ system.
 In contrast, \textit{WARS} captures expanding quorum behavior
 independent of read rate and with conservative write rate
 assumptions. \textit{WARS} considers a single read and a single
-write. Aside from load considerations, oncurrent reads do not affect
+write. Aside from load considerations, concurrent reads do not affect
 staleness. If multiple writes overlap (that is, have overlapping
 periods where they are in-flight but are not committed) the
 probability of inconsistency decreases.  This is because overlapping
@@ -1111,8 +1108,8 @@ which we believe are justified given the benefit of production data.
 Without additional data on the latency required to read multiple
 replicas, we assume that each latency distribution is independently,
 identically distributed (IID).  We fit each configuration using a
-mixture model with two separate distributions, one for the body and
-the other for the tail.
+mixture model with two distributions, one for the body and the other
+for the tail.
 
 LinkedIn provided two latency distributions, whose fits we denote
 \texttt{LNKD-SSD} and \texttt{LNKD-DISK} for the SSD and spinning
@@ -1206,8 +1203,7 @@ requests are delayed at least 150ms.
 \label{fig:latencies}
 \end{figure*}
 
-
-\vspace{2em}
+\vspace{3em}
 
 \vspace{\subsectionskip}\subsection{Observed {\large$t$}-visibility}
 
@@ -1256,7 +1252,7 @@ for the long propagation delay to observe the most recent value.
 \subfigure{\includegraphics[width=17mm]{figs/stalex.pdf}}
 \vspace{-10pt}
 \caption{$t$-visibility for production operation latencies.}
-\vspace{-6pt}
+\vspace{-2pt}
 
 \label{fig:tvis}
 \end{figure*}
@@ -1292,7 +1288,8 @@ $t$-visibility staleness will still converge quickly.
 \label{fig:varyn}
 \end{figure*}
 
-\vspace{1em}
+\vspace{2em}
+
 \vspace{\subsectionskip}\subsection{Latency vs. {\large $t$}-visibility}
 
 Choosing a value for $R$ and $W$ is a trade-off between operation
@@ -1313,7 +1310,7 @@ nines''), we did not observe staleness with $R$$=$$2$, $W$$=$$1$.
 $R$$=$$W$$=$$1$ reduced latency by $59.5\%$ ($1.94$ms) with a
 corresponding $t$-visibility of $1.85$ms.  Under \texttt{WAN}, $R > 1$
 or $W > 1$ results in a large latency increase because this requires
-WAN messages. In summary, owering values of $R$ and $W$ can
+WAN messages. In summary, lowering values of $R$ and $W$ can
 significantly improve operation latency and that $t$-visibility can be
 low even when a high probability of consistent reads is required.
 
@@ -1451,7 +1448,7 @@ inability to maintain all three of consistency, availability, and
 partition tolerance~\cite{cap-proof}, data stores have turned to
 ``eventually consistent'' semantics to provide availability in the
 face of partitions~\cite{consistency-partitioning, vogels-defs}.
-Real-time causal (RTC) consistency is the strongest consistency model
+Real-time causal consistency is the strongest consistency model
 achievable in an available, one-way convergent (eventually consistent)
 system~\cite{rtc-proof}. However, there is a plethora of alternative
 consistency models offering various performance trade-offs, from
@@ -1490,8 +1487,10 @@ consistency predictions and understanding staleness violations.
 
 In this paper, we introduced Probabilistically Bounded Staleness,
 which models the expected staleness of data returned by eventually
-consistent quorum-replicated data stores.  By extending prior theory
-on probabilistic quorum systems, we derived an analytical solution for
+consistent quorum-replicated data stores.  PBS offers an alternative
+to the all-or-nothing consistency guarantees of today's systems by
+offering SLA-style consistency predictions. By extending prior theory on
+probabilistic quorum systems, we derived an analytical solution for
 the $k$-staleness of a partial quorum system, representing the
 expected staleness of a read operation in terms of versions.  We also
 analyzed $t$-visibility, or expected staleness of a read in terms of

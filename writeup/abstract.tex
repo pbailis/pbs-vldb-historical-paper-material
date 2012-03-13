@@ -1,25 +1,27 @@
 
 \begin{abstract}
 
-Data store replication leads to a fundamental trade-off between
-operation latency and data consistency: stronger consistency typically
-requires more coordination, resulting in increased
-latency. Accordingly, systems employing quorum replication are often
-configured to use partial, non-strict quorums, waiting only for a
-subset of replicas to respond to a request before returning data and
-without guaranteeing that read and write replica sets intersect.
-Partial quorums provide only basic eventual consistency guarantees,
-with no limit to the recency of data returned, yet, anecdotally, they
-are often ``good enough'' for practitioners given their latency
-benefits. In this work, we explain why partial quorums are regularly
-acceptable in practice by analyzing both the staleness of data they
-return and the latency benefits they offer. We introduce
-Probabilistically Bounded Staleness (PBS) consistency, which provides
-expected bounds on staleness with respect to both versions and wall
-clock time.  We derive a closed-form solution for versioned staleness
-and model real-time staleness for representative Dynamo-style systems
-under internet-scale production workloads.  We quantitatively
-demonstrate why, in practice, eventually consistent systems using
-partial quorums frequently serve consistent data.
+Data store replication results in a fundamental trade-off between
+operation latency and data consistency. In this paper, we examine this
+trade-off in the context of quorum-replicated data stores. Under
+partial, or non-strict quorum replication, a data store waits for
+responses from a subset of replicas before answering a query, without
+guaranteeing that read and write replica sets intersect. As deployed
+in practice, these configurations provide only basic eventual
+consistency guarantees, with no limit to the recency of data
+returned. However, anecdotally, partial quorums are often ``good
+enough'' for practitioners given their latency benefits. In this work,
+we explain why partial quorums are regularly acceptable in practice,
+analyzing both the staleness of data they return and the latency
+benefits they offer. We introduce Probabilistically Bounded Staleness
+(PBS) consistency, which provides expected bounds on staleness with
+respect to both versions and wall clock time.  We derive a closed-form
+solution for versioned staleness as well as model real-time staleness
+for representative Dynamo-style systems under internet-scale
+production workloads. Using PBS, we measure the
+latency-consistency trade-off for partial quorum systems. We quantitatively
+demonstrate how eventually consistent systems frequently return
+consistent data within tens of milliseconds while offering significant
+latency benefits.
 
 \end{abstract}

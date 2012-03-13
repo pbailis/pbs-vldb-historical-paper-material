@@ -1259,6 +1259,7 @@
           \vskip -9pt  % GM July 2000 (for tighter spacing)
          \@mkboth{{\refname}}{{\refname}}%
      }%
+     \vspace{2mm}
      \list{[\arabic{enumi}]}{%
          \settowidth\labelwidth{[#1]}%
          \leftmargin\labelwidth
