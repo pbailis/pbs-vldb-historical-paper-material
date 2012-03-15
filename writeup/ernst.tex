@@ -215,11 +215,11 @@ data store writes a data item by sending it to a set of replicas,
 called a write quorum.  To serve reads, the data store fetches the
 data from a possibly different set of replicas, called a read quorum.
 For reads, the data store compares the set of values returned by the
-replicas, and, given a total ordering of versions\footnote{This
+replicas, and, given a total ordering of versions,\footnote{This
   total ordering can be achieved using globally synchronized
   clocks~\cite{synch-clocks} or using a causal ordering provided by
   mechanisms such as vector clocks~\cite{vectorclock} with commutative
-  merge functions~\cite{cops}}, can return the most recent value (or
+  merge functions~\cite{cops}} can return the most recent value (or
 all values received, if desired).  For each operation, read and write
 quorums are chosen from a set of sets of replicas, known as a
 \textit{quorum system}, with one system per data item.  There are many
@@ -1507,7 +1507,7 @@ while offering significant latency benefits.
 
 \vspace{\sectionskip}\section*{Interactive Demonstration} An
 interactive demonstration of Dynamo-style PBS is available at
-\url{http://bailis.org/projects/pbs/#demo}.
+\url{http://pbs.cs.berkeley.edu/#demo}.
 
 \section*{Acknowledgments}
 
