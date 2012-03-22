@@ -2,6 +2,7 @@
 @inproceedings{podc-hpl,
 title = {Analyzing Consistency Properties for Fun and Profit},
 author = {Wojciech Golab and Xiaozhou Li and Mehul A. Shah},
+pages = {197--206},
 booktitle = {PODC 2011}}
 
 @article{prob-quorum,
@@ -21,26 +22,28 @@ pages = {184-206}}
  author = {Yu, Haifeng and Vahdat, Amin},
  title = {The Costs and Limits of Availability for
 Replicated Services},
-journal = {ACM Transactions on Computer Systems},
+journal = {ACM TOCS},
 volume = {24(1)},
-month = {February},
 year = {2006},
 pages = {70–-113}}
 } 
 
 @inproceedings{measure-consistency,
-title = {Eventual consistency: How soon is eventual? An evaluation of {Amazon S3's} consistency behavior},
+title = {Eventual consistency: How soon is eventual? {An} evaluation of {Amazon S3's} consistency behavior},
 author = {David Bermbach and Stefan Tai},
+
 booktitle = {MW4SOC 2011}}
 
 @inproceedings{consistency-cidr,
-title = {Data Consistency Properties and the Trade-offs in Commercial Cloud Storages: the Consumers’ Perspective},
+title = {Data Consistency Properties and the Trade-offs in Commercial Cloud Storage: the Consumers’ Perspective},
 author = {Hiroshi Wada and Alan Fekete and Liang Zhao and Kevin Lee and Anna Liu},
+pages = {134--143},
 booktitle = {CIDR 2011}}
 
 @inproceedings{antientropy,
  author = {Demers, Alan and Greene, Dan and Hauser, Carl and Irish, Wes and Larson, John and Shenker, Scott and Sturgis, Howard and Swinehart, Dan and Terry, Doug},
  title = {Epidemic algorithms for replicated database maintenance},
+pages = {1--12},
 booktitle={PODC 1987}}
 
 @online{datastax,
@@ -54,7 +57,7 @@ howpublished = "\url{http://datastax.com/docs/1.0/dml/data_consistency}"}
 @online{maxperfblog,
 author = {Dominic Williams},
 title = {{HBase vs Cassandra: why we moved}},
-note = {24 February 2010 (accessed 13 December 2011)},
+note = {24 February 2010},
 howpublished = "\url{http://ria101.wordpress.com/2010/02/24/hbase-vs-cassandra-why-we-moved}"}
 
 @online{outbrain,
@@ -72,8 +75,8 @@ howpublished = "\url{http://sdruby.org/podcast/81}"}
 @online{urbanmyths,
 title = {Urban myths about {SQL}},
 author = {Michael Stonebraker},
-note = {VoltDB Webinar, 11 June 2010},
-howpubulished = "\url{http://voltdb.com/_pdf/VoltDB-MikeStonebraker-SQLMythsWebinar-060310.pdf}"}
+note = {VoltDB Webinar, June 2010},
+howpublished = "\url{http://voltdb.com/_pdf/VoltDB-MikeStonebraker-SQLMythsWebinar-060310.pdf}"}
 
 @online{riaktalkone,
 title = {Consistency or Bust: Breaking a {Riak} Cluster},
@@ -89,7 +92,7 @@ howpublished = "\url{https://github.com/apache/cassandra/blob/cassandra-1.0/inte
 title = {Cassandra Wiki: Operations},
 howpublished =
                   "\url{http://wiki.apache.org/cassandra/Operations#Repairing_missing_or_inconsistent_data}",
-note = {Accessed 13 December 2011}}
+note = {accessed 13 December 2011}}
 
 @incollection{nosql,
 author = {Adam Marcus},
@@ -101,14 +104,14 @@ year = {2011}}
 
 @online{reddit,
 author = {David King},
-title = {As \textit{keltranis}, comment on "reddit's now running on Cassandra"},
+title = {\textit{keltranis} comment on "reddit's now running on {Cassandra}"},
 note = {March 2010},
 howpublished = "\url{http://www.reddit.com/r/programming/comments/bcqhi/reddits_now_running_on_cassandra/c0m3wh6}"}
 
 @online{riakdefault-n,
 author= {{Basho Technologies, Inc.}},
 title = {Riak Wiki: Riak $>$ Concepts $>$ Replication},
-note = {Accessed 13 December 2011},
+note = {accessed 13 December 2011},
 howpublished = "\url{http://wiki.basho.com/Replication.html}"}
 
 @online{riakdefault-rw,
@@ -139,8 +142,9 @@ note = {24 February 2010},
 howpublished = "\url{http://perspectives.mvdirona.com/2010/02/24/ILoveEventualConsistencyBut.aspx}"}
 
 @inproceedings{calm,
-title = {{Consistency Analysis in {Bloom}: a {CALM} and Collected Approach}},
+title = {Consistency Analysis in {Bloom}: a {CALM} and Collected Approach},
 author = {Peter Alvaro and Neil Conway and Joseph M. Hellerstein and William R. Marczak},
+pages = {249--260},
 booktitle = {CIDR 2011}}
 
 @inproceedings{helland,
@@ -151,23 +155,23 @@ booktitle = {CIDR 2009}}
 @article{consistency-partitioned,
 author = {Susan B. Davidson},
 title = {Optimism  and Consistency  In Partitioned 
-Distributed  Database Systems},
-journal = {ACM  Trans.  on Database Systems},
+Distributed  Database Sys.},
+journal = {ACM  Trans.  on Database Sys.},
 volume = {9(3)},
-month = {September},
 year = {1984},
 pages={456--481}}
 
 @inproceedings{treequorum,
 author = {Divyakant Agrawal and Amr El Abbadi},
 title = {The Tree Quorum Protocol: An Efficient Approach for Managing Replicated Data},
+pages = {243--254},
 booktitle = {VLDB 1990}}
 }
 
 @article{partitionedquorum,
 author = {Maurice Herlihy},
 title = {Dynamic quorum adjustment for partitioned data},
-journal = {ACM Transactions on Database Systems},
+journal = {ACM Trans. on Database Sys.},
 volume = {12 (2)},
 year = {1987},
 pages = {170--194},
@@ -176,9 +180,8 @@ pages = {170--194},
 @article{vahdat-article,
  author = {Yu, Haifeng and Vahdat, Amin},
 title = {Design and Evaluation of a Conit-Based Continuous Consistency Model for Replicated Services},
-journal = {ACM Transactions on Computer Systems},
+journal = {ACM TOCS},
 volume = {20(3)},
-month = {August},
 year = {2002},
 pages = {239-–282}}
 
@@ -192,11 +195,13 @@ Storage Symposium (Netstore)}}
 @inproceedings{non-strict,
 title = {On the Availability of Non-strict Quorum Systems},
 author = {Amitanand Aiyer and Lorenzo Alvisi and Rida A. Bazzi},
+ pages = {48--62},
 booktitle = {DISC 2005}}
 
 @inproceedings{multi-k-quorum,
 title = {Byzantine and Multi-writer K-Quorums},
 author = {Amitanand S. Aiyer and Lorenzo Alvisi and Rida A. Bazzi},
+pages = {443--458},
 booktitle = {DISC 2006}}
 
 @ARTICLE{quorumsystems,
@@ -213,7 +218,6 @@ booktitle = {DISC 2006}}
  title = {Toward a cloud computing research agenda},
  journal = {SIGACT News},
  volume = {40(2)},
- month = {June},
  year = {2009},
  pages = {68--80},
 } 
@@ -221,7 +225,7 @@ booktitle = {DISC 2006}}
 @article{berkeleyview,
  author = {Armbrust, Michael and Fox, Armando and Griffith, Rean and Joseph, Anthony D. and Katz, Randy and Konwinski, Andy and Lee, Gunho and Patterson, David and Rabkin, Ariel and Stoica, Ion and Zaharia, Matei},
  title = {A view of cloud computing},
- journal = {Communications of the ACM},
+ journal = {CACM},
  issue_date = {April 2010},
  volume = {53},
  issue = {4},
@@ -244,12 +248,14 @@ howpublished = "\url{http://glinden.blogspot.com/2006/11/marissa-mayer-at-web-20
 @inproceedings{dynamo,
  author = {DeCandia, Giuseppe and Hastorun, Deniz and Jampani, Madan and Kakulapati, Gunavardhan and Lakshman, Avinash and Pilchin, Alex and Sivasubramanian, Swaminathan and Vosshall, Peter and Vogels, Werner},
  title = {Dynamo: {Amazon's} highly available key-value store},
+ pages = {205--220},
  booktitle = {SOSP 2007},
 } 
 
 @inproceedings{trapp,
 title = {Offering a Precision-Performance Tradeoff for Aggregation Queries over Replicated Data},
 author = {Chris Olston and Jennifer Widom},
+pages = {144--155},
 booktitle = {VLDB 2000}}
 
 @misc{dean-keynote,
@@ -262,24 +268,25 @@ author = {S. Krishnamurthy and W. H. Sanders and M.  Cukier},
 title = {An Adaptive Quality of Service Aware Middleware for Replicated Services},
 journal = {IEEE Trans. on Parallel and Distributed Systems},
 volume = {14(11)},
-month = {November},
 year={2003}}
 
 @inproceedings{nsdispeculation,
 author = {B. Wester and J. Cowling and E. B. Nightingale and P. M. Chen and J. Flinn and B. Liskov},
 title = {Tolerating latency in replicated state machines through client speculation},
+pages = {245--260},
 booktitle = {NSDI 2009}}
 
 @inproceedings{frac,
 author = {Chi Zhang and Zheng Zhang},
 title = {Trading Replication Consistency for Performance and Availability: an Adaptive Approach},
+pages = {687--695},
 booktitle = {ICDCS 2003}}
 
 @incollection {quorum-overview,
    author = {Merideth, Michael and Reiter, Michael},
    title = {Selected Results from the Latest Decade of Quorum Systems Research},
    booktitle = {Replication},
-   series = {Lecture Notes in Computer Science},
+   series = {LNCS},
    publisher = {Springer},
    keyword = {Computer Science},
    pages = {185-206},
@@ -293,7 +300,6 @@ booktitle = {ICDCS 2003}}
  journal = {SIGACT News},
  volume = {33},
  issue = {2},
- month = {June},
  year = {2002},
  issn = {0163-5700},
  pages = {51--59},
@@ -307,7 +313,7 @@ booktitle = {ICDCS 2003}}
 @article{paxos,
 author = {Leslie Lamport},
 title = {The part-time parliament},
-journal = {ACM Transactions on Computer Systems},
+journal = {ACM TOCS},
 year = {1998},
 volume = {16(2)},
 pages={133--169}}
@@ -323,26 +329,28 @@ pages = {59--69}}
 @inproceedings{quorum-placement,
 title = {Quorum Placement in Networks to Minimize Access Delays},
 author = {Anupam Gupta and Bruce M. Maggs and Florian Oprea and Michael K. Reiter},
+pages = {87--96},
 booktitle = {PODC 2005}}
 
 @inproceedings{prob-quorum-dynamic,
 author = {Ittai Abraham and Dahlia Malkhi},
 title = {Probabilistic Quorums for Dynamic Systems (Extended Abstract)},
+pages = {60--74},
 booktitle = {DISC 2003}}
 
 @inproceedings{piql,
 author = {Michael Armbrust and Kristal Curtis and Tim Kraska and Armando Fox and Michael J. Franklin and David A. Patterson},
 title = {{PIQL}: Success-Tolerant Query Processing in the Cloud},
+pages = {181--192},
 booktitle = {VLDB 2012}}
 
 @article{vogels-defs,
  author = {Vogels, Werner},
  title = {Eventually consistent},
- journal = {Communications of the ACM},
+ journal = {CACM},
  issue_date = {January 2009},
  volume = {52},
  issue = {1},
- month = {January},
  year = {2009},
  issn = {0001-0782},
  pages = {40--44},
@@ -360,10 +368,9 @@ note = {Presented at Velocity Web Performance and Operations Conference, {June 2
 @article{sequential,
  author = {Attiya, Hagit and Welch, Jennifer L.},
  title = {Sequential consistency versus linearizability},
- journal = {ACM Transactions Comput. Syst.},
+ journal = {ACM TOCS},
  volume = {12},
  issue = {2},
- month = {May},
  year = {1994},
  issn = {0734-2071},
  pages = {91--122},
@@ -376,10 +383,9 @@ note = {Presented at Velocity Web Performance and Operations Conference, {June 2
 @article{quorums-alternative,
  author = {Jim\'{e}nez-Peris, Ricardo and Pati\~{n}o-Mart\'{\i}nez, M. and Alonso, Gustavo and Kem Bettina},
  title = {Are quorums an alternative for data replication?},
- journal = {ACM Transactions Database Syst.},
+ journal = {ACM Trans. on Database Sys.},
  volume = {28},
  issue = {3},
- month = {September},
  year = {2003},
  issn = {0362-5915},
  pages = {257--294},
@@ -412,12 +418,9 @@ note={23, 24 October, 14, 19, 21, 30 November, 1 December 2011}}
                Amr El Abbadi},
   title     = {Resilient Logical Structures for Efficient Management of Replicated
                Data},
+pages = {151--162},
   booktitle = {VLDB 1992},
 }
-
-@online{riak,
-title = {{Basho Riak}},
-howpublished="\url{http://basho.com/products/riak-overview/}"}
 
 @inproceedings {voldemortpub,
 title = {{Project Voldemort}: Reliable Distributed Storage},
@@ -428,6 +431,7 @@ booktitle = {ICDE 2011}}
 @INPROCEEDINGS{sessionguarantees,
     author = {Douglas B. Terry and Alan J. Demers and Karin Petersen and Mike J. Spreitzer and Marvin M. Theimer and Brent B. Welch},
     title = {Session Guarantees for Weakly Consistent Replicated Data},
+    pages = {140--149},
     booktitle = {PDIS 1994}
 }
 
@@ -453,6 +457,7 @@ note = {16 June 2011 (accessed 21 December 2011)}}
 @inproceedings{quorums-start,
 title = {Weighted Voting for Replicated Data},
 author = {David K. Gifford},
+pages = {150--162},
 booktitle = {SOSP 1979}}
 
 @inproceedings{cops,
@@ -460,13 +465,14 @@ booktitle = {SOSP 1979}}
 	David G. Andersen},
    title = {Don't settle for Eventual: Scalable Causal Consistency for
 	Wide-Area Storage with {COPS}},
+ pages = {401--416},
    booktitle = {SOSP 2011},
 }
 
 @article{vectorclock,
 author = {Leslie Lamport},
 title = {Time, clocks, and the ordering of events in a distributed system},
-journal = {Commun. ACM},
+journal = {CACM},
 volume = {21(7)},
 pages = {558--565},
 year = {1978}}
@@ -474,18 +480,21 @@ year = {1978}}
 @inproceedings{synch-clocks,
 title = {Practical Uses of Synchronized Clocks in Distributed Systems},
 author = {Barbara Liskov},
+ pages = {1--9},
 booktitle = {PODC 1991}}
 
 @inproceedings{zookeeper,
 title = {{ZooKeeper}: Wait-free coordination for Internet-scale systems},
 author = {Patrick Hunt and Mahadev Konar and Flavio P. Junqueira and Benjamin Reed},
+pages={145--158},
 booktitle = {USENIX ATC 2010}}
 
 
 @inproceedings{cassandra-sigmod,
-author = {A. Lakshman and  P. Malik and K. Ranganathan},
-title = {Cassandra: A structured storage system on a {P2P} network},
-booktitle = {SIGMOD 2008}}
+author = {A. Lakshman and  P. Malik},
+title = {Cassandra - A decentralized structured storage system},
+pages = {35--40},
+booktitle = {LADIS 2008}}
 
 @inproceedings{time-virt,
 author = {Timothy Broomhead and Laurence Cremean and Julien Ridoux and Darryl Veitch},
@@ -495,21 +504,21 @@ booktitle = {OSDI 2010}}
 @inproceedings{danger-rep,
 author =  {J. Gray and P. Helland and P. O’Neil and D. Shasha},
 title = {The dangers of replication and a solution},
+pages = {173--182},
 booktitle = {SIGMOD 1996}}
 
 @article{linearizability,
 author={M. Herlihy and J. M. Wing},
 title={Linearizability: a correctness condition for concurrent objects},
-journal ={ACM Transactions on Programming Languages and Systems},
+journal ={ACM Trans. on Programming Languages and Systems},
 volume = {12(3)},
 pages = {463--492},
-month={June},
 year={1990}}
 
 @article{consistency-partitioning,
 author = {S. Davidson and H. Garcia-Moina and D. Skeen},
 title = {Consistency in Partitioned Networks},
-journal = {ACM Computing Surveys},
+journal = {ACM Comp. Surveys},
 volume = {17(3)},
 pages = {314--370},
 year = {1985}}
@@ -517,6 +526,7 @@ year = {1985}}
 @inproceedings{walter,
 author = {Y. Sovran and R. Power and M. K. Aguilera and J. Li.},
 title = {Transactional storage for geo-replicated systems},
+pages = {385--400},
 booktitle={SOSP 2011}}
 
 @techreport{rtc-proof,
@@ -524,5 +534,4 @@ title={Consistency, Availability, Convergence},
 author = {P. Mahajan and L. Alvisi and M. Dahlin},
 institution = {Computer Science Department, University of Texas at Austin},
 number={TR-11-22},
-month={May},
 year = {2011}}
