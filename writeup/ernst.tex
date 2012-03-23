@@ -299,15 +299,12 @@ revisit these assumptions in the next section.
 In practice, many distributed data management systems use quorums as a
 replication mechanism. Amazon's Dynamo~\cite{dynamo} is the progenitor
 of a class of eventually-consistent key-value stores that includes
-Apache Cassandra,\footnote{Apache Cassandra.
-  \url{cassandra.apache.org}} Basho Riak,\footnote{Basho Riak.
-  \url{www.basho.org}} and LinkedIn's Project
-Voldemort.\footnote{Project Voldemort.
-  \url{www.project-voldemort.com}}  All use the same variant of
+Apache Cassandra~\cite{cassandra-sigmod}, Basho Riak~\cite{riak}, and LinkedIn's Project
+Voldemort~\cite{voldemortpub}.  All use the same variant of
 quorum-style replication and we are not aware of any widely adopted
-data store using a vastly different quorum replication protocol.  However,
-with some work, we believe that other styles of replication can adopt
-our methodology.  We describe key-value stores here, but any
+data store using a vastly different quorum replication protocol.
+However, with some work, we believe that other styles of replication
+can adopt our methodology.  We describe key-value stores here, but any
 replicated data store can use quorums, including full RDBMS systems.
 
 Dynamo-style quorum systems employ one quorum system per key,
@@ -343,19 +340,20 @@ concurrent writes.
 \end{figure}
 
 There are significant differences between quorum theory and data
-systems used in practice.  First, replication factors for distributed
-data stores are low.  Typical replication factors are between one and
+systems used in practice.  First, replication factors for data stores
+are low, typically between one and
 three~\cite{cassandradefault, feinbergpc, codapc}.  Second, (in the
 absence of failure), in Dynamo-style partial quorums, the write quorum
 size increases even after the operation returns, growing via
-anti-entropy~\cite{antientropy}.  Moreover, coordinators send all
-requests to all replicas, but coordinators consider only the first $R$ responses.  As a matter of nomenclature (and to disambiguate against
-``dynamic'' quorum membership protocols), we will refer to these
-systems as \textit{expanding partial quorum systems}. (We discuss
-additional anti-entropy in Section~\ref{sec:anti-entropy}.) Third, as
-in much of the applied literature, practitioners focus on fail-stop
-instead of Byzantine failure modes~\cite{birman-byzantine}.  Following
-standard practice, we do not consider Byzantine failure.
+anti-entropy~\cite{antientropy}.  Coordinators send all requests to
+all replicas but consider only the first $R$ ($W$) responses.  As a
+matter of nomenclature (and to disambiguate against ``dynamic'' quorum
+membership protocols), we will refer to these systems as
+\textit{expanding partial quorum systems}. (We discuss additional
+anti-entropy in Section~\ref{sec:anti-entropy}.) Third, as in much of
+the applied literature, practitioners focus on fail-stop instead of
+Byzantine failure modes~\cite{birman-byzantine}.  Following standard
+practice, we do not consider Byzantine failure.
 
 %\vspace{2em}
 
@@ -487,6 +485,8 @@ $k$$=$$5 \rightarrow > 0.995$.
 This closed form solution holds for quorums that do not change size
 over time.  For expanding partial quorum systems, this solution is an
 upper bound on the probability of staleness.
+
+\vspace{1em}
 
 \vspace{\subsectionskip}\subsection{PBS Monotonic Reads}
 
@@ -639,8 +639,7 @@ quorums.  Additionally, one can model both transient and permanent
 failures by increasing the tail probabilities of $P_w$
 (Section~\ref{sec:discussion}).
 
-\vspace{2em}
-
+\vspace{3em}
 
 \vspace{\subsectionskip}\subsection{PBS $\langle k, t \rangle$-staleness}
 
@@ -1137,8 +1136,7 @@ We also considered a wide-area network replication scenario, denoted
 accordingly, one replica command completes quickly and the coordinator
 routes the others remotely.  We delay remote messages by 75ms and
 apply \texttt{LNKD-DISK} delays once the command reaches a remote data
-center, reflecting multi-continent WAN network
-delay~\cite{dean-keynote}
+center, reflecting multi-continent WAN delay~\cite{dean-keynote}.
 
 We show the parameters for each distribution in Table~\ref{table:fits}
 and plot each fitted distribution in Figure~\ref{fig:latencies}.  Note
@@ -1197,7 +1195,6 @@ only one local read (write) and the network delays all other read
 \label{fig:latencies}
 \end{figure*}
 
-
 \vspace{\subsectionskip}\subsection{Observed {\large$t$}-visibility}
 
 We measured the $t$-visibility for each distribution
@@ -1212,17 +1209,16 @@ reaching over a $99.999\%$ probability of consistent reads after five
 milliseconds. \texttt{LNKD-SSD}'s reads briefly raced its writes
 immediately after commit.  However, within a few milliseconds after
 the write, the chance of a read arriving before the last write was
-nearly eliminated. The distribution's read and write
-operation latencies were small (median $.489$ms), and writes
-completed quickly across all replicas due to the distribution's short
-tail ($99.9$th percentile $.657$ms).  In contrast, under
-\texttt{LNKD-DISK}, writes take much longer (median $1.50$ms)
-and have a longer tail ($99.9$th percentile $10.47$ ms).
-\texttt{LNKD-DISK}'s $t$-visibility reflects this defference:
-immediately after write commit, \texttt{LNKD-DISK} had only a $43.9\%$
-probability of consistent reads and, ten ms later, only a $92.5\%$
-probability.  This suggests that SSDs may drastically
-improve consistency in practice due to reducing write variance.
+nearly eliminated. The distribution's read and write operation
+latencies were small (median $.489$ms), and writes completed quickly
+across all replicas due to the distribution's short tail ($99.9$th
+percentile $.657$ms).  In contrast, under \texttt{LNKD-DISK}, writes
+take much longer (median $1.50$ms) and have a longer tail ($99.9$th
+percentile $10.47$ ms).  \texttt{LNKD-DISK}'s $t$-visibility reflects
+this defference: immediately after write commit, \texttt{LNKD-DISK}
+had only a $43.9\%$ probability of consistent reads and, ten ms later,
+only a $92.5\%$ probability.  This suggests that SSDs may greatly
+improve consistency due to reduced write variance.
 
 We experienced similar effects with the other distributions.
 Immediately after commit, \texttt{YMMR} had a $89.3\%$ chance of
@@ -1230,9 +1226,9 @@ consistency.  However, \texttt{YMMR}'s long tail hampered its
 $t$-visibility increase and reached a $99.9\%$ probability of
 consistency 1364 ms after commit.  As expected, \texttt{WAN} observed
 poor chances of consistency until after the 75 milliseconds passed
-($33\%$ chance immediately after commit); The client had to wait for a
-long propagation delay to observe the most recent write unless it
-originated in the reading client's data center,
+($33\%$ chance immediately after commit); the client had to wait longer to
+observe the most recent write unless it originated from the reading
+client's data.
 
 \begin{figure*}[t!]
 \centering
@@ -1277,11 +1273,9 @@ $t$-visibility staleness will still converge quickly.
 \subfigure{\includegraphics[width=.65\columnwidth]{figs/sweepn-WAN.pdf}}
 \vspace{-14pt}
 \caption{$t$-visibility for production operating latencies for variable $N$ and $R$$=$$W$$=$$1$.}
-\vspace{-10pt}
+\vspace{-6pt}
 \label{fig:varyn}
 \end{figure*}
-
-\vspace{2em}
 
 \vspace{\subsectionskip}\subsection{Latency vs. {\large $t$}-visibility}
 
@@ -1402,21 +1396,21 @@ feasible but require considerable care in implementation, complicating
 what is otherwise a simple replication scheme.
 
 \textbf{Failure modes.} In our evaluation of $t$-visibility, we
-focused on normal operating conditions. Unless failures are
-common-case, they affect tail staleness probabilities (which appear as
-latency spikes in \textit{WARS}).  For example, if, as Jeff Dean of
-Google suggests~\cite{dean-keynote}, servers crash at least twice per
-year, given a ten hour downtime per failure, this roughly represents
+focused on normal, steady-state operating conditions. Unless failures
+are common-case, they affect tail staleness probabilities (which
+appear as latency spikes in \textit{WARS}).  For example, if, as Jeff
+Dean of Google suggests~\cite{dean-keynote}, servers crash at least
+twice per year, given a ten hour downtime per failure, this results in
 .23\% downtime per machine per year.  If failures are correlated, this
-small percentage may be a problem. However, if they are independent, a
+may be a problem. If they are independent, a
 replica set of $N$ nodes with $F$ failed nodes behaves like an $N-F$
 replica set.  The probability of all $N$ nodes failing is $(.23)^N$\%
 (``five nines'' reliability for $N$$=$$3$) and the probability tail
-will hide these failures.  Quantifying this impact more precisely
-would be beneficial but requires additional information about failure
-rates and their impact on latency distributions. Additionally,
-modeling recovery semantics such as hinted handoff~\cite[Section
-  4.6]{dynamo} would also be useful.
+will hide these failures.  Quantifying these effects requires
+information about failure rates and their impact on latency
+distributions but would be beneficial. Modeling recovery semantics
+such as hinted handoff~\cite[Section 4.6]{dynamo} would also be
+useful.
 
 \vspace{\sectionskip}\section{Related Work}
 \label{sec:relatedwork}
@@ -1435,7 +1429,7 @@ propagation, anti-entropy, and Dynamo is a promising area for
 theoretical work.
 
 Data consistency is a long-studied problem in distributed
-systems~\cite{consistency-partitioned, danger-rep} and concurrent
+systems~\cite{consistency-partitioning} and concurrent
 programming~\cite{linearizability}.  Given the CAP Theorem and the
 inability to maintain all three of consistency, availability, and
 partition tolerance~\cite{cap-proof}, data stores have turned to
@@ -1529,12 +1523,14 @@ DGE 1106400, National Science Foundation Grants IIS-0713661,
 CNS-0722077 and IIS-0803690, the Air Force Office of Scientific
 Research Grant FA95500810352, and by DARPA contract FA865011C7136.
 
+\balance
+
+
 {\small
 \bibliographystyle{abbrv}
 \bibliography{ernst}
 }
 
-\balance
 
 \end{document}
 
