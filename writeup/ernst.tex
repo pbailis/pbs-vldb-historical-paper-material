@@ -151,7 +151,7 @@ eventual consistency?''), and of experiencing a combination of the two
 mechanisms to enforce deterministic staleness bounds~\cite{ aqua,
   trapp,vahdat-article, vahdat-bounded, frac}; instead, our goal is to
 provide a lens for analyzing, improving, and predicting the behavior
-of \textit{existing}, widely-deployed systems.
+of \textit{existing}, widely deployed systems.
 
 We provide closed-form solutions for PBS $k$-staleness and use Monte
 Carlo methods to explore the trade-off between latency and
@@ -177,7 +177,7 @@ We make the following contributions in this paper:
 
 \item We develop the theory of Probabilistically Bounded Staleness
   (PBS) for partial quorums. PBS describes the probability of
-  staleness across both versions ($k$-staleness) and time
+  staleness across versions ($k$-staleness) and time
   ($t$-visibility) as well as the probability of session-based
   monotonic reads consistency.
 
@@ -236,7 +236,7 @@ system, in which each quorum is of size $\lceil \frac{N}{2}\rceil$.
 The theory literature describes alternative quorum system designs
 providing varying asymptotic properties of capacity, scalability, and
 fault tolerance, from tree-quorums~\cite{treequorum} to
-grid-quorums~\cite{quorumsystems} and highly-available
+grid-quorums~\cite{quorumsystems} and highly available
 hybrids~\cite{92-quorums}.  Jim\'{e}nez-Peris et al. provide an
 overview of traditional, strict quorum
 systems~\cite{quorums-alternative}.
@@ -276,11 +276,11 @@ excellent---but only asymptotically.
 \textit{$k$-quorum systems} provide \textit{deterministic} guarantees
 that a partial quorum system will return values that are within $k$
 versions of the most recent write~\cite{non-strict}.  In a single
-writer scenario, sending each write to to $\lceil\frac{N}{k}\rceil$
+writer scenario, sending each write to $\lceil\frac{N}{k}\rceil$
 replicas with round-robin write scheduling ensures that any replica is
 no more than $k$ versions out-of-date.  However, with multiple
 writers, we lose the global ordering properties that the single-writer
-was able to control, and the best known algorithm for the pathological
+was able to control, and the best-known algorithm for the pathological
 case results in a lower bound of $(2N-1)(k-1)+N$ versions
 staleness~\cite{multi-k-quorum}.
 
@@ -298,7 +298,7 @@ revisit these assumptions in the next section.
 
 In practice, many distributed data management systems use quorums as a
 replication mechanism. Amazon's Dynamo~\cite{dynamo} is the progenitor
-of a class of eventually-consistent key-value stores that includes
+of a class of eventually consistent key-value stores that includes
 Apache Cassandra~\cite{cassandra-sigmod}, Basho Riak~\cite{riak}, and LinkedIn's Project
 Voldemort~\cite{voldemortpub}.  All use the same variant of
 quorum-style replication and we are not aware of any widely adopted
@@ -319,10 +319,10 @@ responses from a pre-determined number of replicas (typically set
 per-operation).  Accordingly, without message loss, all replicas
 eventually receive all writes.  This means that the write and read
 quorums chosen for a request depend on which nodes respond to the
-request first.  Dynamo denotes $N$ as the the replication factor of a
-key, $R$ as the number of replica responses required for a successful
-read, and $W$ as the number of replica acknowledgments required for a
-successful write. Under normal operation, Dynamo-style systems
+request first.  Dynamo denotes the replication factor of a
+key as $N$, the number of replica responses required for a successful
+read as $R$, and the number of replica acknowledgments required for a
+successful write as $W$. Under normal operation, Dynamo-style systems
 guarantee consistency when $R$$+$$W$$>$$N$.  Setting
 $W$$>$$\lceil$$N/2$$\rceil$ ensures consistency in the presence of
 concurrent writes.
@@ -495,7 +495,7 @@ data than it has previously read, a well-known session guarantee
 called \textit{monotonic reads} consistency~\cite{sessionguarantees}.
 This is particularly useful when clients do not need to see the most
 recent version of a data item but still require a notion of ``forward
-progress'' through versions, as in timelines or streaming changelogs.
+progress'' through versions, as in timelines or streaming change logs.
 
 \begin{definition}
 \label{def:prob-mr}
@@ -699,7 +699,7 @@ staleness.
 Dynamo-style quorum systems are inconsistent as a result of read and
 write message reordering, a product of message delays.  To illustrate
 this phenomenon, we introduce a model of message latency in Dynamo
-operation which, for convenience, we call \textit{WARS}.
+operation that, for convenience, we call \textit{WARS}.
 
 In Figure~\ref{fig:dynamo-diagram}, we illustrate \textit{WARS} using
 a space-time diagram for messages between a coordinator and a single
@@ -790,7 +790,7 @@ contact the service.  Individuals making requests to web services
 through their browsers will likely space sequential requests by tens
 or hundreds of milliseconds due to client-to-server latency.  Although
 we do not consider this delay here, it is important to remember for
-practical scenarios because the delay between reads and writes ($t$)
+practical scenarios because delays between reads and writes ($t$)
 may be large.
 
 \textbf{Additional anti-entropy.} As we discussed in
@@ -934,16 +934,16 @@ We ran Cassandra on three servers with 2.2GHz AMD Opteron 2214
 dual-core SMT processors and 4GB of 667MHz DDR2 memory, serving
 in-memory data.  To measure staleness, we inserted increasing versions of a key while concurrently issuing read requests.
 
-Our observations matched the \textit{WARS} predictions. We injected
-each combination of exponentially distributed $\texttt{W}=\lambda \in
-\{0.05,$ $0.1,$ $0.2\}$ (means $20$ms, $10$ms and $5$ms)
-and $\texttt{A}$$=$$\texttt{R}$$=$$\texttt{S}=\lambda \in \{0.1,$
-$0.2,$ $0.5\}$ (means $10$ms, $5$ms and $2$ms) across
-50,000 writes.  After empirically measuring the \textit{WARS}
-distributions, consistency, and latency for each partial quorum
-configuration, we predicted the $t$-visibility and latency. Our
-average $t$-visibility prediction RMSE was $0.28\%$
-(std. dev. $0.05\%$, max. $0.53\%$) for each
+Our \textit{WARS} predictions matched our empirical observations of
+Cassandra's behavior. We injected each combination of exponentially
+distributed $\texttt{W}=\lambda \in \{0.05,$ $0.1,$ $0.2\}$ (means
+$20$ms, $10$ms and $5$ms) and
+$\texttt{A}$$=$$\texttt{R}$$=$$\texttt{S}=\lambda \in \{0.1,$ $0.2,$
+$0.5\}$ (means $10$ms, $5$ms and $2$ms) across 50,000 writes.  After
+empirically measuring the \textit{WARS} distributions, consistency,
+and latency for each partial quorum configuration, we predicted the
+$t$-visibility and latency. Our average $t$-visibility prediction RMSE
+was $0.28\%$ (std. dev. $0.05\%$, max. $0.53\%$) for each
 $t\in$$\{1,$$\dots,$$199\}$ ms. Our predicted latency (for each of the
 $\{1.0, \dots, 99.9$th$\}$ percentiles for each configuration) had an
 average N-RMSE of $0.48\%$ (std. dev. $0.18\%$, max. $0.90\%$).  This
@@ -1215,7 +1215,7 @@ across all replicas due to the distribution's short tail ($99.9$th
 percentile $.657$ms).  In contrast, under \texttt{LNKD-DISK}, writes
 take much longer (median $1.50$ms) and have a longer tail ($99.9$th
 percentile $10.47$ ms).  \texttt{LNKD-DISK}'s $t$-visibility reflects
-this defference: immediately after write commit, \texttt{LNKD-DISK}
+this difference: immediately after write commit, \texttt{LNKD-DISK}
 had only a $43.9\%$ probability of consistent reads and, ten ms later,
 only a $92.5\%$ probability.  This suggests that SSDs may greatly
 improve consistency due to reduced write variance.
@@ -1396,11 +1396,11 @@ feasible but require considerable care in implementation, complicating
 what is otherwise a simple replication scheme.
 
 \textbf{Failure modes.} In our evaluation of $t$-visibility, we
-focused on normal, steady-state operating conditions. Unless failures
+focused on normal, steady state operating conditions. Unless failures
 are common-case, they affect tail staleness probabilities (which
 appear as latency spikes in \textit{WARS}).  For example, if, as Jeff
 Dean of Google suggests~\cite{dean-keynote}, servers crash at least
-twice per year, given a ten hour downtime per failure, this results in
+twice per year, given a ten-hour downtime per failure, this results in
 .23\% downtime per machine per year.  If failures are correlated, this
 may be a problem. If they are independent, a
 replica set of $N$ nodes with $F$ failed nodes behaves like an $N-F$
