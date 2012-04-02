@@ -1115,7 +1115,7 @@ assumed that one-way messages were symmetric
 Voldemort performs at least one read before every write (average of 1
 seek, between 1-3 seeks), and writes to the BerkeleyDB Java Edition
 backend flush to durable storage either every 30 seconds or 20
-megabytes---whichever comes first~\cite{feinbergpc}.  Accordingly, for
+MB---whichever comes first~\cite{feinbergpc}.  Accordingly, for
 \texttt{LNKD-DISK}, we used the same \texttt{A}=\texttt{R}=\texttt{S}
 as \texttt{LNKD-SSD} but fit \texttt{W} separately.
 
