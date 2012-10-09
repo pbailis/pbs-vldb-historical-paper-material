@@ -1,5 +1,0 @@
-Servers: 4
-N: 3
-WriteMS: 100
-ReadMS: 10
-Total time: 360
